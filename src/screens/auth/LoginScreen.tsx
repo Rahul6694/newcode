@@ -152,17 +152,11 @@ const handleLogin = async () => {
 
   try {
     const res = await authApi.login(email.trim(), password);
-
-    // If token exists, login is successful
     if (!res?.token) {
       showError(res?.message || 'Login failed');
       return;
     }
 
-    // Save token in AsyncStorage
-    await AsyncStorage.setItem('auth_token', res.token);
-
-    // Save token in Redux
     dispatch(setToken(res.token));
 
     showSuccess('Login successful');

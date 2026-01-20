@@ -117,7 +117,7 @@ export const HistoryScreen: React.FC = () => {
   const handleRefresh = async () => {
   setRefreshing(true);
   try {
-    await loadHistory(1); // reload first page
+    await loadHistory(1); 
   } finally {
     setRefreshing(false);
   }

@@ -82,24 +82,13 @@ export const ProfileScreen: React.FC = () => {
   const loadProfile = async () => {
   try {
     setLoading(true);
-
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) {
-      showError('Not logged in');
-      return;
-    }
-
-    // Call API to fetch profile
-    const res = await userApi.getProfile(token);
+    
+    const res = await userApi.getProfile();
     if (res) {
       console.log('Profile data:', res);
-
-      // Use res directly if it already contains profile
       const profile = res.data || res; 
       setProfileData(profile);
 
-      // Save to AsyncStorage
-      await AsyncStorage.setItem('user_data', JSON.stringify(profile));
     } else {
       const errorMsg = res?.message || 'Failed to load profile';
       showError(errorMsg);
@@ -108,8 +97,6 @@ export const ProfileScreen: React.FC = () => {
   } catch (error: any) {
     console.log('Load profile error:', error);
     showError(error?.message || 'Unable to load profile. Try again.');
-
-    // fallback: load stored profile if available
     try {
       const storedUser = await AsyncStorage.getItem('user_data');
       if (storedUser) setProfileData(JSON.parse(storedUser));

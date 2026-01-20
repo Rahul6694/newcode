@@ -29,8 +29,6 @@ export const userApi = {
   getProfile: (): Promise<ApiResponse> =>
     ApiClient.get('/auth/profile'),
 
- 
-
   changePassword: (oldPassword: string, newPassword: string): Promise<ApiResponse> =>
     ApiClient.post('/user/change-password', {oldPassword, newPassword}),
 
