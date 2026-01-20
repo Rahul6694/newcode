@@ -82,24 +82,13 @@ export const ProfileScreen: React.FC = () => {
   const loadProfile = async () => {
   try {
     setLoading(true);
-
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) {
-      showError('Not logged in');
-      return;
-    }
-
-    // Call API to fetch profile
-    const res = await userApi.getProfile(token);
+    
+    const res = await userApi.getProfile();
     if (res) {
       console.log('Profile data:', res);
-
-      // Use res directly if it already contains profile
       const profile = res.data || res; 
       setProfileData(profile);
 
-      // Save to AsyncStorage
-      await AsyncStorage.setItem('user_data', JSON.stringify(profile));
     } else {
       const errorMsg = res?.message || 'Failed to load profile';
       showError(errorMsg);
@@ -108,8 +97,6 @@ export const ProfileScreen: React.FC = () => {
   } catch (error: any) {
     console.log('Load profile error:', error);
     showError(error?.message || 'Unable to load profile. Try again.');
-
-    // fallback: load stored profile if available
     try {
       const storedUser = await AsyncStorage.getItem('user_data');
       if (storedUser) setProfileData(JSON.parse(storedUser));
@@ -236,12 +223,12 @@ const handleLogout = async () => {
                   {dummyUser.email}
                 </Typography>
                 <View style={styles.badgeContainer}>
-                  <View style={styles.statusBadge}>
+                  {/* <View style={styles.statusBadge}>
                     <Typography variant="caption" color="white" weight="600">
                       {dummyUser.status}
                     </Typography>
-                  </View>
-                  {dummyUser.isEmailVerified && (
+                  </View> */}
+                  {/* {dummyUser.isEmailVerified && (
                     <View style={styles.verifiedBadge}>
                       <Image
                         source={require('@/assets/images/verifie.png')}
@@ -252,14 +239,14 @@ const handleLogout = async () => {
                         Verified
                       </Typography>
                     </View>
-                  )}
-                  {dummyUser.designation && (
+                  )} */}
+                  {/* {dummyUser.designation && (
                     <View style={styles.designationBadge}>
                       <Typography variant="caption" color="primary" weight="600">
                         {dummyUser.designation}
                       </Typography>
                     </View>
-                  )}
+                  )} */}
                 </View>
               </View>
             </Animated.View>
@@ -280,11 +267,11 @@ const handleLogout = async () => {
                   </Typography>
                 </View>
                 <View style={styles.cardBody}>
-                  <InfoField iconImage={require('@/assets/images/email.png')} label="Email" value={dummyUser.email} />
-                  <InfoField iconImage={require('@/assets/images/verifie.png')} label="Email Verified" value={dummyUser.isEmailVerified ? 'Verified' : 'Not Verified'} />
                   <InfoField iconImage={require('@/assets/images/user.png')} label="Full Name" value={dummyUser.fullName} />
+                  <InfoField iconImage={require('@/assets/images/email.png')} label="Email" value={dummyUser.email} />
+                  {/* <InfoField iconImage={require('@/assets/images/verifie.png')} label="Email Verified" value={dummyUser.isEmailVerified ? 'Verified' : 'Not Verified'} /> */}
                   <InfoField iconImage={require('@/assets/images/phone-call.png')} label="Phone Number" value={dummyUser.phoneNumber} />
-                  <InfoField iconImage={require('@/assets/images/location.png')} label="Address" value={dummyUser.address} isLast />
+                  {/* <InfoField iconImage={require('@/assets/images/location.png')} label="Address" value={dummyUser.address} isLast /> */}
                 </View>
               </Card>
             </Animated.View>
@@ -307,8 +294,8 @@ const handleLogout = async () => {
                 <View style={styles.cardBody}>
                   <InfoField iconImage={require('@/assets/images/user.png')} label="User Type" value={dummyUser.userType} />
                   <InfoField iconImage={require('@/assets/images/briefcase.png')} label="Designation" value={dummyUser.designation} />
-                  <InfoField iconImage={require('@/assets/images/organization.png')} label="Organization Name" value={dummyUser.organizationName || 'N/A'} />
-                  <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast />
+                  {/* <InfoField iconImage={require('@/assets/images/organization.png')} label="Organization Name" value={dummyUser.organizationName || 'N/A'} />
+                  <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast /> */}
                 </View>
               </Card>
             </Animated.View>

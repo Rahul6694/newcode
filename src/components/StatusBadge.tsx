@@ -9,10 +9,10 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<TripStatus, {color: string; bg: string; label: string}> = {
-  Assigned: {
+  ASSIGNED: {
     color: colors.statusAssigned,
     bg: '#F3E8FF',
-    label: 'Scheduled',
+    label: 'ASSIGNED',
   },
   'In Progress': {
     color: colors.statusInProgress,
@@ -38,22 +38,22 @@ const statusConfig: Record<TripStatus, {color: string; bg: string; label: string
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({status, size = 'md'}) => {
   const config = statusConfig[status];
-
+  console.log(config,status,statusConfig,"config=====>")
   return (
     <View
       style={[
         styles.badge,
-        {backgroundColor: config.bg},
+        {backgroundColor: config?.bg},
         size === 'sm' && styles.badgeSm,
       ]}>
-      <View style={[styles.dot, {backgroundColor: config.color}]} />
+      <View style={[styles.dot, {backgroundColor: config?.color}]} />
       <Text
         style={[
           styles.text,
-          {color: config.color},
+          {color: config?.color},
           size === 'sm' && styles.textSm,
         ]}>
-        {config.label}
+        {config?.label}
       </Text>
     </View>
   );

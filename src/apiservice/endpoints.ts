@@ -1,50 +1,47 @@
-import ApiClient, {ApiResponse} from './ApiClient';
+import ApiClient, { ApiResponse } from './ApiClient';
 
 // Auth endpoints
 export const authApi = {
-
   login: (email: string, password: string) =>
     ApiClient.post('/auth/login', { email, password }),
 
   register: (userData: any): Promise<ApiResponse> =>
     ApiClient.post('/auth/register', userData),
 
-  logout: (): Promise<ApiResponse> =>
-    ApiClient.post('/auth/logout'),
+  logout: (): Promise<ApiResponse> => ApiClient.post('/auth/logout'),
 
   refreshToken: (): Promise<ApiResponse> =>
     ApiClient.post('/auth/refresh-token'),
 
   forgotPassword: (email: string): Promise<ApiResponse> =>
-    ApiClient.post('/auth/forgot-password', {email,panel: 'DRIVER'}),
+    ApiClient.post('/auth/forgot-password', { email, panel: 'DRIVER' }),
 
-resetPassword: (email: string, otp: string, newPassword: string) => 
+  resetPassword: (email: string, otp: string, newPassword: string) =>
     ApiClient.post('/auth/reset-password', { email, otp, newPassword }),
   verifyOtp: (email: string, otp: string): Promise<ApiResponse> =>
-    ApiClient.post('/auth/verify-otp', {email, otp}),
+    ApiClient.post('/auth/verify-otp', { email, otp }),
 };
 
 // User endpoints
 export const userApi = {
-  getProfile: (): Promise<ApiResponse> =>
-    ApiClient.get('/auth/profile'),
+  getProfile: (): Promise<ApiResponse> => ApiClient.get('/auth/profile'),
 
- 
-
-  changePassword: (oldPassword: string, newPassword: string): Promise<ApiResponse> =>
-    ApiClient.post('/user/change-password', {oldPassword, newPassword}),
+  changePassword: (
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<ApiResponse> =>
+    ApiClient.post('/user/change-password', { oldPassword, newPassword }),
 
   uploadProfileImage: (formData: FormData): Promise<ApiResponse> =>
     ApiClient.uploadFile('/user/profile/image', formData),
 
-  deleteAccount: (): Promise<ApiResponse> =>
-    ApiClient.delete('/user/account'),
+  deleteAccount: (): Promise<ApiResponse> => ApiClient.delete('/user/account'),
 };
 
 // Trip endpoints
 export const tripApi = {
   getAllTrips: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/trips', {params}),
+    ApiClient.get('/trips', { params }),
 
   getTripById: (tripId: string): Promise<ApiResponse> =>
     ApiClient.get(`/trips/${tripId}`),
@@ -65,19 +62,29 @@ export const tripApi = {
     ApiClient.post(`/trips/${tripId}/complete`, data),
 
   getTripHistory: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/trips/history', {params}),
+    ApiClient.get('/trips/history', { params }),
+
+  getActiveTrip: (params?: any): Promise<ApiResponse> =>
+    ApiClient.get('/trips/driver/active', { params }),
+
+  getDeatilsTrip: (id: string): Promise<ApiResponse> =>
+  ApiClient.get(`/trips/${id}`)
 };
 
 // Location endpoints
 export const locationApi = {
   updateLocation: (latitude: number, longitude: number): Promise<ApiResponse> =>
-    ApiClient.post('/location/update', {latitude, longitude}),
+    ApiClient.post('/location/update', { latitude, longitude }),
 
   getLocationHistory: (tripId: string): Promise<ApiResponse> =>
     ApiClient.get(`/location/history/${tripId}`),
 
-  markLocation: (tripId: string, name: string, coordinates: any): Promise<ApiResponse> =>
-    ApiClient.post(`/location/mark/${tripId}`, {name, coordinates}),
+  markLocation: (
+    tripId: string,
+    name: string,
+    coordinates: any,
+  ): Promise<ApiResponse> =>
+    ApiClient.post(`/location/mark/${tripId}`, { name, coordinates }),
 };
 
 // Document endpoints
@@ -98,7 +105,7 @@ export const documentApi = {
 // Notification endpoints
 export const notificationApi = {
   getNotifications: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/notifications', {params}),
+    ApiClient.get('/notifications', { params }),
 
   markAsRead: (notificationId: string): Promise<ApiResponse> =>
     ApiClient.post(`/notifications/${notificationId}/read`),
@@ -116,15 +123,18 @@ export const supportApi = {
     ApiClient.post('/support/tickets', data),
 
   getTickets: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/support/tickets', {params}),
+    ApiClient.get('/support/tickets', { params }),
 
   getTicketById: (ticketId: string): Promise<ApiResponse> =>
     ApiClient.get(`/support/tickets/${ticketId}`),
 
   addComment: (ticketId: string, comment: string): Promise<ApiResponse> =>
-    ApiClient.post(`/support/tickets/${ticketId}/comments`, {comment}),
+    ApiClient.post(`/support/tickets/${ticketId}/comments`, { comment }),
 
-  uploadTicketAttachment: (ticketId: string, formData: FormData): Promise<ApiResponse> =>
+  uploadTicketAttachment: (
+    ticketId: string,
+    formData: FormData,
+  ): Promise<ApiResponse> =>
     ApiClient.uploadFile(`/support/tickets/${ticketId}/attachments`, formData),
 };
 
@@ -134,7 +144,7 @@ export const dashboardApi = {
     ApiClient.get('/dashboard/stats'),
 
   getEarnings: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/dashboard/earnings', {params}),
+    ApiClient.get('/dashboard/earnings', { params }),
 
   getPerformanceMetrics: (): Promise<ApiResponse> =>
     ApiClient.get('/dashboard/performance'),

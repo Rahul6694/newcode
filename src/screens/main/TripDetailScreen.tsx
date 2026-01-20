@@ -1,13 +1,14 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {View, StyleSheet, ScrollView, TouchableOpacity, Linking, RefreshControl, Image, Animated, PanResponder, Dimensions} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation, RouteProp} from '@react-navigation/native';
+import {useRoute, useNavigation, RouteProp, useIsFocused} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {navigationService} from '@/services/navigationService';
 import {TripStatus, TodoStackParamList, DocumentStage} from '@/types';
 import {Button, Card, Modal, Input, useToast, Typography} from '@/components';
 import {Header} from '@/components/Header';
 import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
+import { tripApi } from '@/apiservice';
 
 // Sample Trip Data for UI display only
 const sampleTrip: any = {
@@ -85,6 +86,32 @@ export const TripDetailScreen: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState(false);
   const slideProgress = useRef(new Animated.Value(0)).current;
   const [isSliding, setIsSliding] = useState(false);
+
+  // console.log()
+
+  const getDeatilsTrip = async () => {
+      try {
+        const res = await tripApi.getDeatilsTrip(tripId);
+        if (res) {
+          console.log('Profile data:123', res);
+          const data = res.data || res;
+          console.log(data, 'data==============>');
+        } else {
+          const errorMsg = res?.message || 'Failed to load profile';
+          console.log('Profile data:', res);
+        }
+      } catch (error: any) {
+        console.log('Load profile error:', error);
+      } finally {
+      }
+    };
+
+  useEffect(() => {
+     getDeatilsTrip()
+  }, [useIsFocused()]);
+  
+
+
 
   // Simple refresh handler (UI only)
   const handleRefresh = () => {

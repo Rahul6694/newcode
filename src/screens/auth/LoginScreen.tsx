@@ -30,7 +30,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi } from '@/apiservice';
 import { useDispatch } from 'react-redux';
-import { setToken } from '@/redux/authSlice';
+import { setToken, setUser } from '@/redux/authSlice';
 import { AppDispatch } from '@/redux/store';
 
 const dispatch: AppDispatch = useDispatch();
@@ -145,16 +145,23 @@ export const LoginScreen: React.FC = () => {
 
   // Handle auth errors from Redux
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      showError('Please enter email and password');
+const handleLogin = async () => {
+  if (!email.trim() || !password.trim()) {
+    showError('Please enter email and password');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await authApi.login(email.trim(), password);
+  
+    if (!res?.token) {
+      showError(res?.message || 'Login failed');
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const res = await authApi.login(email.trim(), password);
+    dispatch(setToken(res.token));
 
       // If token exists, login is successful
       if (!res?.token) {
@@ -167,7 +174,7 @@ export const LoginScreen: React.FC = () => {
 
       // Save token in Redux
       dispatch(setToken(res.token));
-
+      dispatch(setUser(res?.user))
       showSuccess('Login successful');
     } catch (error: any) {
       console.log('Login error:', error);
