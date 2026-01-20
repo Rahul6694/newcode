@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,13 +13,19 @@ import {
   Image,
   StatusBar,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {validateLoginCredentials} from '@/utils/validation';
-import {AuthStackParamList} from '@/types';
-import {Button, Input, useToast, Typography} from '@/components';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { validateLoginCredentials } from '@/utils/validation';
+import { AuthStackParamList } from '@/types';
+import { Button, Input, useToast, Typography } from '@/components';
+import {
+  colors,
+  spacing,
+  typography,
+  borderRadius,
+  shadows,
+} from '@/theme/colors';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi } from '@/apiservice';
@@ -29,14 +35,13 @@ import { AppDispatch } from '@/redux/store';
 
 const dispatch: AppDispatch = useDispatch();
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 type LoginNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavigationProp>();
 
-  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -45,7 +50,7 @@ export const LoginScreen: React.FC = () => {
   const [rememberMeError, setRememberMeError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const {showSuccess, showError} = useToast();
+  const { showSuccess, showError } = useToast();
 
   // Load saved email if remember me was checked previously
   useEffect(() => {
@@ -54,7 +59,7 @@ export const LoginScreen: React.FC = () => {
         const savedEmail = await AsyncStorage.getItem('remembered_email');
         const wasRemembered = await AsyncStorage.getItem('remember_me');
         if (savedEmail && wasRemembered === 'true') {
-          setEmail(savedEmail);
+          setEmail('');
           setRememberMe(true);
         }
       } catch (error) {
@@ -127,8 +132,6 @@ export const LoginScreen: React.FC = () => {
     return '';
   };
 
-  
-
   // Real-time validation on blur
   const handleEmailBlur = () => {
     const emailErr = validateEmail(email);
@@ -142,152 +145,154 @@ export const LoginScreen: React.FC = () => {
 
   // Handle auth errors from Redux
 
-const handleLogin = async () => {
-  if (!email.trim() || !password.trim()) {
-    showError('Please enter email and password');
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const res = await authApi.login(email.trim(), password);
-
-    // If token exists, login is successful
-    if (!res?.token) {
-      showError(res?.message || 'Login failed');
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      showError('Please enter email and password');
       return;
     }
 
-    // Save token in AsyncStorage
-    await AsyncStorage.setItem('auth_token', res.token);
+    setLoading(true);
 
-    // Save token in Redux
-    dispatch(setToken(res.token));
+    try {
+      const res = await authApi.login(email.trim(), password);
 
-    showSuccess('Login successful');
+      // If token exists, login is successful
+      if (!res?.token) {
+        showError(res?.message || 'Login failed');
+        return;
+      }
 
-  } catch (error: any) {
-    console.log('Login error:', error);
-    showError(error?.message || 'Unable to login. Try again');
-  } finally {
-    setLoading(false);
-  }
-};
+      // Save token in AsyncStorage
+      await AsyncStorage.setItem('auth_token', res.token);
 
+      // Save token in Redux
+      dispatch(setToken(res.token));
+
+      showSuccess('Login successful');
+    } catch (error: any) {
+      console.log('Login error:', error);
+      showError(error?.message || 'Unable to login. Try again');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
       <View style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={Platform.OS === 'android' ? colors.primarySoft : undefined}
-      />
-      <View style={styles.backgroundGradient} />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <KeyboardAvoidingView
-          style={styles.keyboardView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-          enabled={Platform.OS === 'ios'}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            nestedScrollEnabled={true}>
-            <View style={styles.contentWrapper}>
-              {/* Header Section with Enhanced Animation */}
-              <Animated.View
-                style={[
-                  styles.header,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{translateY: slideAnim}],
-                  },
-                ]}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={
+            Platform.OS === 'android' ? colors.primarySoft : undefined
+          }
+        />
+        <View style={styles.backgroundGradient} />
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <KeyboardAvoidingView
+            style={styles.keyboardView}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            enabled={Platform.OS === 'ios'}
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              nestedScrollEnabled={true}
+            >
+              <View style={styles.contentWrapper}>
+                {/* Header Section with Enhanced Animation */}
                 <Animated.View
                   style={[
-                    styles.logoContainer,
+                    styles.header,
                     {
-                      transform: [
-                        {scale: logoScale},
-                      ],
+                      opacity: fadeAnim,
+                      transform: [{ translateY: slideAnim }],
                     },
-                  ]}>
-             
-                  <View style={styles.logoCircle}>
-                    <Image
-                      source={require('@/assets/images/logo.jpg')}
-                      style={styles.logoImage}
-                      resizeMode="contain"
-                    />
+                  ]}
+                >
+                  <Animated.View
+                    style={[
+                      styles.logoContainer,
+                      {
+                        transform: [{ scale: logoScale }],
+                      },
+                    ]}
+                  >
+                    <View style={styles.logoCircle}>
+                      <Image
+                        source={require('@/assets/images/logo.jpg')}
+                        style={styles.logoImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <Typography variant="bodySemibold" style={styles.logoLabel}>
+                      ATCE DRIVER
+                    </Typography>
+                  </Animated.View>
+                  <View style={styles.titleContainer}>
+                    <Typography variant="h1" style={styles.title}>
+                      Welcome Back
+                    </Typography>
+                    <Typography variant="body" style={styles.subtitle}>
+                      Sign in to manage your trips and deliveries
+                    </Typography>
                   </View>
-                  <Typography variant="bodySemibold" style={styles.logoLabel}>
-                    ATCE DRIVER
-                  </Typography>
                 </Animated.View>
-                <View style={styles.titleContainer}>
-                  <Typography variant="h1" style={styles.title}>
-                    Welcome Back
-                  </Typography>
-                  <Typography variant="body" style={styles.subtitle}>
-                    Sign in to manage your trips and deliveries
-                  </Typography>
-                </View>
-              </Animated.View>
 
-              {/* Login Form Card with Animation */}
-              <Animated.View
-                style={[
-                  styles.formCard,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{translateY: slideAnim}],
-                  },
-                ]}>
-                <View style={styles.form}>
-                <Input
-                  label="Email Address"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={text => {
-                    setEmail(text);
-                    // Clear error when user starts typing
-                    if (emailError) setEmailError('');
-                  }}
-                  onBlur={handleEmailBlur}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!loading}
-                  error={emailError}
-                  leftIconImage={require('@/assets/images/email.png')}
-                />
+                {/* Login Form Card with Animation */}
+                <Animated.View
+                  style={[
+                    styles.formCard,
+                    {
+                      opacity: fadeAnim,
+                      transform: [{ translateY: slideAnim }],
+                    },
+                  ]}
+                >
+                  <View style={styles.form}>
+                    <Input
+                      label="Email Address"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChangeText={text => {
+                        setEmail(text);
+                        // Clear error when user starts typing
+                        if (emailError) setEmailError('');
+                      }}
+                      onBlur={handleEmailBlur}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!loading}
+                      error={emailError}
+                      leftIconImage={require('@/assets/images/email.png')}
+                    />
 
-                <Input
-                  label="Password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={text => {
-                    setPassword(text);
-                    // Clear error when user starts typing
-                    if (passwordError) setPasswordError('');
-                  }}
-                  onBlur={handlePasswordBlur}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!loading}
-                  error={passwordError}
-                  leftIconImage={require('@/assets/images/padlock.png')}
-                  passwordVisibleIcon={require('@/assets/images/eye.png')}
-                  passwordHiddenIcon={require('@/assets/images/hidden.png')}
-                />
+                    <Input
+                      label="Password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChangeText={text => {
+                        setPassword(text);
+                        // Clear error when user starts typing
+                        if (passwordError) setPasswordError('');
+                      }}
+                      onBlur={handlePasswordBlur}
+                      secureTextEntry
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!loading}
+                      error={passwordError}
+                      leftIconImage={require('@/assets/images/padlock.png')}
+                      passwordVisibleIcon={require('@/assets/images/eye.png')}
+                      passwordHiddenIcon={require('@/assets/images/hidden.png')}
+                    />
 
-                {/* Remember Me & Forgot Password */}
-                <View style={styles.optionsRow}>
-                  <TouchableOpacity
+                    {/* Remember Me & Forgot Password */}
+                    <View style={styles.optionsRow}>
+                      {/* <TouchableOpacity
                     style={styles.rememberMeContainer}
                     onPress={() => setRememberMe(!rememberMe)}
                       disabled={loading}
@@ -302,32 +307,37 @@ const handleLogin = async () => {
                       <Typography variant="smallMedium" style={styles.rememberMeText}>
                         Remember Me
                       </Typography>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('ForgotPassword')}
-                      disabled={loading}
-                    activeOpacity={0.7}>
-                      <Typography variant="smallMedium" color="primary" style={styles.forgotPasswordText}>
-                        Forgot Password?
-                      </Typography>
-                  </TouchableOpacity>
-                </View>
+                  </TouchableOpacity> */}
+                      <TouchableOpacity
+                        onPress={() => navigation.navigate('ForgotPassword')}
+                        disabled={loading}
+                        activeOpacity={0.7}
+                      >
+                        <Typography
+                          variant="smallMedium"
+                          color="primary"
+                          style={styles.forgotPasswordText}
+                        >
+                          Forgot Password?
+                        </Typography>
+                      </TouchableOpacity>
+                    </View>
 
-                {/* Login Button */}
-                <Button
-                    title="Sign In"
-                  onPress={handleLogin}
-                  loading={loading}
-                  fullWidth
-                  size="lg"
-                  style={styles.loginButton}
-                />
-                </View>
-              </Animated.View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-        <Animated.View
+                    {/* Login Button */}
+                    <Button
+                      title="Sign In"
+                      onPress={handleLogin}
+                      loading={loading}
+                      fullWidth
+                      size="lg"
+                      style={styles.loginButton}
+                    />
+                  </View>
+                </Animated.View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+          {/* <Animated.View
         style={[
           styles.footer,
           {
@@ -351,12 +361,11 @@ const handleLogin = async () => {
             </Typography>
           </View>
         </View>
-      </Animated.View>
-      </SafeAreaView>
+      </Animated.View> */}
+        </SafeAreaView>
 
-      {/* Footer Help Text - Outside SafeAreaView, Fixed at Bottom */}
-     
-    </View>
+        {/* Footer Help Text - Outside SafeAreaView, Fixed at Bottom */}
+      </View>
     </>
   );
 };
@@ -439,7 +448,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
-    marginTop: spacing.sm, 
+    marginTop: spacing.sm,
     ...shadows.lg,
     borderWidth: 1,
     borderColor: colors.borderLight,
@@ -449,10 +458,11 @@ const styles = StyleSheet.create({
   },
   optionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: spacing.xs / 2,
     marginBottom: spacing.sm,
+    width:"100%"
   },
   rememberMeContainer: {
     flexDirection: 'row',
@@ -492,7 +502,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex:-1,
+    zIndex: -1,
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -526,12 +536,7 @@ const styles = StyleSheet.create({
   },
   helpTextContainer: {
     flex: 1,
-
   },
-  helpTitle: {
-   
-  },
-  helpDescription: {
-  
-  },
+  helpTitle: {},
+  helpDescription: {},
 });

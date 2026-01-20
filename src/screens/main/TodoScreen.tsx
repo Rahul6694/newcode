@@ -486,7 +486,7 @@ const [loading, setloading] = useState()
         </View>
 
         {/* Progress */}
-        <View style={styles.progressSection}>
+        {/* <View style={styles.progressSection}>
           <View style={styles.progressHeader}>
             <Typography style={styles.progressTitle}>
               Today’s Progress
@@ -497,7 +497,7 @@ const [loading, setloading] = useState()
           <View style={styles.progressBar}>
             <View style={styles.progressFill} />
           </View>
-        </View>
+        </View> */}
       </View>
     </View>
   );
@@ -523,14 +523,6 @@ const [loading, setloading] = useState()
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={!loading && displayTrips.length === 0 ? renderEmptyState : null}
-        // refreshControl={
-        //   <RefreshControl
-        //     refreshing={refreshing}
-        //     onRefresh={handleRefresh}
-        //     tintColor={colors.primary}
-        //     colors={[colors.primary]}
-        //   />
-        // }
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
