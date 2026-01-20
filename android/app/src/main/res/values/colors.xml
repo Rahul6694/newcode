@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Icon Background Color -->
+    <color name="ic_launcher_background">#2563EB</color>
+    
+    <!-- Primary Colors -->
+    <color name="primary">#2563EB</color>
+    <color name="primaryDark">#1D4ED8</color>
+    <color name="primaryLight">#3B82F6</color>
+    
+    <!-- Background Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="background">#F8FAFC</color>
+</resources>

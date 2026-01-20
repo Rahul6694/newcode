@@ -1,0 +1,25 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["jest"],
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/components/*": ["components/*"],
+      "@/screens/*": ["screens/*"],
+      "@/services/*": ["services/*"],
+      "@/types/*": ["types/*"],
+      "@/store/*": ["store/*"],
+      "@/utils/*": ["utils/*"],
+      "@/navigation/*": ["navigation/*"]
+    }
+  },
+  "include": ["src/**/*", "index.js", "**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods", "android", "ios"]
+}
