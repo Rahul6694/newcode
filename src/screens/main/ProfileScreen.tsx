@@ -8,10 +8,10 @@ import { Button, Card, Modal, useToast, Typography } from '@/components';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { userApi } from '@/apiservice';
 import { useDispatch } from 'react-redux';
 import { clearToken } from '@/redux/authSlice';
 import { AppDispatch } from '@/redux/store';
+import { authApi } from '@/apiservice';
 
 const dispatch: AppDispatch = useDispatch();
 
@@ -83,7 +83,7 @@ export const ProfileScreen: React.FC = () => {
   try {
     setLoading(true);
     
-    const res = await userApi.getProfile();
+    const res = await authApi.getProfile();
     if (res) {
       console.log('Profile data:', res);
       const profile = res.data || res; 

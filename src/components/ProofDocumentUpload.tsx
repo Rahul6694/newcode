@@ -50,8 +50,14 @@ export const ProofDocumentUpload: React.FC<ProofDocumentUploadProps> = ({
           {/* Documents Grid */}
           <View style={styles.documentsGridInline}>
             {documents.map((uri, index) => (
-              <View key={index} style={styles.documentItemInline}>
-                <Image source={{uri}} style={styles.documentItemImageInline} />
+              
+              <View key={index} style={styles.documentItemInline}> 
+              <>
+              {
+                console.log(uri)
+              }
+              </>
+                <Image source={{uri:uri?.path || uri?.uri}} style={styles.documentItemImageInline} />
                 <TouchableOpacity
                   style={styles.removeDocumentButtonInline}
                   onPress={() => onRemoveDocument(index)}
