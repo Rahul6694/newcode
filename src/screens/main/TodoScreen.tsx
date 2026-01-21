@@ -82,11 +82,11 @@ export const TodoScreen: React.FC = () => {
       break;
 
     case 'ARRIVED':
-      navigation.navigate('TripDetail', { tripId: trip.id });
+      navigation.navigate('MarkComplete', { tripId: trip.id });
       break;
 
     default:
-      navigation.navigate('TripDetail', { tripId: trip.id });
+      navigation.navigate('TripDetail', { tripId: trip.id })
   }
 };
 
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: colors.textSecondary,
-    
+    lineHeight: 16,
   },
   filterTabsContainer: {
     flexDirection: 'row',
