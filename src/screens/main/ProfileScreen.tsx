@@ -223,12 +223,12 @@ const handleLogout = async () => {
                   {dummyUser.email}
                 </Typography>
                 <View style={styles.badgeContainer}>
-                  <View style={styles.statusBadge}>
+                  {/* <View style={styles.statusBadge}>
                     <Typography variant="caption" color="white" weight="600">
                       {dummyUser.status}
                     </Typography>
-                  </View>
-                  {dummyUser.isEmailVerified && (
+                  </View> */}
+                  {/* {dummyUser.isEmailVerified && (
                     <View style={styles.verifiedBadge}>
                       <Image
                         source={require('@/assets/images/verifie.png')}
@@ -239,14 +239,14 @@ const handleLogout = async () => {
                         Verified
                       </Typography>
                     </View>
-                  )}
-                  {dummyUser.designation && (
+                  )} */}
+                  {/* {dummyUser.designation && (
                     <View style={styles.designationBadge}>
                       <Typography variant="caption" color="primary" weight="600">
                         {dummyUser.designation}
                       </Typography>
                     </View>
-                  )}
+                  )} */}
                 </View>
               </View>
             </Animated.View>
@@ -267,11 +267,11 @@ const handleLogout = async () => {
                   </Typography>
                 </View>
                 <View style={styles.cardBody}>
-                  <InfoField iconImage={require('@/assets/images/email.png')} label="Email" value={dummyUser.email} />
-                  <InfoField iconImage={require('@/assets/images/verifie.png')} label="Email Verified" value={dummyUser.isEmailVerified ? 'Verified' : 'Not Verified'} />
                   <InfoField iconImage={require('@/assets/images/user.png')} label="Full Name" value={dummyUser.fullName} />
+                  <InfoField iconImage={require('@/assets/images/email.png')} label="Email" value={dummyUser.email} />
+                  {/* <InfoField iconImage={require('@/assets/images/verifie.png')} label="Email Verified" value={dummyUser.isEmailVerified ? 'Verified' : 'Not Verified'} /> */}
                   <InfoField iconImage={require('@/assets/images/phone-call.png')} label="Phone Number" value={dummyUser.phoneNumber} />
-                  <InfoField iconImage={require('@/assets/images/location.png')} label="Address" value={dummyUser.address} isLast />
+                  {/* <InfoField iconImage={require('@/assets/images/location.png')} label="Address" value={dummyUser.address} isLast /> */}
                 </View>
               </Card>
             </Animated.View>
@@ -294,8 +294,8 @@ const handleLogout = async () => {
                 <View style={styles.cardBody}>
                   <InfoField iconImage={require('@/assets/images/user.png')} label="User Type" value={dummyUser.userType} />
                   <InfoField iconImage={require('@/assets/images/briefcase.png')} label="Designation" value={dummyUser.designation} />
-                  <InfoField iconImage={require('@/assets/images/organization.png')} label="Organization Name" value={dummyUser.organizationName || 'N/A'} />
-                  <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast />
+                  {/* <InfoField iconImage={require('@/assets/images/organization.png')} label="Organization Name" value={dummyUser.organizationName || 'N/A'} />
+                  <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast /> */}
                 </View>
               </Card>
             </Animated.View>
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: 15,
-    lineHeight: 22,
+    
   },
   fieldDivider: {
     height: 1,
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   modalText: {
     textAlign: 'center',
     marginBottom: spacing.xxl,
-    lineHeight: 22,
+    
     fontSize: 15,
     paddingHorizontal: spacing.sm,
   },

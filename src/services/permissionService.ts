@@ -25,7 +25,7 @@ class PermissionService {
         return this.mapPermissionResult(result);
       }
     } catch (error) {
-      console.error('[PermissionService] Error checking camera permission:', error);
+      console.log('[PermissionService] Error checking camera permission:', error);
       return 'denied';
     }
   }
@@ -50,7 +50,7 @@ class PermissionService {
         return this.mapPermissionResult(result);
       }
     } catch (error) {
-      console.error('[PermissionService] Error checking gallery permission:', error);
+      console.log('[PermissionService] Error checking gallery permission:', error);
       return 'denied';
     }
   }
@@ -71,7 +71,7 @@ class PermissionService {
         return result === RESULTS.GRANTED;
       }
     } catch (error) {
-      console.error('[PermissionService] Error requesting camera permission:', error);
+      console.log('[PermissionService] Error requesting camera permission:', error);
       return false;
     }
   }
@@ -95,7 +95,7 @@ class PermissionService {
         return result === RESULTS.GRANTED;
       }
     } catch (error) {
-      console.error('[PermissionService] Error requesting gallery permission:', error);
+      console.log('[PermissionService] Error requesting gallery permission:', error);
       return false;
     }
   }
@@ -132,7 +132,7 @@ class PermissionService {
         return {camera, gallery};
       }
     } catch (error) {
-      console.error('[PermissionService] Error requesting multiple permissions:', error);
+      console.log('[PermissionService] Error requesting multiple permissions:', error);
       return {camera: false, gallery: false};
     }
   }
@@ -149,7 +149,7 @@ class PermissionService {
         Linking.openSettings();
       }
     } catch (error) {
-      console.error('[PermissionService] Error opening app settings:', error);
+      console.log('[PermissionService] Error opening app settings:', error);
       Alert.alert(
         'Settings',
         'Unable to open settings. Please enable permissions manually in your device settings.',

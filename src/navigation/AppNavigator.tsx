@@ -9,8 +9,10 @@ import { RootState } from '@/redux/store';
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const AppNavigator: React.FC = () => {
-  // Get token from Redux
   const tokenAuth = useSelector((state: RootState) => state.auth.token);
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  console.log(user,"user===============>")
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

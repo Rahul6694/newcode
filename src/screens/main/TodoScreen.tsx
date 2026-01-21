@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,253 +9,87 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 // import {getActiveTrips, refreshTrips, selectActiveTrips, selectTripLoading} from '@/store';
 
-import {Trip, TodoStackParamList, TripStatus} from '@/types';
-import {Card, StatusBadge, Typography, useToast} from '@/components';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
+import { Trip, TodoStackParamList, TripStatus } from '@/types';
+import { Card, StatusBadge, Typography, useToast } from '@/components';
+import {
+  colors,
+  spacing,
+  typography,
+  borderRadius,
+  shadows,
+} from '@/theme/colors';
+import { useSelector } from 'react-redux';
+import { tripApi } from '@/apiservice';
 
-type TodoScreenNavigationProp = StackNavigationProp<TodoStackParamList, 'TodoList'>;
-
-// Dummy Trip Data
-const dummyTrips: Trip[] = [
-  {
-    id: 'trip-001',
-    tripNumber: 'TRP-2024-001',
-    orderNumber: 'ORD-12345',
-    vehicleNumber: 'RJ-14-AB-1234',
-    assignedWeight: '5000',
-    deliveredWeight: null,
-    status: 'Assigned',
-    loadingLocation: {
-      address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
-      coordinates: {
-        latitude: 26.9124,
-        longitude: 75.7873,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T08:00:00'),
-      },
-      contactPerson: {
-        name: 'Rajesh Kumar',
-        phoneNumber: '+91-9876543210',
-      },
-    },
-    unloadingLocation: {
-      address: 'Distribution Center, Sector 5, Delhi, NCR 110001',
-      coordinates: {
-        latitude: 28.6139,
-        longitude: 77.2090,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T08:00:00'),
-      },
-      contactPerson: {
-        name: 'Priya Sharma',
-        phoneNumber: '+91-9876543211',
-      },
-    },
-    timeline: {
-      assigned: new Date('2024-01-15T08:00:00'),
-    },
-    documents: {
-      loading: [],
-      unloading: [],
-    },
-    remarks: {
-      loading: undefined,
-      unloading: undefined,
-    },
-    trackingData: [],
-  },
-  {
-    id: 'trip-002',
-    tripNumber: 'TRP-2024-002',
-    orderNumber: 'ORD-12346',
-    vehicleNumber: 'RJ-14-CD-5678',
-    assignedWeight: '7500',
-    deliveredWeight: null,
-    status: 'In Progress',
-    loadingLocation: {
-      address: 'Factory Complex, MIDC Area, Mumbai, Maharashtra 400093',
-      coordinates: {
-        latitude: 19.0760,
-        longitude: 72.8777,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T10:00:00'),
-      },
-      contactPerson: {
-        name: 'Amit Patel',
-        phoneNumber: '+91-9876543212',
-      },
-    },
-    unloadingLocation: {
-      address: 'Port Warehouse, Nhava Sheva, Navi Mumbai, Maharashtra 400707',
-      coordinates: {
-        latitude: 18.9517,
-        longitude: 72.9994,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T10:00:00'),
-      },
-      contactPerson: {
-        name: 'Sunil Desai',
-        phoneNumber: '+91-9876543213',
-      },
-    },
-    timeline: {
-      assigned: new Date('2024-01-15T10:00:00'),
-      started: new Date('2024-01-15T10:30:00'),
-    },
-    documents: {
-      loading: [],
-      unloading: [],
-    },
-    remarks: {
-      loading: undefined,
-      unloading: undefined,
-    },
-    trackingData: [],
-  },
-  {
-    id: 'trip-003',
-    tripNumber: 'TRP-2024-003',
-    orderNumber: 'ORD-12347',
-    vehicleNumber: 'RJ-14-EF-9012',
-    assignedWeight: '3000',
-    deliveredWeight: null,
-    status: 'Loaded',
-    loadingLocation: {
-      address: 'Logistics Hub, Sector 18, Noida, Uttar Pradesh 201301',
-      coordinates: {
-        latitude: 28.5355,
-        longitude: 77.3910,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T12:00:00'),
-      },
-      contactPerson: {
-        name: 'Vikram Singh',
-        phoneNumber: '+91-9876543214',
-      },
-    },
-    unloadingLocation: {
-      address: 'Retail Store, Connaught Place, New Delhi, Delhi 110001',
-      coordinates: {
-        latitude: 28.6304,
-        longitude: 77.2177,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T12:00:00'),
-      },
-      contactPerson: {
-        name: 'Anjali Mehta',
-        phoneNumber: '+91-9876543215',
-      },
-    },
-    timeline: {
-      assigned: new Date('2024-01-15T12:00:00'),
-      started: new Date('2024-01-15T12:15:00'),
-      loaded: new Date('2024-01-15T13:00:00'),
-    },
-    documents: {
-      loading: [],
-      unloading: [],
-    },
-    remarks: {
-      loading: 'All items loaded successfully',
-      unloading: undefined,
-    },
-    trackingData: [],
-  },
-  {
-    id: 'trip-004',
-    tripNumber: 'TRP-2024-004',
-    orderNumber: 'ORD-12348',
-    vehicleNumber: 'RJ-14-GH-3456',
-    assignedWeight: '6000',
-    deliveredWeight: null,
-    status: 'Arrived',
-    loadingLocation: {
-      address: 'Manufacturing Unit, Peenya Industrial Area, Bangalore, Karnataka 560058',
-      coordinates: {
-        latitude: 13.0144,
-        longitude: 77.5118,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T14:00:00'),
-      },
-      contactPerson: {
-        name: 'Ramesh Iyer',
-        phoneNumber: '+91-9876543216',
-      },
-    },
-    unloadingLocation: {
-      address: 'Customer Site, Electronic City, Bangalore, Karnataka 560100',
-      coordinates: {
-        latitude: 12.8456,
-        longitude: 77.6633,
-        accuracy: 10,
-        timestamp: new Date('2024-01-15T14:00:00'),
-      },
-      contactPerson: {
-        name: 'Deepak Reddy',
-        phoneNumber: '+91-9876543217',
-      },
-    },
-    timeline: {
-      assigned: new Date('2024-01-15T14:00:00'),
-      started: new Date('2024-01-15T14:20:00'),
-      loaded: new Date('2024-01-15T15:00:00'),
-      arrived: new Date('2024-01-15T16:30:00'),
-    },
-    documents: {
-      loading: [],
-      unloading: [],
-    },
-    remarks: {
-      loading: 'Loading completed on time',
-      unloading: undefined,
-    },
-    trackingData: [],
-  },
-];
+type TodoScreenNavigationProp = StackNavigationProp<
+  TodoStackParamList,
+  'TodoList'
+>;
 
 export const TodoScreen: React.FC = () => {
   const navigation = useNavigation<TodoScreenNavigationProp>();
-  
+  const user = useSelector((state: RootState) => state.auth.user);
   const [refreshing, setRefreshing] = useState(false);
-  const {showError} = useToast();
-const [loading, setloading] = useState()
+  const { showError } = useToast();
+  const [loading, setloading] = useState();
+  const [data, setData] = useState([]);
+
   // Use dummy data if active trips are empty - show only first trip
-  const allTrips =  dummyTrips;
+  const allTrips = data;
   const displayTrips = allTrips.slice(0, 1); // Show only first trip
 
-  // useEffect(() => {
-  //   loadTrips();
-  // }, []);
-
-  // const loadTrips = async () => {
-  //   try {
-  //     await dispatch(getActiveTrips());
-  //   } catch (error) {
-  //     // Silently fail and use dummy data
-  //     console.log('Using dummy data for trips');
-  //   }
-  // };
-
-  // const handleRefresh = async () => {
-  //   setRefreshing(true);
-  //   try {
-  //     await dispatch(refreshTrips());
-  //   } catch (error) {
-  //     showError('Failed to refresh trips');
-  //   } finally {
-  //     setRefreshing(false);
-  //   }
-  // };
-
-  const handleTripPress = (trip: Trip) => {
-    navigation.navigate('TripDetail', {tripId: trip.id});
+  const getActiveTrips = async () => {
+    try {
+      const res = await tripApi.getActiveTrip();
+      if (res) {
+        console.log('Profile data:', res);
+        const data = res.data || res;
+        setData(data||[])
+        console.log(data, 'data==============>');
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+        console.log('Profile data:', res);
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+    } finally {
+    }
   };
+
+  useEffect(() => {
+    getActiveTrips();
+  }, [useIsFocused()]);
+
+ const handleTripPress = (trip: Trip) => {
+  if(!trip.id){
+    console.log("Trip ID is missing");
+    return;
+  }
+  switch (trip.status) {
+
+    case 'IN_PROGRESS':
+      navigation.navigate('LocationMark', { tripId: trip.id ,stage:null});
+      break;
+
+    case 'LOADED':
+      navigation.navigate('TripInProgress', { tripId: trip.id });
+      break;
+
+    case 'ARRIVED':
+      navigation.navigate('TripDetail', { tripId: trip.id });
+      break;
+
+    default:
+      navigation.navigate('TripDetail', { tripId: trip.id });
+  }
+};
+
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -266,18 +100,28 @@ const [loading, setloading] = useState()
     });
   };
 
-  const renderTripCard = ({item}: {item: Trip}) => {
-    const loadingCity = item.loadingLocation.address.split(',')[0];
-    const unloadingCity = item.unloadingLocation.address.split(',')[0];
-    const loadingAddress = item.loadingLocation.address;
-    const unloadingAddress = item.unloadingLocation.address;
-    
+  const renderTripCard = ({ item }: { item: Trip }) => {
+    const loadingCity = item?.order?.loadingCity?.split(',')[0];
+    const unloadingCity = item?.order?.unloadingCity?.split(',')[0];
+    const loadingAddress = item?.order?.loadingAddress;
+    const unloadingAddress = item?.order?.unloadingAddress;
+
     return (
       <View style={styles.card}>
         {/* Header */}
-      <View style={styles.cardHeader}>
-          <Typography variant="smallMedium" color="textSecondary" weight="600" style={styles.tripId}>{item.tripNumber}</Typography>
-          <StatusBadge status={item.status} />
+        <View style={styles.cardHeader}>
+          <Typography
+            variant="smallMedium"
+            color="textSecondary"
+            weight="600"
+            style={styles.tripId}
+          >
+            {item?.tripNumber}
+          </Typography>
+          {
+            item?.status && <StatusBadge status={item?.status || "ASSIGNED"} />
+          }
+          
         </View>
 
         <View style={styles.divider} />
@@ -285,20 +129,48 @@ const [loading, setloading] = useState()
         {/* Route Section */}
         <View style={styles.routeContainer}>
           <View style={styles.timelineContainer}>
-            <View style={[styles.dot, {backgroundColor: colors.success}]} />
+            <View style={[styles.dot, { backgroundColor: colors.success }]} />
             <View style={styles.line} />
-            <View style={[styles.dot, {backgroundColor: colors.error}]} />
+            <View style={[styles.dot, { backgroundColor: colors.error }]} />
           </View>
-          
+
           <View style={styles.locations}>
             <View style={styles.locationItem}>
-              <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{loadingCity}</Typography>
-              <Typography variant="small" color="textSecondary" style={styles.addressText} numberOfLines={1}>{loadingAddress}</Typography>
-          </View>
-            <View style={[styles.locationItem, {marginTop: 20}]}>
-              <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{unloadingCity}</Typography>
-              <Typography variant="small" color="textSecondary" style={styles.addressText} numberOfLines={1}>{unloadingAddress}</Typography>
-          </View>
+              <Typography
+                variant="bodyMedium"
+                color="textPrimary"
+                weight="700"
+                style={styles.cityText}
+              >
+                {loadingCity}
+              </Typography>
+              <Typography
+                variant="small"
+                color="textSecondary"
+                style={styles.addressText}
+                numberOfLines={1}
+              >
+                {loadingAddress}
+              </Typography>
+            </View>
+            <View style={[styles.locationItem, { marginTop: 20 }]}>
+              <Typography
+                variant="bodyMedium"
+                color="textPrimary"
+                weight="700"
+                style={styles.cityText}
+              >
+                {unloadingCity}
+              </Typography>
+              <Typography
+                variant="small"
+                color="textSecondary"
+                style={styles.addressText}
+                numberOfLines={1}
+              >
+                {unloadingAddress}
+              </Typography>
+            </View>
           </View>
         </View>
 
@@ -307,186 +179,150 @@ const [loading, setloading] = useState()
         {/* Info Grid */}
         <View style={styles.grid}>
           <View style={styles.gridItem}>
-            <Image 
-              source={require('@/assets/images/shipped.png')} 
+            <Image
+              source={require('@/assets/images/shipped.png')}
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.assignedWeight || 'N/A'} Kg</Typography>
+            <Typography
+              variant="smallMedium"
+              color="textSecondary"
+              weight="500"
+              style={styles.infoText}
+            >
+              {item?.assignedWeight || 'N/A'} ton
+            </Typography>
           </View>
           <View style={styles.gridItem}>
-            <Image 
-              source={require('@/assets/images/calendar.png')} 
+            <Image
+              source={require('@/assets/images/calendar.png')}
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>
-              {new Date(item.timeline.assigned).toLocaleDateString('en-GB', {
+            <Typography
+              variant="smallMedium"
+              color="textSecondary"
+              weight="500"
+              style={styles.infoText}
+            >
+              {new Date(item?.order?.startDate).toLocaleDateString('en-GB', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
               })}
             </Typography>
           </View>
-          <View style={styles.gridItem}>
-            <Image 
-              source={require('@/assets/images/contact-form.png')} 
+          {/* <View style={styles.gridItem}>
+            <Image
+              source={require('@/assets/images/contact-form.png')}
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>Docs: Pending</Typography>
+            <Typography
+              variant="smallMedium"
+              color="textSecondary"
+              weight="500"
+              style={styles.infoText}
+            >
+              Docs: Pending
+            </Typography>
+          </View> */}
         </View>
-      </View>
 
         {/* Action Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.button}
           onPress={() => handleTripPress(item)}
-          activeOpacity={0.8}>
-          <Typography variant="smallMedium" color="white" weight="700" style={styles.buttonText}>VIEW TRIP DETAILS</Typography>
-          <Image 
-            source={require('@/assets/images/next.png')} 
+          activeOpacity={0.8}
+        >
+          <Typography
+            variant="smallMedium"
+            color="white"
+            weight="700"
+            style={styles.buttonText}
+          >
+            VIEW TRIP DETAILS
+          </Typography>
+          <Image
+            source={require('@/assets/images/next.png')}
             style={styles.buttonArrow}
             resizeMode="contain"
           />
         </TouchableOpacity>
       </View>
-  );
+    );
   };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={styles.emptyIconContainer}>
-        <Image 
-          source={require('@/assets/images/trip.png')} 
+        <Image
+          source={require('@/assets/images/trip.png')}
           style={styles.emptyIcon}
           resizeMode="contain"
         />
       </View>
-      <Typography variant="h4" color="textPrimary" weight="700" style={styles.emptyTitle}>No Active Trips</Typography>
-      <Typography variant="body" color="textSecondary" align="center" style={styles.emptySubtitle}>
+      <Typography
+        variant="h4"
+        color="textPrimary"
+        weight="700"
+        style={styles.emptyTitle}
+      >
+        No Active Trips
+      </Typography>
+      <Typography
+        variant="body"
+        color="textSecondary"
+        align="center"
+        style={styles.emptySubtitle}
+      >
         You don't have any trips assigned yet. Pull down to refresh.
       </Typography>
     </View>
   );
 
-  // const renderHeader = () => {
-  //   const currentHour = new Date().getHours();
-  //   const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 18 ? 'Good Afternoon' : 'Good Evening';
-
-  //   return (
-  //     <View style={styles.headerWrapper}>
-  //       {/* Hero Section */}
-  //       <View style={styles.heroSection}>
-  //         {/* Hero Content */}
-  //         <View style={styles.heroContent}>
-  //           {/* Header with Greeting */}
-  //           <View style={styles.heroHeader}>
-  //             <View style={styles.heroHeaderLeft}>
-  //               <Typography variant="caption" color="primary" weight="600" style={styles.greetingText}>{greeting}</Typography>
-  //               <Typography variant="h2" color="textPrimary" weight="700" style={styles.userName}>Rahul Sharma</Typography>
-  //             </View>
-  //           </View>
-
-  //           {/* Stats Cards */}
-  //           <View style={styles.heroStatsRow}>
-  //             <View style={styles.heroStatCard}>
-  //               <View style={styles.heroStatIconBg}>
-  //                 <Image 
-  //                   source={require('@/assets/images/trip.png')} 
-  //                   style={styles.heroStatIcon}
-  //                   resizeMode="contain"
-  //                 />
-  //               </View>
-  //               <View style={styles.heroStatTextContainer}>
-  //                 <Typography variant="h4" color="primary" weight="700">1</Typography>
-  //                 <Typography variant="caption" color="textSecondary" weight="600">Active Trip</Typography>
-  //               </View>
-  //             </View>
-
-  //             <View style={styles.heroStatDivider} />
-
-  //             <View style={styles.heroStatCard}>
-  //               <View style={styles.heroStatIconBg}>
-  //                 <Image 
-  //                   source={require('@/assets/images/calendar.png')} 
-  //                   style={styles.heroStatIcon}
-  //                   resizeMode="contain"
-  //                 />
-  //               </View>
-  //               <View style={styles.heroStatTextContainer}>
-  //                 <Typography variant="h4" color="primary" weight="700">12</Typography>
-  //                 <Typography variant="caption" color="textSecondary" weight="600">This Month</Typography>
-  //               </View>
-  //             </View>
-  //           </View>
-
-  //           {/* Progress Bar */}
-  //           <View style={styles.heroProgressContainer}>
-  //             <View style={styles.progressLabelRow}>
-  //               <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.progressLabelText}>Today's Progress</Typography>
-  //               <Typography variant="caption" color="primary" weight="700">25%</Typography>
-  //             </View>
-  //             <View style={styles.heroProgressBar}>
-  //               <View style={styles.heroProgressFill} />
-  //             </View>
-  //           </View>
-
-  //           {/* Call to Action */}
-  //           {/* <View style={styles.heroCtaBox}>
-  //             <View style={styles.heroCtaIcon}>
-  //               <Typography style={styles.heroCtaEmoji}>📍</Typography>
-  //             </View>
-  //             <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.heroCtaText}>
-  //               Your next trip is ready! View details to get started
-  //             </Typography>
-  //           </View> */}
-  //         </View>
-  //       </View>
-  //   </View>
-  // );
-  // };
-
   const renderHeader = () => {
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+    const hour = new Date().getHours();
+    const greeting =
+      hour < 12
+        ? 'Good Morning'
+        : hour < 18
+        ? 'Good Afternoon'
+        : 'Good Evening';
 
-  return (
-    <View style={styles.headerWrapper}>
-      <View style={styles.heroCard}>
-        {/* Top Row */}
-        <View style={styles.heroTopRow}>
-          <View>
-            <Typography style={styles.greeting}>{greeting} 👋</Typography>
-            <Typography style={styles.userName}>
-               Rahul Sharma
-            </Typography>
+    return (
+      <View style={styles.headerWrapper}>
+        <View style={styles.heroCard}>
+          {/* Top Row */}
+          <View style={styles.heroTopRow}>
+            <View>
+              <Typography style={styles.greeting}>{greeting} 👋</Typography>
+              <Typography style={styles.userName}>{user?.fullName}</Typography>
+            </View>
+
+            <Image
+              source={require('@/assets/images/drive.png')}
+              style={styles.avatar}
+            />
           </View>
 
-          <Image
-            source={require('@/assets/images/drive.png')}
-            style={styles.avatar}
-          />
-        </View>
+          {/* Stats */}
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Typography style={styles.statValue}>1</Typography>
+              <Typography style={styles.statLabel}>Active Trip</Typography>
+            </View>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Typography style={styles.statValue}>1</Typography>
-            <Typography style={styles.statLabel}>Active Trip</Typography>
+            <View style={styles.statDivider} />
+
+            <View style={styles.statBox}>
+              <Typography style={styles.statValue}>12</Typography>
+              <Typography style={styles.statLabel}>This Month</Typography>
+            </View>
           </View>
 
-          <View style={styles.statDivider} />
-
-          <View style={styles.statBox}>
-            <Typography style={styles.statValue}>12</Typography>
-            <Typography style={styles.statLabel}>This Month</Typography>
-          </View>
-        </View>
-
-        {/* Progress */}
-        <View style={styles.progressSection}>
+          {/* Progress */}
+          {/* <View style={styles.progressSection}>
           <View style={styles.progressHeader}>
             <Typography style={styles.progressTitle}>
               Today’s Progress
@@ -497,44 +333,37 @@ const [loading, setloading] = useState()
           <View style={styles.progressBar}>
             <View style={styles.progressFill} />
           </View>
+        </View> */}
         </View>
       </View>
-    </View>
-  );
-};
+    );
+  };
 
   return (
     <>
-      <StatusBar 
-        barStyle="dark-content" 
-        backgroundColor="#F8FAFC" 
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#F8FAFC"
         translucent={false}
         hidden={false}
         animated={true}
       />
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Full Screen Linear Gradient Background */}
-      
-      
-      <FlatList
-        data={displayTrips}
-        renderItem={renderTripCard}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={!loading && displayTrips.length === 0 ? renderEmptyState : null}
-        // refreshControl={
-        //   <RefreshControl
-        //     refreshing={refreshing}
-        //     onRefresh={handleRefresh}
-        //     tintColor={colors.primary}
-        //     colors={[colors.primary]}
-        //   />
-        // }
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
-    </SafeAreaView>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {/* Full Screen Linear Gradient Background */}
+
+        <FlatList
+          data={displayTrips}
+          renderItem={renderTripCard}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={
+            !loading && displayTrips.length === 0 ? renderEmptyState : null
+          }
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+        />
+      </SafeAreaView>
     </>
   );
 };
@@ -544,7 +373,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  
+
   listContent: {
     paddingBottom: spacing.xxxl,
     zIndex: 1,
@@ -553,7 +382,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
-
   },
   heroSection: {
     borderRadius: borderRadius.xl,
@@ -730,7 +558,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: colors.textSecondary,
-    lineHeight: 16,
+    
   },
   filterTabsContainer: {
     flexDirection: 'row',
@@ -811,9 +639,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   line: {
-   borderWidth:1,
-   borderStyle:'dashed',
-   borderColor:colors.textPrimary,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.textPrimary,
     flex: 1,
     marginVertical: spacing.sm,
   },
@@ -912,109 +740,107 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroCard: {
-  backgroundColor: '#2563EB',
-  borderRadius: 24,
-  padding: 20,
-  ...shadows.lg,
-},
+    backgroundColor: '#2563EB',
+    borderRadius: 24,
+    padding: 20,
+    ...shadows.lg,
+  },
 
-heroTopRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 20,
-},
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
 
-greeting: {
-  fontSize: 13,
-  color: '#E0E7FF',
-  fontWeight: '600',
-  marginBottom: 4,
-},
+  greeting: {
+    fontSize: 13,
+    color: '#E0E7FF',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
 
-userName: {
-  fontSize: 26,
-  fontWeight: '800',
-  color: '#FFFFFF',
-},
+  userName: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
 
+  avatar: {
+    width: 50,
+    height: 50,
+    tintColor: 'white',
+  },
 
-avatar: {
-  width: 50,
-  height: 50,
-  tintColor:'white'
-},
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
 
-statsRow: {
-  flexDirection: 'row',
-  backgroundColor: 'rgba(255,255,255,0.15)',
-  borderRadius: 16,
-  paddingVertical: 14,
-  paddingHorizontal: 12,
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: 20,
-},
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
 
-statBox: {
-  flex: 1,
-  alignItems: 'center',
-},
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
 
-statValue: {
-  fontSize: 22,
-  fontWeight: '800',
-  color: '#FFFFFF',
-},
+  statLabel: {
+    fontSize: 12,
+    color: '#DBEAFE',
+    marginTop: 2,
+  },
 
-statLabel: {
-  fontSize: 12,
-  color: '#DBEAFE',
-  marginTop: 2,
-},
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
 
-statDivider: {
-  width: 1,
-  height: 40,
-  backgroundColor: 'rgba(255,255,255,0.3)',
-},
+  progressSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+  },
 
-progressSection: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 16,
-  padding: 14,
-},
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
 
-progressHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginBottom: 10,
-},
+  progressTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
 
-progressTitle: {
-  fontSize: 13,
-  fontWeight: '700',
-  color: '#1E293B',
-},
+  progressPercent: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#2563EB',
+  },
 
-progressPercent: {
-  fontSize: 13,
-  fontWeight: '800',
-  color: '#2563EB',
-},
+  progressBar: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
 
-progressBar: {
-  height: 8,
-  backgroundColor: '#E5E7EB',
-  borderRadius: 10,
-  overflow: 'hidden',
-},
-
-progressFill: {
-  height: '100%',
-  width: '25%',
-  backgroundColor: '#22C55E',
-  borderRadius: 10,
-},
-
+  progressFill: {
+    height: '100%',
+    width: '25%',
+    backgroundColor: '#22C55E',
+    borderRadius: 10,
+  },
 });

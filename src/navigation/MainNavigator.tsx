@@ -71,7 +71,7 @@ export const MainNavigator: React.FC = () => {
           return {
             tabBarStyle: hideTabBarScreens.includes(routeName) ? {display: 'none'} : styles.tabBar,
             tabBarIcon: ({focused}) => (
-              <TabIcon iconSource={iconMap.trips} focused={focused} label="Trips" />
+              <TabIcon iconSource={iconMap.trips} focused={focused} label="To-Do" />
             ),
           };
         }}

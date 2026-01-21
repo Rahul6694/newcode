@@ -21,7 +21,7 @@ axiosInstance.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
-      console.error('Error retrieving token:', error);
+      console.log('Error retrieving token:', error);
     }
     return config;
   },
@@ -42,7 +42,7 @@ axiosInstance.interceptors.response.use(
         // You can dispatch a logout action here if using Redux
         // Or navigate to login screen
       } catch (err) {
-        console.error('Error clearing auth data:', err);
+        console.log('Error clearing auth data:', err);
       }
     }
     return Promise.reject(error);

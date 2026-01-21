@@ -14,6 +14,7 @@ import {Trip, TripStatus, HistoryStackParamList} from '@/types';
 import {Card, StatusBadge, Typography, useToast} from '@/components';
 import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
 import {apiService} from '@/api';
+import { tripApi } from '@/apiservice';
 
 type HistoryScreenNavigationProp = StackNavigationProp<HistoryStackParamList>;
 
@@ -87,23 +88,17 @@ export const HistoryScreen: React.FC = () => {
     loadHistory();
   }, []);
 
- const loadHistory = async (page: number = 1) => {
+const loadHistory = async (page: number = 1) => {
   try {
     setLoading(true);
-    const response = await apiService.getTripHistory(page, 10);
 
-    // Extract trips from different response structures
-    let trips: any[] = [];
-    if (response?.data?.trips) trips = response.data.trips;
-    else if (Array.isArray(response.data)) trips = response.data;
-    else if ((response as any).trips) trips = (response as any).trips;
+    const response = await tripApi.getTripHistory(page, 10);
 
-    if (trips.length > 0) {
-      const convertedTrips = trips.map(convertApiResponseToTrip);
-      setHistory(convertedTrips);
-    } else {
-      setHistory([]);
-    }
+
+    const trips = response?.data?.trips || [];
+
+    const convertedTrips = trips.map(convertApiResponseToTrip);
+    setHistory(convertedTrips);
   } catch (error: any) {
     console.log('Load History Error:', error);
     showError(error?.response?.data?.message || 'Failed to load trip history');
@@ -112,6 +107,7 @@ export const HistoryScreen: React.FC = () => {
     setLoading(false);
   }
 };
+
 
 
   const handleRefresh = async () => {
@@ -349,7 +345,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   listContent: {
-    paddingBottom: spacing.xxxl,
+    paddingBottom: 100,
   },
   header: {
     paddingHorizontal: spacing.lg,
@@ -409,13 +405,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: spacing.sm,
     fontSize: 22,
-    lineHeight: 28,
+
   },
   bannerSubtitle: {
     ...typography.body,
     color: colors.textSecondary,
     fontSize: 14,
-    lineHeight: 20,
+
     marginBottom: spacing.md,
   },
   bannerHighlight: {
