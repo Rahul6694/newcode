@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,16 +8,17 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation, RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {TodoStackParamList} from '@/types';
-import {Button, Card, useToast, Typography, ProofDocumentUpload} from '@/components';
-import {Header} from '@/components/Header';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
-import {Animated} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { TodoStackParamList } from '@/types';
+import { Button, Card, useToast, Typography, ProofDocumentUpload } from '@/components';
+import { Header } from '@/components/Header';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
+import { Animated } from 'react-native';
 import ImageCropPicker from 'react-native-image-crop-picker';
-import {usePermissions} from '@/hooks/usePermissions';
+import { usePermissions } from '@/hooks/usePermissions';
+import { tripApi } from '@/apiservice';
 
 type LocationMarkRouteProp = RouteProp<TodoStackParamList, 'LocationMark'>;
 type LocationMarkNavigationProp = StackNavigationProp<TodoStackParamList, 'LocationMark'>;
@@ -25,8 +26,8 @@ type LocationMarkNavigationProp = StackNavigationProp<TodoStackParamList, 'Locat
 export const LocationMarkScreen: React.FC = () => {
   const route = useRoute<LocationMarkRouteProp>();
   const navigation = useNavigation<LocationMarkNavigationProp>();
-  const {tripId, stage} = route.params;
-  const {showSuccess, showError} = useToast();
+  const { tripId, stage, } = route.params;
+  const { showSuccess, showError } = useToast();
   const permissions = usePermissions();
 
   // UI state only
@@ -38,21 +39,51 @@ export const LocationMarkScreen: React.FC = () => {
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const [cameraAttempts, setCameraAttempts] = useState(0);
   const [galleryAttempts, setGalleryAttempts] = useState(0);
+  const [docsUploaded, setDocsUploaded] = useState(false);
+ const [data, setData] = useState([]);
 
+
+
+  useEffect(() => {  
+      getActiveTrips() 
+     },[]); 
+  
+  
+    const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    
+    
+    
+      const getActiveTrips = async () => {
+        try {
+          const res = await tripApi.getActiveTrip();
+          if (res) {
+            console.log('Profile data:', res);
+            const data = res.data || res;
+            setData(data||[])
+            console.log('efefe',data);
+          } else {
+            const errorMsg = res?.message || 'Failed to load profile';
+            console.log('Profile data:', res);
+          }
+        } catch (error: any) {
+          console.log('Load profile error:', error);
+        } finally {
+        }
+      };  
   // UI handlers only
   const handleTakePhoto = async () => {
     console.log('[LocationMarkScreen] handleTakePhoto called, attempt:', cameraAttempts + 1);
-    
+
     // Request camera permission first
     console.log('[LocationMarkScreen] Requesting camera permission...');
     const cameraGranted = await permissions.requestCameraPermission();
     console.log('[LocationMarkScreen] Camera permission granted:', cameraGranted);
-    
+
     if (!cameraGranted) {
       const newAttempts = cameraAttempts + 1;
       setCameraAttempts(newAttempts);
       console.warn('[LocationMarkScreen] Camera permission denied, attempt:', newAttempts);
-      
+
       if (newAttempts >= 2) {
         // Automatically open settings after 2 attempts
         console.warn('[LocationMarkScreen] Max attempts reached, opening settings automatically...');
@@ -66,7 +97,7 @@ export const LocationMarkScreen: React.FC = () => {
       }
       return;
     }
-    
+
     // Reset attempts on success
     setCameraAttempts(0);
 
@@ -81,12 +112,12 @@ export const LocationMarkScreen: React.FC = () => {
         mediaType: 'photo',
         includeExif: true,
       });
-      
+
       console.log('[LocationMarkScreen] Photo captured:', image.path);
       setDocuments([...documents, image.path]);
       showSuccess('Photo added successfully');
     } catch (error: any) {
-      console.error('[LocationMarkScreen] Camera error:', error);
+      console.log('[LocationMarkScreen] Camera error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
         console.log('[LocationMarkScreen] Camera cancelled by user');
       } else {
@@ -97,22 +128,22 @@ export const LocationMarkScreen: React.FC = () => {
 
   const handlePickImage = async () => {
     console.log('[LocationMarkScreen] handlePickImage called, attempt:', galleryAttempts + 1);
-    
+
     // Check current permission status first
     console.log('[LocationMarkScreen] Checking gallery permission status...');
     const currentStatus = await permissions.checkGalleryPermission();
     console.log('[LocationMarkScreen] Current gallery permission status:', currentStatus);
-    
+
     // Request gallery permission
     console.log('[LocationMarkScreen] Requesting gallery permission...');
     const galleryGranted = await permissions.requestGalleryPermission();
     console.log('[LocationMarkScreen] Gallery permission granted:', galleryGranted);
-    
+
     if (!galleryGranted) {
       const newAttempts = galleryAttempts + 1;
       setGalleryAttempts(newAttempts);
       console.warn('[LocationMarkScreen] Gallery permission DENIED, attempt:', newAttempts);
-      
+
       if (newAttempts >= 2) {
         // Automatically open settings after 2 attempts
         console.warn('[LocationMarkScreen] Max attempts reached, opening settings automatically...');
@@ -127,7 +158,7 @@ export const LocationMarkScreen: React.FC = () => {
       console.log('[LocationMarkScreen] Returning early - permission not granted');
       return; // IMPORTANT: Exit the function here
     }
-    
+
     // Reset attempts on success
     setGalleryAttempts(0);
 
@@ -144,14 +175,14 @@ export const LocationMarkScreen: React.FC = () => {
         maxFiles: 10,
         includeExif: true,
       });
-      
+
       const selectedImages = Array.isArray(images) ? images : [images];
       console.log('[LocationMarkScreen] Images selected:', selectedImages.length);
       const newPhotos = selectedImages.map(img => img.path);
       setDocuments([...documents, ...newPhotos]);
       showSuccess(`${newPhotos.length} photo(s) added`);
     } catch (error: any) {
-      console.error('[LocationMarkScreen] Gallery error:', error);
+      console.log('[LocationMarkScreen] Gallery error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
         console.log('[LocationMarkScreen] Gallery cancelled by user');
       } else {
@@ -167,49 +198,74 @@ export const LocationMarkScreen: React.FC = () => {
   };
 
   // UI handlers only
-  const handleUploadDocuments = () => {
+  const uploadDocuments = async () => {
     if (documents.length === 0) {
+      showError('Please add documents before uploading');
       return;
     }
+
     setUploadingDocs(true);
-    setTimeout(() => {
-      setUploadingDocs(false);
+
+    try {
+      const formData = new FormData();
+
+      documents.forEach((doc, index) => {
+        formData.append('document', {
+          uri: doc,
+          name: `loading_${index}.jpg`,
+          type: 'image/jpeg',
+        } as any);
+      });
+
+   
+      formData.append('remarks', 'Loading completed');
+
+      await tripApi.uploadDocument(tripId, formData);
+
       showSuccess('Documents uploaded successfully');
-      handleMarkLocation();
-    }, 1500);
-  };
+      setDocsUploaded(true); 
 
-  const handleMarkLocation = () => {
-    if (documents.length === 0) {
-      return;
+    } catch (error: any) {
+      console.log(error);
+     
+    } finally {
+      setUploadingDocs(false);
     }
-    setMarking(true);
-    setTimeout(() => {
-      setMarking(false);
-      showSuccess('Location marked successfully');
-      // Navigate based on stage
-      if (stage === 'loading') {
-        navigation.replace('TripInProgress', {tripId});
-      } else {
-        navigation.replace('TripDetail', {tripId});
-      }
-    }, 1500);
   };
 
-  const stageLabel = stage === 'loading' ? 'Loading' : 'Unloading';
-  const actionLabel = stage === 'loading' ? 'Mark as Loaded' : 'Mark as Arrived';
+  const markTripAsLoaded = async () => {
+    setMarking(true);
 
+    try {
+      await tripApi.markLoaded(tripId, 'All items loaded properly');
+
+      showSuccess('Trip marked as loaded');
+      navigation.replace('TripInProgress', { tripId });
+
+    } catch (error: any) {
+      console.log(error);
+      showError(error.message || 'Failed to mark trip as loaded');
+    } finally {
+      setMarking(false);
+    }
+  };
+  const handlePrimaryAction = () => {
+    if (!docsUploaded) {
+      uploadDocuments();   // step 1
+    } else {
+      markTripAsLoaded();  // step 2
+    }
+  };
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Fixed Header */}
-      {stage === 'loading' && !loading && location && (
-        <Header title="Mark as Loaded" onBackPress={() => navigation.goBack()} />
-      )}
+
+      <Header title="Mark as Loaded" onBackPress={() => navigation.goBack()} />
+
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}>
-        
+
         {/* Loading State */}
         {loading && (
           <View style={styles.loadingWrapper}>
@@ -233,90 +289,86 @@ export const LocationMarkScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Trip Loaded Successfully Screen */}
-        {stage === 'loading' && !loading && location && (
-          <>
-            {/* Combined Banner Section - All in One */}
-            <Card style={styles.combinedBannerCard}>
-              <View style={styles.combinedBanner}>
-                {/* Header Section */}
-                <View style={styles.combinedHeader}>
-                  <View style={styles.headerTop}>
-                    <View style={styles.headerLeft}>
-                      <Typography variant="h3" color="textPrimary" weight="700" style={styles.combinedTitle}>Trip Loaded Successfully!</Typography>
-                      <View style={styles.weightBadgeInline}>
-                        <Typography variant="smallMedium" color="white" weight="700" style={styles.weightBadgeTextInline}>500 kg</Typography>
-                      </View>
-                    </View>
-                    <View style={styles.statusBadgeInline}>
-                      <View style={[styles.statusDotInline, documents.length > 0 && styles.statusDotReady]} />
-                      <Typography variant="caption" color={documents.length > 0 ? 'success' : 'warning'} weight="700" style={[styles.statusTextInline, documents.length > 0 && styles.statusTextReady]}>
-                        {documents.length > 0 ? 'READY' : 'PENDING'}
-                      </Typography>
-                    </View>
+
+        {/* Combined Banner Section - All in One */}
+        <Card style={styles.combinedBannerCard}>
+          <View style={styles.combinedBanner}>
+            {/* Header Section */}
+            <View style={styles.combinedHeader}>
+              <View style={styles.headerTop}>
+                <View style={styles.headerLeft}>
+                  <Typography variant="h3" color="textPrimary" weight="700" style={styles.combinedTitle}>Trip Loaded Successfully!</Typography>
+                  <View style={styles.weightBadgeInline}>
+                    <Typography variant="smallMedium" color="white" weight="700" style={styles.weightBadgeTextInline}>{trip?.assignedWeight ?? 'N/A'} TON</Typography>
                   </View>
-                  <Typography variant="body" color="textSecondary" style={styles.combinedSubtitle}>
-                    All items loaded properly and ready for delivery
+                </View>
+                <View style={styles.statusBadgeInline}>
+                  <View style={[styles.statusDotInline, documents.length > 0 && styles.statusDotReady]} />
+                  <Typography variant="caption" color={documents.length > 0 ? 'success' : 'warning'} weight="700" style={[styles.statusTextInline, documents.length > 0 && styles.statusTextReady]}>
+                    {documents.length > 0 ? 'READY' : 'PENDING'}
                   </Typography>
                 </View>
+              </View>
+              <Typography variant="body" color="textSecondary" style={styles.combinedSubtitle}>
+                All items loaded properly and ready for delivery
+              </Typography>
+            </View>
 
-                {/* Trip Info Section */}
-                <View style={styles.tripInfoSection}>
-                  <View style={styles.tripInfoRow}>
-                    <View style={styles.tripInfoItem}>
-                      <Typography variant="body" color="textSecondary" weight="500" style={styles.tripInfoLabel}>Trip Number</Typography>
-                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.tripInfoValue}>TRIP-1767983743355-rj62x</Typography>
-                    </View>
-                    <View style={styles.tripInfoDivider} />
-                    <View style={styles.tripInfoItem}>
-                      <Typography variant="body" color="textSecondary" weight="500" style={styles.tripInfoLabel}>Total Weight</Typography>
-                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.tripInfoValue}>500 KG</Typography>
-                    </View>
-                  </View>
+            {/* Trip Info Section */}
+            <View style={styles.tripInfoSection}>
+              <View style={styles.tripInfoRow}>
+                <View style={styles.tripInfoItem}>
+                  <Typography variant="body" color="textSecondary" weight="500" style={styles.tripInfoLabel}>Trip Number</Typography>
+                  <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.tripInfoValue}>{trip?.tripNumber ?? 'N/A'}</Typography>
                 </View>
-
-                {/* Document Upload Section */}
-                <View style={styles.documentSection}>
-                  <ProofDocumentUpload
-                    documents={documents}
-                    onTakePhoto={handleTakePhoto}
-                    onPickImage={handlePickImage}
-                    onRemoveDocument={handleRemoveDocument}
-                    title="Upload Documents"
-                    subtitle={`Capture or select photos for the ${stageLabel.toLowerCase()} process`}
-                  />
-                </View>
-
-                {/* Action Button */}
-                <View style={styles.combinedButtonContainer}>
-                  <Button
-                    title={marking ? 'Processing...' : uploadingDocs ? 'Uploading...' : documents.length > 0 ? 'Mark as Loaded' : 'Upload Documents'}
-                    onPress={documents.length > 0 ? handleMarkLocation : handleUploadDocuments}
-                    loading={marking || uploadingDocs}
-                    disabled={marking || uploadingDocs}
-                    fullWidth
-                    size="lg"
-                    style={styles.combinedButton}
-                  />
+                <View style={styles.tripInfoDivider} />
+                <View style={styles.tripInfoItem}>
+                  <Typography variant="body" color="textSecondary" weight="500" style={styles.tripInfoLabel}>Total Weight</Typography>
+                  <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.tripInfoValue}>{trip?.assignedWeight ?? 'N/A'} TON</Typography>
                 </View>
               </View>
-            </Card>
-          </>
-        )}
+            </View>
 
-        {/* Action Button for Other Stages */}
-        {stage !== 'loading' && !loading && location && (
-          <View style={styles.actionWrapper}>
-            <Button
-              title={marking ? 'Processing...' : actionLabel}
-              onPress={handleMarkLocation}
-              loading={marking}
-              disabled={marking}
-              fullWidth
-              size="lg"
-            />
+            {/* Document Upload Section */}
+            <View style={styles.documentSection}>
+              <ProofDocumentUpload
+                documents={documents}
+                onTakePhoto={handleTakePhoto}
+                onPickImage={handlePickImage}
+                onRemoveDocument={handleRemoveDocument}
+                title="Upload Documents"
+                subtitle={`Capture or select photos for the loding process`}
+              />
+            </View>
+
+            {/* Action Button */}
+            <View style={styles.combinedButtonContainer}>
+              <Button
+                title={
+                  marking
+                    ? 'Processing...'
+                    : uploadingDocs
+                      ? 'Uploading...'
+                      : docsUploaded
+                        ? 'Mark as Loaded'
+                        : 'Upload Documents'
+                }
+                onPress={handlePrimaryAction}
+                loading={uploadingDocs || marking}
+                disabled={uploadingDocs || marking}
+                fullWidth
+                size="lg"
+                style={styles.combinedButton}
+              />
+
+            </View>
           </View>
-        )}
+        </Card>
+
+
+
+
+
       </ScrollView>
 
     </SafeAreaView>
@@ -330,7 +382,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    
+
   },
   loadingWrapper: {
     flex: 1,
@@ -471,7 +523,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     textAlign: 'center',
     fontSize: 13,
-    lineHeight: 18,
+
   },
   combinedBannerCard: {
     marginHorizontal: spacing.lg,
@@ -554,7 +606,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textSecondary,
     fontSize: 14,
-    lineHeight: 20,
+    
   },
   tripInfoSection: {
     padding: spacing.lg,
@@ -591,8 +643,8 @@ const styles = StyleSheet.create({
   },
   documentSection: {
     marginTop: spacing.sm,
-paddingVertical: spacing.sm,
-paddingHorizontal: 5,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: 5,
   },
   documentSectionTitle: {
     ...typography.h3,
@@ -713,7 +765,7 @@ paddingHorizontal: 5,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
- 
+
     ...shadows.sm,
   },
   uploadOptionIconGalleryInline: {
@@ -735,7 +787,7 @@ paddingHorizontal: 5,
   },
   combinedButtonContainer: {
     width: '100%',
-   
+
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
     backgroundColor: colors.white,

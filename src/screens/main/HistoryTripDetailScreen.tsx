@@ -7,7 +7,8 @@ import {HistoryStackParamList, Trip, TripStatus, MainTabParamList} from '@/types
 import {Card, StatusBadge, Typography, useToast} from '@/components';
 import {Header} from '@/components/Header';
 import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
-import {apiService} from '@/api';
+import { tripApi } from '@/apiservice/endpoints';
+
 
 
 // Convert API response to Trip format
@@ -104,7 +105,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
       console.log('=== Fetching Trip Details ===');
       console.log('Trip ID:', tripId);
       
-      const response = await apiService.getTripById(tripId);
+      const response = await tripApi.getTripById(tripId);
       
       console.log('Trip Details API Response:', {
         response: response,
@@ -688,7 +689,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textPrimary,
     marginBottom: spacing.md,
-    lineHeight: 22,
+    
     fontSize: 15,
     fontWeight: '500',
   },

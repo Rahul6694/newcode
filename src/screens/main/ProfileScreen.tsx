@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: 15,
-    lineHeight: 22,
+    
   },
   fieldDivider: {
     height: 1,
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   modalText: {
     textAlign: 'center',
     marginBottom: spacing.xxl,
-    lineHeight: 22,
+    
     fontSize: 15,
     paddingHorizontal: spacing.sm,
   },

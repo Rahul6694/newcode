@@ -9,6 +9,7 @@ import {check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {TodoStackParamList} from '@/types';
 import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
 import {Header} from '@/components/Header';
+import { tripApi } from '@/apiservice';
 
 const {height} = Dimensions.get('window');
 
@@ -16,38 +17,7 @@ type TripInProgressRouteProp = RouteProp<TodoStackParamList, 'TripInProgress'>;
 type TripInProgressNavigationProp = StackNavigationProp<TodoStackParamList, 'TripInProgress'>;
 
 // Sample trip data (same as TripDetailScreen) - in real app, this would come from API
-const sampleTrip: any = {
-  id: 'trip-001',
-  tripNumber: 'TRP-2024-001',
-  orderNumber: 'ORD-12345',
-  vehicleNumber: 'RJ-14-AB-1234',
-  assignedWeight: '5000',
-  deliveredWeight: null,
-  status: 'In Progress',
-  distance: '497',
-  loadingLocation: {
-    address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
-    coordinates: {
-      latitude: 26.9124,
-      longitude: 75.7873,
-    },
-    contactPerson: {
-      name: 'Rajesh Kumar',
-      phoneNumber: '+91-9876543210',
-    },
-  },
-  unloadingLocation: {
-    address: 'Distribution Center, Sector 5, Delhi, NCR 110001',
-    coordinates: {
-      latitude: 28.6139,
-      longitude: 77.209,
-    },
-    contactPerson: {
-      name: 'Priya Sharma',
-      phoneNumber: '+91-9876543211',
-    },
-  },
-};
+
 
 export const TripInProgressScreen: React.FC = () => {
   const route = useRoute<TripInProgressRouteProp>();
@@ -87,6 +57,71 @@ export const TripInProgressScreen: React.FC = () => {
   const maxSlideDistance = slideButtonWidth - thumbSize - (thumbPadding * 2);
   const slideProgress = useRef(new Animated.Value(0)).current;
   const [isSliding, setIsSliding] = useState(false);
+  const [data, setData] = useState([]);
+ useEffect(() => {
+  getActiveTrips();
+}, []);
+
+const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+
+
+  const getActiveTrips = async () => {
+    try {
+      const res = await tripApi.getActiveTrip();
+      if (res) {
+        console.log('Profile data:', res);
+        const data = res.data || res;
+        setData(data||[])
+        console.log(data, 'data==============>');
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+        console.log('Profile data:', res);
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+    } finally {
+    }
+  };  
+
+const unloadingAddress = trip?.order?.unloadingAddress ?? 'N/A';
+const unloadingContactName = trip?.order?.unloadingContactName ?? 'N/A';
+const unloadingContactNumber = trip?.order?.unloadingContactNumber ?? 'N/A';
+
+const sampleTrip: any = {
+
+  tripNumber: 'TRP-2024-001',
+  // orderNumber: 'ORD-12345',
+  // vehicleNumber: 'RJ-14-AB-1234',
+  // assignedWeight: '5000',
+  // deliveredWeight: null,
+  // status: 'In Progress',
+  // distance: '497',
+  // loadingLocation: {
+  //   address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
+  //   coordinates: {
+  //     latitude: 26.9124,
+  //     longitude: 75.7873,
+  //   },
+  //   contactPerson: {
+  //     name: 'Rajesh Kumar',
+  //     phoneNumber: '+91-9876543210',
+  //   },
+  // },
+  unloadingLocation: {
+    address: unloadingAddress ,
+    coordinates: {
+      latitude: 28.6139,
+      longitude: 77.209,
+    },
+    contactPerson: {
+      name: unloadingContactName,
+      phoneNumber: unloadingContactNumber,
+    },
+  },
+};
+ 
+
 
   const thumbLeft = slideProgress.interpolate({
     inputRange: [0, maxSlideDistance],
@@ -409,20 +444,32 @@ export const TripInProgressScreen: React.FC = () => {
   const openGoogleMaps = () => {
     const {latitude, longitude} = destination;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    Linking.openURL(url).catch((err) => console.error('Failed to open Google Maps:', err));
+    Linking.openURL(url).catch((err) => console.log('Failed to open Google Maps:', err));
   };
 
   // Function to handle Mark as Arrived
-  const handleMarkAsArrived = () => {
-    // Example: TripComplete screen
-    navigation.navigate('MarkComplete', {
-      tripId: tripId,
-    
-    });
-  
-    // OR agar sirf back jana hai
-    // navigation.goBack();
-  };
+ const handleMarkAsArrived = async () => {
+  if (!tripId) return;
+
+  try {
+    const payload = {
+      arrivedLatitude: 22.3569,
+      arrivedLongitude: 72.3569,
+    };
+
+    const res = await tripApi.markArrived(tripId, payload);
+
+    if (res?.success) {
+      console.log('Trip marked as arrived', res.data);
+      navigation.navigate('MarkComplete', {
+        tripId: tripId,
+      });
+    }
+  } catch (error) {
+    console.log('Mark arrived error:', error);
+  }
+};
+
   
 
   return (
@@ -790,7 +837,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 24,
     textAlign: 'center',
-    lineHeight: 24,
+    
   },
   modalButtons: {
     flexDirection: 'row',
@@ -902,7 +949,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs / 2,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    lineHeight: 14,
+    
   },
   arrivalTimeValue: {
     ...typography.bodySemibold,
@@ -924,7 +971,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: 0.3,
-    lineHeight: 26,
+    
     marginBottom: 2,
   },
   distanceLabel: {
@@ -933,7 +980,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: 0.3,
-    lineHeight: 14,
+    
   },
   orderHeader: {
     flexDirection: 'row',
@@ -951,7 +998,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.xs / 2,
     letterSpacing: -0.3,
-    lineHeight: 26,
+    
   },
   orderNumber: {
     ...typography.bodyMedium,
@@ -959,7 +1006,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: 0.2,
-    lineHeight: 18,
+    
   },
   statusBadge: {
     flexDirection: 'row',
@@ -1001,7 +1048,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs / 2,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    lineHeight: 14,
+    
   },
   orderDetailValue: {
     ...typography.bodyMedium,
@@ -1009,7 +1056,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    lineHeight: 20,
+    
   },
   divider: {
     height: 1,
@@ -1046,7 +1093,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    lineHeight: 18,
+    
   },
   deliveryStatusSection: {
     flex: 1,
@@ -1059,7 +1106,7 @@ const styles = StyleSheet.create({
     color: '#10B981',
     marginBottom: 4,
     letterSpacing: 0.8,
-    lineHeight: 24,
+    
   },
   estimatedLabel: {
     ...typography.small,
@@ -1067,7 +1114,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: 0.3,
-    lineHeight: 14,
+    
   },
   deliverySection: {
     marginBottom: spacing.lg,
@@ -1102,7 +1149,7 @@ marginTop: spacing.md,
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    lineHeight: 22,
+    
     marginBottom: spacing.xs,
   },
   deliveryAddress: {
@@ -1110,7 +1157,7 @@ marginTop: spacing.md,
     fontSize: 14,
     fontWeight: '500',
     color: colors.textSecondary,
-    lineHeight: 20,
+    
     letterSpacing: 0.1,
   },
   deliveryDivider: {
@@ -1157,7 +1204,7 @@ marginTop: spacing.md,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    lineHeight: 14,
+    
     marginBottom: spacing.xs / 2,
   },
   deliveryContactName: {
@@ -1166,7 +1213,7 @@ marginTop: spacing.md,
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    lineHeight: 20,
+    
   },
   deliveryActionButtonsRow: {
     flexDirection: 'row',
@@ -1254,7 +1301,7 @@ marginTop: spacing.md,
     fontSize: 16,
     fontWeight: '700',
     color: colors.textPrimary,
-    lineHeight: 22,
+    
   },
   tripDetailsRow: {
     flexDirection: 'row',
@@ -1302,7 +1349,7 @@ marginTop: spacing.md,
     fontSize: 14,
     fontWeight: '500',
     color: colors.textPrimary,
-    lineHeight: 20,
+    
     marginLeft: 24,
     marginTop: spacing.xs,
   },
@@ -1396,6 +1443,6 @@ bottom:10,
     fontWeight: '700',
     color: colors.white,
     letterSpacing: 0.5,
-    lineHeight: 20,
+    
   },
 });

@@ -1,72 +1,16 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {View, StyleSheet, ScrollView, TouchableOpacity, Linking, RefreshControl, Image, Animated, PanResponder, Dimensions} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation, RouteProp, useIsFocused} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {navigationService} from '@/services/navigationService';
-import {TripStatus, TodoStackParamList, DocumentStage} from '@/types';
-import {Button, Card, Modal, Input, useToast, Typography} from '@/components';
-import {Header} from '@/components/Header';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Linking, RefreshControl, Image, Animated, PanResponder, Dimensions, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation, RouteProp, useIsFocused } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { navigationService } from '@/services/navigationService';
+import { TripStatus, TodoStackParamList, DocumentStage } from '@/types';
+import { Button, Card, Modal, Input, useToast, Typography } from '@/components';
+import { Header } from '@/components/Header';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { tripApi } from '@/apiservice';
 
-// Sample Trip Data for UI display only
-const sampleTrip: any = {
-  id: 'trip-001',
-  tripNumber: 'TRP-2024-001',
-  orderNumber: 'ORD-12345',
-  vehicleNumber: 'RJ-14-AB-1234',
-  assignedWeight: '5000',
-  deliveredWeight: null,
-  status: 'Assigned',
-  distance: '497',
-  loadingLocation: {
-    address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
-    coordinates: {
-      latitude: 26.9124,
-      longitude: 75.7873,
-      accuracy: 10,
-      timestamp: new Date('2024-01-15T08:00:00'),
-    },
-    contactPerson: {
-      name: 'Rajesh Kumar',
-      phoneNumber: '+91-9876543210',
-    },
-  },
-  unloadingLocation: {
-    address: 'Distribution Center, Sector 5, Delhi, NCR 110001',
-    coordinates: {
-      latitude: 28.6139,
-      longitude: 77.2090,
-      accuracy: 10,
-      timestamp: new Date('2024-01-15T08:00:00'),
-    },
-    contactPerson: {
-      name: 'Priya Sharma',
-      phoneNumber: '+91-9876543211',
-    },
-  },
-  timeline: {
-    assigned: new Date('2024-01-15T08:00:00'),
-    started: new Date('2024-01-15T10:30:00'),
-    loaded: new Date('2024-01-15T13:00:00'),
-    arrived: new Date('2024-01-15T16:30:00'),
-    completed: new Date('2024-01-15T17:00:00'),
-  },
-  documents: {
-    loading: [],
-    unloading: [],
-  },
-  remarks: {
-    loading: undefined,
-    unloading: undefined,
-  },
-  driver: {
-    fullName: 'John Doe',
-    mobileNumber: '+91-9876543210',
-    licenseNumber: 'DL123456789',
-  },
-};
+
 
 type TripDetailRouteProp = RouteProp<TodoStackParamList, 'TripDetail'>;
 type TripDetailNavigationProp = StackNavigationProp<TodoStackParamList, 'TripDetail'>;
@@ -74,11 +18,10 @@ type TripDetailNavigationProp = StackNavigationProp<TodoStackParamList, 'TripDet
 export const TripDetailScreen: React.FC = () => {
   const route = useRoute<TripDetailRouteProp>();
   const navigation = useNavigation<TripDetailNavigationProp>();
-  const {tripId} = route.params;
-  const {showSuccess} = useToast();
+  const { tripId } = route.params;
+  const { showSuccess } = useToast();
 
-  // UI state only
-  const [trip] = useState<any>(sampleTrip);
+
   const [refreshing, setRefreshing] = useState(false);
   const [remarksModal, setRemarksModal] = useState(false);
   const [remarksText, setRemarksText] = useState('');
@@ -86,30 +29,82 @@ export const TripDetailScreen: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState(false);
   const slideProgress = useRef(new Animated.Value(0)).current;
   const [isSliding, setIsSliding] = useState(false);
-
+  const [trip, setTrip] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   // console.log()
 
-  const getDeatilsTrip = async () => {
-      try {
-        const res = await tripApi.getDeatilsTrip(tripId);
-        if (res) {
-          console.log('Profile data:123', res);
-          const data = res.data || res;
-          console.log(data, 'data==============>');
-        } else {
-          const errorMsg = res?.message || 'Failed to load profile';
-          console.log('Profile data:', res);
-        }
-      } catch (error: any) {
-        console.log('Load profile error:', error);
-      } finally {
-      }
-    };
+
+  const [data, setData] = useState([]);
+
+
 
   useEffect(() => {
-     getDeatilsTrip()
+    getActiveTrips()
+  }, []);
+
+
+  const trips = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+
+
+  const getActiveTrips = async () => {
+    try {
+      const res = await tripApi.getActiveTrip();
+      if (res) {
+        console.log('Profile data:', res);
+        const data = res.data || res;
+        setData(data || [])
+        console.log('efefe', data);
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+        console.log('Profile data:', res);
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+    } finally {
+    }
+  };
+
+  // const getDeatilsTrip = async () => {
+  //   try {
+  //     const res = await tripApi.getDeatilsTrip(tripId);
+  //     if (res) {
+  //       console.log('Profile data:123', res);
+  //       const data = res.data || res;
+  //       setTrip(data)
+
+  //       console.log(data, 'data==============>');
+  //     } else {
+  //       const errorMsg = res?.message || 'Failed to load profile';
+  //       console.log('Profile data:', res);
+  //     }
+  //   } catch (error: any) {
+  //     console.log('Load profile error:', error);
+  //   } finally {
+  //   }
+  // };
+  const getDeatilsTrip = async () => {
+    setLoading(true);
+    try {
+      const res = await tripApi.getDeatilsTrip(tripId);
+      if (res) {
+        const data = res.data || res;
+        setTrip(data);
+      } else {
+        console.log('Profile data:', res);
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    getDeatilsTrip()
   }, [useIsFocused()]);
-  
+
 
 
 
@@ -169,51 +164,91 @@ export const TripDetailScreen: React.FC = () => {
   });
 
   // UI handlers only
-  const handleSlideAction = () => {
-    // Navigate to LocationMark screen when button is slid
-    navigation.navigate('LocationMark', {tripId, stage: 'loading'});
-    // Reset slide button
-    Animated.spring(slideProgress, {
-      toValue: 0,
-      useNativeDriver: false,
-    }).start();
+  // Add this inside your TripDetailScreen component
+
+  const handleSlideAction = async () => {
+    if (!trip) return;
+
+    // Only start trip if status is "Assigned"
+    if (trip.status !== 'Assigned') {
+      showSuccess('Trip cannot be started from current status');
+      // Reset slider anyway
+      Animated.spring(slideProgress, {
+        toValue: 0,
+        useNativeDriver: false,
+      }).start();
+      return;
+    }
+
+    try {
+      const payload = {
+        latitude: 25.2048,
+        longitude: 55.2708,
+      };
+
+      const res = await tripApi.startTrip(trip.id, payload);
+
+      if (res?.data) {
+        showSuccess('Trip started successfully!');
+        setTrip((prev: any) => ({
+          ...prev,
+          status: 'In Progress',
+          startTime: res.data.startTime || new Date().toISOString(),
+        }));
+        navigation.navigate('LocationMark', { tripId: trip.id, stage: trip });
+      }
+    } catch (error: any) {
+      console.log('Start trip API error:', error);
+    } finally {
+      Animated.spring(slideProgress, {
+        toValue: 0,
+        useNativeDriver: false,
+      }).start();
+    }
+
+
   };
+
+
 
   const handleCall = (phone: string) => Linking.openURL(`tel:${phone}`);
 
   const handleNavigate = (type: 'loading' | 'unloading') => {
     if (!trip) return;
     const loc = type === 'loading' ? trip.loadingLocation : trip.unloadingLocation;
-    // Direct navigation to Google Maps
     navigationService.navigateToLocation({
-      address: loc.address,
-      coordinates: loc.coordinates,
+      address: trip?.order.loadingCity,
+      coordinates: trip?.order.unloadingCity,
       label: type === 'loading' ? 'Pickup' : 'Delivery',
     });
   };
 
-  const handleRemarks = (stage: 'loading' | 'unloading') => {
-    setRemarksStage(stage);
-    setRemarksText(trip?.remarks[stage] || '');
-    setRemarksModal(true);
-  };
+  const handleCall = (phoneNumber: string) => {
+    if (!phoneNumber) {
+      console.log('Error', 'Phone number not available');
+      return;
+    }
 
-  // UI handlers
-  const saveRemarks = () => {
-    setRemarksModal(false);
-    showSuccess('Remarks saved');
-  };
+    // Create a tel URL
+    const url = `tel:${phoneNumber}`;
 
-  const uploadDoc = (stage: DocumentStage) => {
-    showSuccess('Document uploaded');
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (!supported) {
+          console.log('Error', 'Cannot make a call from this device');
+        } else {
+          return Linking.openURL(url);
+        }
+      })
+      .catch((err) => console.log('Error making call:', err));
   };
 
   const getNextAction = (s: TripStatus) => {
-    const map: Record<string, {title: string; status: TripStatus}> = {
-      Assigned: {title: 'Start Trip', status: 'In Progress'},
-      'In Progress': {title: 'Mark Loaded', status: 'Loaded'},
-      Loaded: {title: 'Mark Arrived', status: 'Arrived'},
-      Arrived: {title: 'Complete', status: 'Completed'},
+    const map: Record<string, { title: string; status: TripStatus }> = {
+      Assigned: { title: 'Start Trip', status: 'In Progress' },
+      'In Progress': { title: 'Mark Loaded', status: 'Loaded' },
+      Loaded: { title: 'Mark Arrived', status: 'Arrived' },
+      Arrived: { title: 'Complete', status: 'Completed' },
     };
     return map[s] || null;
   };
@@ -227,10 +262,34 @@ export const TripDetailScreen: React.FC = () => {
     }).format(new Date(d));
 
 
-  const next = getNextAction(trip.status);
+  const next = getNextAction(trip?.status);
+
+
+
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <Typography variant="bodyMedium" color="textPrimary">
+          Loading trip details...
+        </Typography>
+      </SafeAreaView>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <Typography variant="bodyMedium" color="textPrimary">
+          No trip data available
+        </Typography>
+      </SafeAreaView>
+    );
+  }
+
 
   return (
-    <SafeAreaView style={styles.container}edges={['top']} >
+    <SafeAreaView style={styles.container} edges={['top']} >
       <Header title="Trip Details" onBackPress={() => navigation.goBack()} />
 
       <ScrollView
@@ -249,328 +308,419 @@ export const TripDetailScreen: React.FC = () => {
           <View style={styles.headerCardHeader}>
             <View style={styles.headerCardHeaderLeft}>
               <Typography variant="h4" color="textPrimary" weight="700" style={styles.headerCardTitle}>Order Details</Typography>
-              <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.headerCardSubtitle}>{trip.tripNumber || `#${trip.id.slice(-6).toUpperCase()}`}</Typography>
+              <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.headerCardSubtitle}>{trip?.tripNumber}</Typography>
             </View>
             <View style={styles.statusBadge}>
               <View style={styles.statusDot} />
-              <Typography variant="caption" color="primary" weight="700" style={styles.statusText}>{trip.status}</Typography>
+              <Typography variant="caption" color="primary" weight="700" style={styles.statusText}>{trip?.status}</Typography>
             </View>
           </View>
-          
+
           <View style={styles.orderDetailsList}>
-            {trip.orderNumber && (
+            {trip?.order.orderNumber && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Order ID</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.orderNumber}</Typography>
-                </View>
-              )}
-            {trip.vehicleNumber && (
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.order.orderNumber}</Typography>
+              </View>
+            )}
+            {trip?.vehicle && trip.vehicle.registrationNumber && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Vehicle</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.vehicleNumber}</Typography>
-                </View>
-              )}
-              {trip.assignedWeight && (
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.vehicle.registrationNumber}</Typography>
+              </View>
+            )}
+            {trip?.assignedWeight && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.assignedWeight} KG</Typography>
-                </View>
-              )}
-            </View>
-          
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.assignedWeight} KG</Typography>
+              </View>
+            )}
+          </View>
+
         </Card>
 
         {/* Route & Timeline */}
         <Card style={styles.section}>
-          <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Route & Timeline</Typography>
-          {trip.distance && (
+          <Typography
+            variant="bodyMedium"
+            color="textPrimary"
+            weight="600"
+            style={styles.sectionTitle}>
+            Route & Timeline
+          </Typography>
+
+          {/* ---------- ROUTE ---------- */}
+          {trip?.distance && (
             <View style={styles.routeInfo}>
               <View style={styles.routeTextContainer}>
-                <Image 
-                  source={require('@/assets/images/location.png')} 
+                <Image
+                  source={require('@/assets/images/location.png')}
                   style={styles.routeIcon}
                   resizeMode="contain"
                 />
+
                 <View style={styles.routeTextRow}>
-                  <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.routeText}>
-                    {trip.loadingLocation.address.split(',')[0]}
+                  <Typography
+                    variant="bodyMedium"
+                    color="textPrimary"
+                    weight="600"
+                    style={styles.routeText}>
+                    {trip?.order?.loadingCity}
                   </Typography>
-                  <Image 
-                    source={require('@/assets/images/next.png')} 
+
+                  <Image
+                    source={require('@/assets/images/next.png')}
                     style={styles.routeArrow}
                     resizeMode="contain"
                   />
-                  <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.routeText}>
-                    {trip.unloadingLocation.address.split(',')[0]}
+
+                  <Typography
+                    variant="bodyMedium"
+                    color="textPrimary"
+                    weight="600"
+                    style={styles.routeText}>
+                    {trip?.order?.unloadingCity}
                   </Typography>
                 </View>
               </View>
-              <Typography variant="bodyMedium" color="primary" weight="700" style={styles.distanceText}>{trip.distance} km</Typography>
+
+              <Typography
+                variant="bodyMedium"
+                color="primary"
+                weight="700"
+                style={styles.distanceText}>
+                {trip.distance} km
+              </Typography>
             </View>
           )}
+
+          {/* ---------- TIMELINE ---------- */}
           <View style={styles.timeline}>
-            {trip.timeline.assigned && (
+            {trip?.createdAt && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Assigned</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.assigned)}</Typography>
+                <Typography
+                  variant="bodyMedium"
+                  color="textSecondary"
+                  weight="600"
+                  style={styles.timelineLabel}>
+                  Assigned
+                </Typography>
+                <Typography
+                  variant="bodyMedium"
+                  color="textPrimary"
+                  weight="500"
+                  style={styles.timelineDate}>
+                  {formatDate(trip.createdAt)}
+                </Typography>
               </View>
             )}
-            {trip.timeline.started && (
+
+            {trip?.startTime && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Started</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.started)}</Typography>
+                <Typography
+                  variant="bodyMedium"
+                  color="textSecondary"
+                  weight="600"
+                  style={styles.timelineLabel}>
+                  Started
+                </Typography>
+                <Typography
+                  variant="bodyMedium"
+                  color="textPrimary"
+                  weight="500"
+                  style={styles.timelineDate}>
+                  {formatDate(trip.startTime)}
+                </Typography>
               </View>
             )}
-            {trip.timeline.loaded && (
+
+            {trip?.endTime && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Loaded</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.loaded)}</Typography>
-              </View>
-            )}
-            {trip.timeline.arrived && (
-              <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Arrived</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.arrived)}</Typography>
-              </View>
-            )}
-            {trip.timeline.completed && (
-              <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Completed</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.completed)}</Typography>
+                <Typography
+                  variant="bodyMedium"
+                  color="textSecondary"
+                  weight="600"
+                  style={styles.timelineLabel}>
+                  Completed
+                </Typography>
+                <Typography
+                  variant="bodyMedium"
+                  color="textPrimary"
+                  weight="500"
+                  style={styles.timelineDate}>
+                  {formatDate(trip.endTime)}
+                </Typography>
               </View>
             )}
           </View>
         </Card>
+
 
 
         {/* Pickup Location */}
         <Card style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Image 
-              source={require('@/assets/images/location.png')} 
+            <Image
+              source={require('@/assets/images/location.png')}
               style={styles.sectionTitleIcon}
               resizeMode="contain"
             />
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Pickup Location</Typography>
+            <Typography
+              variant="bodyMedium"
+              color="textPrimary"
+              weight="600"
+              style={styles.sectionTitle}>
+              Pickup Location
+            </Typography>
           </View>
-          <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.address}>
-            {trip.loadingLocation.address || 'Location not specified'}
+
+          {/* ADDRESS */}
+          <Typography
+            variant="bodyMedium"
+            color="textPrimary"
+            weight="500"
+            style={styles.address}>
+            {trip?.order?.loadingCity || 'Location not specified'}
           </Typography>
-          {trip.loadingLocation.contactPerson.phoneNumber ? (
+
+          {/* DRIVER CONTACT */}
+          {trip?.driver?.mobileNumber ? (
             <View style={styles.contactRow}>
-              <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.contact}>{trip.loadingLocation.contactPerson.name}</Typography>
+              <Typography
+                variant="bodyMedium"
+                color="textSecondary"
+                weight="600"
+                style={styles.contact}>
+                {trips?.order?.loadingContactName ?? 'N/A'}
+              </Typography>
+
               <TouchableOpacity
                 style={styles.callBtn}
-                onPress={() => handleCall(trip.loadingLocation.contactPerson.phoneNumber)}>
-                <Image 
-                  source={require('@/assets/images/phone-call.png')} 
+                onPress={() => handleCall(trips?.order?.loadingContactNumber || 'NA')}
+              >
+                <Image
+                  source={require('@/assets/images/phone-call.png')}
                   style={styles.callIcon}
                   resizeMode="contain"
                 />
-                <Typography variant="smallMedium" color="primary" style={styles.callText}>Call</Typography>
+                <Typography variant="smallMedium" color="primary" style={styles.callText}>
+                  Call
+                </Typography>
               </TouchableOpacity>
             </View>
           ) : (
-            <Typography variant="small" color="textTertiary" style={styles.noContact}>No contact information available</Typography>
+            <Typography variant="small" color="textTertiary" style={styles.noContact}>
+              No contact information available
+            </Typography>
           )}
-          {(trip.status === 'Assigned' || trip.status === 'In Progress') && 
-           trip.loadingLocation.coordinates.latitude !== 0 && (
-            <Button
-              title="Navigate"
-              onPress={() => handleNavigate('loading')}
-              variant="outline"
-              style={styles.navBtn}
-            />
-          )}
-          {trip.status === 'In Progress' && (
-            <View style={styles.actions}>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => uploadDoc('loading')}>
-                <Image 
-                  source={require('@/assets/images/image.png')} 
-                  style={styles.actionIcon}
-                  resizeMode="contain"
-                />
-                <Typography variant="smallMedium" color="textPrimary" weight="600" style={styles.actionButtonText}>Upload</Typography>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => handleRemarks('loading')}>
-                <Image 
-                  source={require('@/assets/images/contact-form.png')} 
-                  style={styles.actionIcon}
-                  resizeMode="contain"
-                />
-                <Typography variant="smallMedium" color="textPrimary" weight="600" style={styles.actionButtonText}>Remarks</Typography>
-              </TouchableOpacity>
-            </View>
-          )}
-          {trip.documents.loading.length > 0 && (
-            <View style={styles.docs}>
-              {trip.documents.loading.map((d: any) => (
-                <View key={d.id} style={styles.docItem}>
-                  <Image 
-                    source={require('@/assets/images/contact-form.png')} 
-                    style={styles.docIcon}
-                    resizeMode="contain"
-                  />
-                  <Typography variant="small" color="textPrimary" style={styles.docText}>{d.name}</Typography>
-                </View>
-              ))}
-            </View>
-          )}
+
+
+          <Button
+            title="Navigate"
+            variant="outline"
+            style={styles.navBtn}
+            onPress={() =>
+              handleNavigate({
+                latitude: Number(trip.startLatitude),
+                longitude: Number(trip.startLongitude),
+              })
+            }
+          />
+
+
+
         </Card>
+
 
         {/* Delivery Location */}
         <Card style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Image 
-              source={require('@/assets/images/location.png')} 
+            <Image
+              source={require('@/assets/images/location.png')}
               style={styles.sectionTitleIcon}
               resizeMode="contain"
             />
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Delivery Location</Typography>
+            <Typography
+              variant="bodyMedium"
+              color="textPrimary"
+              weight="600"
+              style={styles.sectionTitle}>
+              Delivery Location
+            </Typography>
           </View>
-          <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.address}>
-            {trip.unloadingLocation.address || 'Location not specified'}
+
+          {/* ADDRESS */}
+          <Typography
+            variant="bodyMedium"
+            color="textPrimary"
+            weight="500"
+            style={styles.address}>
+            {trip?.order?.unloadingCity || 'Location not specified'}
           </Typography>
-          {trip.unloadingLocation.contactPerson.phoneNumber ? (
+
+          {/* CONTACT */}
+          {trip?.driver?.mobileNumber ? (
             <View style={styles.contactRow}>
-              <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.contact}>{trip.unloadingLocation.contactPerson.name}</Typography>
+              <Typography
+                variant="bodyMedium"
+                color="textSecondary"
+                weight="600"
+                style={styles.contact}>
+                {trips?.order?.unloadingContactName ?? 'N/A'}
+              </Typography>
+
               <TouchableOpacity
                 style={styles.callBtn}
-                onPress={() => handleCall(trip.unloadingLocation.contactPerson.phoneNumber)}>
-                <Image 
-                  source={require('@/assets/images/phone-call.png')} 
+                onPress={() => handleCall(trips?.order?.unloadingContactNumber || 'NA')}
+              >
+                <Image
+                  source={require('@/assets/images/phone-call.png')}
                   style={styles.callIcon}
                   resizeMode="contain"
                 />
-                <Typography variant="smallMedium" color="primary" style={styles.callText}>Call</Typography>
+                <Typography variant="smallMedium" color="primary" style={styles.callText}>
+                  Call
+                </Typography>
               </TouchableOpacity>
             </View>
           ) : (
-            <Typography variant="small" color="textTertiary" style={styles.noContact}>No contact information available</Typography>
+            <Typography variant="small" color="textTertiary" style={styles.noContact}>
+              No contact information available
+            </Typography>
           )}
-          {(trip.unloadingLocation.coordinates.latitude !== 0) && (
+
+          {/* NAVIGATE */}
+          {Number(trip?.endLatitude) !== 0 && (
             <Button
               title="Navigate"
-              onPress={() => handleNavigate('unloading')}
               variant="outline"
               style={styles.navBtn}
+              onPress={() =>
+                handleNavigate({
+                  latitude: Number(trip.endLatitude),
+                  longitude: Number(trip.endLongitude),
+                })
+              }
             />
           )}
-          {trip.status === 'Arrived' && (
-            <View style={styles.actions}>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => uploadDoc('unloading')}>
-                <Image 
-                  source={require('@/assets/images/image.png')} 
-                  style={styles.actionIcon}
-                  resizeMode="contain"
-                />
-                <Typography variant="smallMedium" color="textPrimary" weight="600" style={styles.actionButtonText}>Upload</Typography>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => handleRemarks('unloading')}>
-                <Image 
-                  source={require('@/assets/images/contact-form.png')} 
-                  style={styles.actionIcon}
-                  resizeMode="contain"
-                />
-                <Typography variant="smallMedium" color="textPrimary" weight="600" style={styles.actionButtonText}>Remarks</Typography>
-              </TouchableOpacity>
-            </View>
-          )}
-          {trip.documents.unloading.length > 0 && (
-            <View style={styles.docs}>
-              {trip.documents.unloading.map((d: any) => (
-                <View key={d.id} style={styles.docItem}>
-                  <Image 
-                    source={require('@/assets/images/contact-form.png')} 
-                    style={styles.docIcon}
-                    resizeMode="contain"
-                  />
-                  <Typography variant="small" color="textPrimary" style={styles.docText}>{d.name}</Typography>
-                </View>
-              ))}
-            </View>
-          )}
+
+
         </Card>
 
+
         {/* Weight & Load Information */}
-        {(trip.assignedWeight || trip.deliveredWeight || trip.vehicleCapacity) && (
+        {(trip?.assignedWeight || trip?.deliveredWeight || trip?.vehicle?.maxLoadCapacity) && (
           <Card style={styles.section}>
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Weight & Load Information</Typography>
+            <Typography
+              variant="bodyMedium"
+              color="textPrimary"
+              weight="600"
+              style={styles.sectionTitle}>
+              Weight & Load Information
+            </Typography>
+
             <View style={styles.weightInfo}>
-              {trip.deliveredWeight && (
+              {/* DELIVERED WEIGHT */}
+              {trip?.deliveredWeight && (
                 <View style={styles.weightRow}>
-                  <Image 
-                    source={require('@/assets/images/shipped.png')} 
+                  <Image
+                    source={require('@/assets/images/shipped.png')}
                     style={styles.weightIcon}
                     resizeMode="contain"
                   />
+
                   <View style={styles.weightDetails}>
-                    <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.weightValue}>{trip.deliveredWeight} kg</Typography>
-                    <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.weightLabel}>Delivered Weight</Typography>
-                    {trip.assignedWeight && (
-                      <Typography variant="small" color="warning" style={styles.assignedWeight}>Assigned: {trip.assignedWeight} kg</Typography>
+                    <Typography
+                      variant="bodyMedium"
+                      color="textPrimary"
+                      weight="700"
+                      style={styles.weightValue}>
+                      {trip.deliveredWeight} kg
+                    </Typography>
+
+                    <Typography
+                      variant="bodyMedium"
+                      color="textSecondary"
+                      weight="600"
+                      style={styles.weightLabel}>
+                      Delivered Weight
+                    </Typography>
+
+                    {trip?.assignedWeight && (
+                      <Typography
+                        variant="small"
+                        color="warning"
+                        style={styles.assignedWeight}>
+                        Assigned: {trip.assignedWeight} kg
+                      </Typography>
                     )}
                   </View>
-              </View>
-            )}
-              {trip.vehicleCapacity && (
+                </View>
+              )}
+
+              {/* VEHICLE INFO */}
+              {trip?.vehicle?.maxLoadCapacity && (
                 <View style={styles.vehicleInfoRow}>
-                  <Typography variant="smallMedium" color="textSecondary" style={styles.vehicleInfoText}>Vehicle Capacity: {trip.vehicleCapacity} kg</Typography>
-                  {trip.vehicleNumber && (
-                    <Typography variant="smallMedium" color="textSecondary" style={styles.vehicleInfoText}>Vehicle Number: {trip.vehicleNumber}</Typography>
+                  <Typography
+                    variant="smallMedium"
+                    color="textSecondary"
+                    style={styles.vehicleInfoText}>
+                    Vehicle Capacity: {trip.vehicle.maxLoadCapacity} kg
+                  </Typography>
+
+                  {trip?.vehicle?.registrationNumber && (
+                    <Typography
+                      variant="smallMedium"
+                      color="textSecondary"
+                      style={styles.vehicleInfoText}>
+                      Vehicle Number: {trip.vehicle.registrationNumber}
+                    </Typography>
                   )}
-              </View>
-            )}
+                </View>
+              )}
             </View>
           </Card>
         )}
 
-       
-
-       
-      
-
-
-    
-        {trip.status !== 'Completed' && (
-          <View style={styles.slideContainer}>
+        <View style={styles.slideContainer}>
+          <Animated.View
+            style={[
+              styles.slideButton,
+              {
+                opacity: slideButtonOpacity, // always active
+                backgroundColor: colors.primary, // always primary color
+              }
+            ]}
+            {...slidePanResponder.panHandlers} // always allow sliding
+          >
             <Animated.View
               style={[
-                styles.slideButton,
+                styles.slideThumb,
                 {
-                  opacity: slideButtonOpacity,
+                  left: thumbLeft,
                 }
-              ]}
-              {...slidePanResponder.panHandlers}>
-              <Animated.View
-                style={[
-                  styles.slideThumb,
-                  {
-                    left: thumbLeft,
-                  }
-                ]}>
-                <Image 
-                  source={require('@/assets/images/next.png')} 
-                  style={styles.slideThumbIcon}
-                  resizeMode="contain"
-                />
-              </Animated.View>
-              <Typography variant="bodyMedium" color="white" weight="700" style={styles.slideButtonText}>
-                {isSliding ? 'Sliding...' : next ? next.title : 'Start Trip'}
-              </Typography>
+              ]}>
+              <Image
+                source={require('@/assets/images/next.png')}
+                style={styles.slideThumbIcon}
+                resizeMode="contain"
+              />
             </Animated.View>
+
+            <Typography
+              variant="bodyMedium"
+              color="white"
+              weight="700"
+              style={styles.slideButtonText}
+            >
+              {isSliding ? 'Sliding...' : next?.title || 'Start Trip'}
+            </Typography>
+          </Animated.View>
         </View>
-        )}
+
+
       </ScrollView>
- 
+
     </SafeAreaView>
   );
 };
@@ -583,7 +733,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-   
+
   },
   center: {
     flex: 1,
@@ -744,7 +894,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textPrimary,
     marginBottom: spacing.md,
-    lineHeight: 22,
+    
     fontSize: 15,
     fontWeight: '500',
   },
@@ -874,7 +1024,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
- 
+
   },
   slideThumbIcon: {
     width: 24,

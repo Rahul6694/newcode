@@ -66,9 +66,30 @@ export const TodoScreen: React.FC = () => {
     getActiveTrips();
   }, [useIsFocused()]);
 
-  const handleTripPress = (trip: Trip) => {
-    navigation.navigate('TripDetail', { tripId: trip.id });
-  };
+ const handleTripPress = (trip: Trip) => {
+  if(!trip.id){
+    console.log("Trip ID is missing");
+    return;
+  }
+  switch (trip.status) {
+
+    case 'IN_PROGRESS':
+      navigation.navigate('LocationMark', { tripId: trip.id ,stage:null});
+      break;
+
+    case 'LOADED':
+      navigation.navigate('TripInProgress', { tripId: trip.id });
+      break;
+
+    case 'ARRIVED':
+      navigation.navigate('MarkComplete', { tripId: trip.id });
+      break;
+
+    default:
+      navigation.navigate('TripDetail', { tripId: trip.id })
+  }
+};
+
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {

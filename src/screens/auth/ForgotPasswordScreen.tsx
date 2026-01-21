@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'left',
     paddingHorizontal: 0,
-    lineHeight: 18,
+
     fontSize: 13,
   },
   formCard: {

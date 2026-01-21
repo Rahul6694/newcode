@@ -10,14 +10,14 @@ export const navigationService = {
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
     
     Linking.openURL(googleMapsUrl).catch(err => {
-      console.error('Failed to open Google Maps:', err);
+      console.log('Failed to open Google Maps:', err);
       // Fallback to default maps if Google Maps is not available
       const fallbackUrl = Platform.select({
         ios: `maps://app?daddr=${latitude},${longitude}`,
         android: `geo:${latitude},${longitude}?q=${latitude},${longitude}`,
       });
       if (fallbackUrl) {
-        Linking.openURL(fallbackUrl).catch(console.error);
+        Linking.openURL(fallbackUrl).catch(console.log);
       }
     });
   },

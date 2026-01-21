@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useEffectEvent, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,6 +16,7 @@ import { Header } from '@/components/Header';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { usePermissions } from '@/hooks/usePermissions';
+import { tripApi } from '@/apiservice';
 
 type MarkCompleteRouteProp = RouteProp<TodoStackParamList, 'MarkComplete'>;
 type MarkCompleteNavigationProp = StackNavigationProp<TodoStackParamList, 'MarkComplete'>;
@@ -32,22 +33,56 @@ export const MarkCompleteScreen: React.FC = () => {
   const [cameraAttempts, setCameraAttempts] = useState(0);
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const permissions = usePermissions();
-
+ const [data, setData] = useState([]);
   // Dummy trip data
-  const tripData = {
-    orderId: 'ORD-1767595134921',
-    tripNumber: 'TRIP-1767983743355-rj62x',
-    customerName: 'Ashaduzzaman Mondal',
-    customerPhone: '9093482056',
-    address: 'Darjeeling, West Bengal, India',
-    vehicleNumber: 'SL0Y4555',
-    vehicleMake: 'Volvo',
-    assignedWeight: '500',
-    materialType: '10 MM Aggregate',
-    distance: '497',
-    totalAmount: '5019700',
-    status: 'ARRIVED',
-  };
+
+useEffect(() => {  
+    getActiveTrips() 
+   },[]); 
+
+
+  const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  
+  
+  
+    const getActiveTrips = async () => {
+      try {
+        const res = await tripApi.getActiveTrip();
+        if (res) {
+          console.log('Profile data:', res);
+          const data = res.data || res;
+          setData(data||[])
+          console.log('efefe',data);
+        } else {
+          const errorMsg = res?.message || 'Failed to load profile';
+          console.log('Profile data:', res);
+        }
+      } catch (error: any) {
+        console.log('Load profile error:', error);
+      } finally {
+      }
+    };  
+const tripData = {
+  orderId: trip?.order?.orderNumber ?? 'N/A',
+  tripNumber: trip?.tripNumber ?? 'N/A',
+
+  customerName: trip?.order?.unloadingContactName ?? 'N/A',
+  customerPhone: trip?.order?.unloadingContactNumber ?? 'N/A',
+
+  address: trip?.order?.unloadingAddress ?? 'N/A',
+
+  vehicleNumber: trip?.vehicle?.registrationNumber ?? 'N/A',
+  vehicleMake: trip?.vehicle?.make ?? 'N/A',
+
+  assignedWeight: trip?.assignedWeight ?? 'N/A',
+  materialType: trip?.order?.materialType ?? 'N/A',
+
+  distance: trip?.distance ?? 'N/A',
+  totalAmount: trip?.order?.totalAmount ?? 'N/A',
+
+  status: trip?.status ?? 'N/A',
+};
+
 
   // UI handlers only
   const handleTakePhoto = async () => {
@@ -96,7 +131,7 @@ export const MarkCompleteScreen: React.FC = () => {
       setDeliveryPhotos([...deliveryPhotos, image.path]);
       showSuccess('Photo captured successfully');
     } catch (error: any) {
-      console.error('[MarkCompleteScreen] Camera error:', error);
+      console.log('[MarkCompleteScreen] Camera error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
         console.log('[MarkCompleteScreen] Camera cancelled by user');
       } else {
@@ -156,7 +191,7 @@ export const MarkCompleteScreen: React.FC = () => {
       setDeliveryPhotos([...deliveryPhotos, ...newPhotos]);
       showSuccess(`${newPhotos.length} photo(s) added`);
     } catch (error: any) {
-      console.error('[MarkCompleteScreen] Gallery error:', error);
+      console.log('[MarkCompleteScreen] Gallery error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
         console.log('[MarkCompleteScreen] Gallery cancelled by user');
       } else {
@@ -172,14 +207,44 @@ export const MarkCompleteScreen: React.FC = () => {
   };
 
   // UI handler only
-  const handleMarkComplete = () => {
-    if (deliveryPhotos.length === 0) {
-      return;
+  const handleMarkComplete = async () => {
+  if (!tripId) return;
 
+  if (deliveryPhotos.length === 0) {
+    showSuccess('Please upload delivery photo');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+
+    // 🔹 same keys as Postman
+    formData.append('latitude', 22.3569);
+    formData.append('longitude', 91.7832);
+    formData.append('deliveredWeight', 25.0);
+
+    // 🔹 multiple files supported
+    deliveryPhotos.forEach((path, index) => {
+      formData.append('unloadingDocuments', {
+        uri: path,
+        type: 'image/jpeg',
+        name: `delivery_${index}.jpg`,
+      } as any);
+    });
+
+    const res = await tripApi.completeTrip(tripId, formData);
+
+    if (res?.success) {
+      showSuccess('Trip completed successfully');
+      setShowCongratulations(true);
+    } else {
+      showSuccess(res?.message || 'Failed to complete trip');
     }
-    setShowCongratulations(true);
-    showSuccess('Trip completed successfully');
-  };
+  } catch (error) {
+    console.log('Complete trip error:', error);
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -484,7 +549,7 @@ const styles = StyleSheet.create({
   addressValue: {
     ...typography.body,
     color: colors.textPrimary,
-    lineHeight: 22,
+    
     fontSize: 15,
     marginBottom: spacing.xs,
   },

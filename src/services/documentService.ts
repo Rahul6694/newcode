@@ -42,7 +42,7 @@ export const documentService = {
         },
       };
     } catch (error: any) {
-      console.error('[documentService] Camera error:', error);
+      console.log('[documentService] Camera error:', error);
       throw error;
     }
   },
@@ -73,7 +73,7 @@ export const documentService = {
         },
       };
     } catch (error: any) {
-      console.error('[documentService] Gallery error:', error);
+      console.log('[documentService] Gallery error:', error);
       throw error;
     }
   },

@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'left',
     paddingHorizontal: 0,
-    lineHeight: 18,
+ 
     fontSize: 13,
   },
   formCard: {
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   resendText: {
-    lineHeight: 20,
+
   },
   resendLink: {
     // Inline styles are handled by the TouchableOpacity wrapper

@@ -5,9 +5,6 @@ export const authApi = {
   login: (email: string, password: string) =>
     ApiClient.post('/auth/login', { email, password }),
 
-  register: (userData: any): Promise<ApiResponse> =>
-    ApiClient.post('/auth/register', userData),
-
   logout: (): Promise<ApiResponse> => ApiClient.post('/auth/logout'),
 
   refreshToken: (): Promise<ApiResponse> =>
@@ -22,22 +19,6 @@ export const authApi = {
     ApiClient.post('/auth/verify-otp', { email, otp }),
 };
 
-// User endpoints
-export const userApi = {
-  getProfile: (): Promise<ApiResponse> => ApiClient.get('/auth/profile'),
-
-  changePassword: (
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<ApiResponse> =>
-    ApiClient.post('/user/change-password', { oldPassword, newPassword }),
-
-  uploadProfileImage: (formData: FormData): Promise<ApiResponse> =>
-    ApiClient.uploadFile('/user/profile/image', formData),
-
-  deleteAccount: (): Promise<ApiResponse> => ApiClient.delete('/user/account'),
-};
-
 // Trip endpoints
 export const tripApi = {
   getAllTrips: (params?: any): Promise<ApiResponse> =>
@@ -46,38 +27,49 @@ export const tripApi = {
   getTripById: (tripId: string): Promise<ApiResponse> =>
     ApiClient.get(`/trips/${tripId}`),
 
-  createTrip: (tripData: any): Promise<ApiResponse> =>
-    ApiClient.post('/trips', tripData),
 
-  updateTrip: (tripId: string, tripData: any): Promise<ApiResponse> =>
-    ApiClient.put(`/trips/${tripId}`, tripData),
+  startTrip: (
+    tripId: string,
+    payload: { latitude: number; longitude: number }
+  ): Promise<ApiResponse> =>
+    ApiClient.post(`/trips/${tripId}/start`, payload),
 
-  deleteTrip: (tripId: string): Promise<ApiResponse> =>
-    ApiClient.delete(`/trips/${tripId}`),
-
-  startTrip: (tripId: string): Promise<ApiResponse> =>
-    ApiClient.post(`/trips/${tripId}/start`),
 
   completeTrip: (tripId: string, data: any): Promise<ApiResponse> =>
     ApiClient.post(`/trips/${tripId}/complete`, data),
 
-  getTripHistory: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/trips/history', { params }),
+  getTripHistory: (page: number = 1, limit: number = 10): Promise<ApiResponse> =>
+    ApiClient.get('/trips/driver/history', {
+      params: { page, limit },
+    }),
 
   getActiveTrip: (params?: any): Promise<ApiResponse> =>
     ApiClient.get('/trips/driver/active', { params }),
 
   getDeatilsTrip: (id: string): Promise<ApiResponse> =>
-  ApiClient.get(`/trips/${id}`)
+    ApiClient.get(`/trips/${id}`),
+  /** NEW: Upload Loading Documents */
+
+
+  /** NEW: Mark Trip as Loaded with Remarks */
+  markLoaded: (tripId: string, loadingRemarks: string): Promise<ApiResponse> =>
+    ApiClient.post(
+      `/trips/${tripId}/mark-loaded`,
+      { loadingRemarks }
+    ),
+    markArrived: (
+  tripId: string,
+  payload: { arrivedLatitude: number; arrivedLongitude: number }
+): Promise<ApiResponse> =>
+  ApiClient.post(`/trips/${tripId}/mark-arrived`, payload),
+
+   uploadDocument: (tripId: string, formData: FormData): Promise<ApiResponse> =>
+    ApiClient.uploadFile(`/trips/${tripId}/upload-loading-docs`, formData),
+
 };
 
 // Location endpoints
 export const locationApi = {
-  updateLocation: (latitude: number, longitude: number): Promise<ApiResponse> =>
-    ApiClient.post('/location/update', { latitude, longitude }),
-
-  getLocationHistory: (tripId: string): Promise<ApiResponse> =>
-    ApiClient.get(`/location/history/${tripId}`),
 
   markLocation: (
     tripId: string,
@@ -87,20 +79,8 @@ export const locationApi = {
     ApiClient.post(`/location/mark/${tripId}`, { name, coordinates }),
 };
 
-// Document endpoints
-export const documentApi = {
-  uploadDocument: (tripId: string, formData: FormData): Promise<ApiResponse> =>
-    ApiClient.uploadFile(`/documents/${tripId}/upload`, formData),
 
-  getDocuments: (tripId: string): Promise<ApiResponse> =>
-    ApiClient.get(`/documents/${tripId}`),
-
-  deleteDocument: (documentId: string): Promise<ApiResponse> =>
-    ApiClient.delete(`/documents/${documentId}`),
-
-  verifyDocument: (documentId: string, data: any): Promise<ApiResponse> =>
-    ApiClient.post(`/documents/${documentId}/verify`, data),
-};
+ 
 
 // Notification endpoints
 export const notificationApi = {

@@ -176,7 +176,7 @@ export type TodoStackParamList = {
   TodoList: undefined;
   TripDetail: {tripId: string};
   DocumentUpload: {tripId: string; stage: 'loading' | 'unloading'};
-  LocationMark: {tripId: string; stage: 'loading' | 'unloading'};
+  LocationMark: {tripId: string ,stage:any};
   TripInProgress: {tripId: string};
   MarkComplete: {tripId: string};
 };

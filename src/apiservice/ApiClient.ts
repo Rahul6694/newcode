@@ -124,7 +124,7 @@ class ApiClient {
       const status = error.response.status;
       const message = error.response.data?.message || 'An error occurred';
       
-      console.error(`API Error [${status}]:`, message);
+      console.log(`API Error [${status}]:`, message);
       
       return {
         success: false,
@@ -133,7 +133,7 @@ class ApiClient {
       };
     } else if (error.request) {
       // Request made but no response
-      console.error('API Error: No response from server');
+      console.log('API Error: No response from server');
       return {
         success: false,
         message: 'No response from server',
@@ -141,7 +141,7 @@ class ApiClient {
       };
     } else {
       // Error in request setup
-      console.error('API Error:', error.message);
+      console.log('API Error:', error.message);
       return {
         success: false,
         message: error.message || 'An error occurred',
