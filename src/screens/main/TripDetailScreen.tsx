@@ -682,15 +682,6 @@ export const TripDetailScreen: React.FC = () => {
           </Card>
         )}
 
-
-
-
-
-
-
-
-
-
         <View style={styles.slideContainer}>
           <Animated.View
             style={[
