@@ -17,6 +17,8 @@ export const authApi = {
     ApiClient.post('/auth/reset-password', { email, otp, newPassword }),
   verifyOtp: (email: string, otp: string): Promise<ApiResponse> =>
     ApiClient.post('/auth/verify-otp', { email, otp }),
+  getProfile: (params?: any): Promise<ApiResponse> =>
+    ApiClient.get('/auth/profile', { params }),
 };
 
 // Trip endpoints
@@ -27,18 +29,18 @@ export const tripApi = {
   getTripById: (tripId: string): Promise<ApiResponse> =>
     ApiClient.get(`/trips/${tripId}`),
 
-
   startTrip: (
     tripId: string,
-    payload: { latitude: number; longitude: number }
-  ): Promise<ApiResponse> =>
-    ApiClient.post(`/trips/${tripId}/start`, payload),
-
+    payload: { latitude: number; longitude: number },
+  ): Promise<ApiResponse> => ApiClient.post(`/trips/${tripId}/start`, payload),
 
   completeTrip: (tripId: string, data: any): Promise<ApiResponse> =>
     ApiClient.post(`/trips/${tripId}/complete`, data),
 
-  getTripHistory: (page: number = 1, limit: number = 10): Promise<ApiResponse> =>
+  getTripHistory: (
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<ApiResponse> =>
     ApiClient.get('/trips/driver/history', {
       params: { page, limit },
     }),
@@ -50,27 +52,21 @@ export const tripApi = {
     ApiClient.get(`/trips/${id}`),
   /** NEW: Upload Loading Documents */
 
-
   /** NEW: Mark Trip as Loaded with Remarks */
   markLoaded: (tripId: string, loadingRemarks: string): Promise<ApiResponse> =>
-    ApiClient.post(
-      `/trips/${tripId}/mark-loaded`,
-      { loadingRemarks }
-    ),
-    markArrived: (
-  tripId: string,
-  payload: { arrivedLatitude: number; arrivedLongitude: number }
-): Promise<ApiResponse> =>
-  ApiClient.post(`/trips/${tripId}/mark-arrived`, payload),
+    ApiClient.post(`/trips/${tripId}/mark-loaded`, { loadingRemarks }),
+  markArrived: (
+    tripId: string,
+    payload: { arrivedLatitude: number; arrivedLongitude: number },
+  ): Promise<ApiResponse> =>
+    ApiClient.post(`/trips/${tripId}/mark-arrived`, payload),
 
-   uploadDocument: (tripId: string, formData: FormData): Promise<ApiResponse> =>
+  uploadDocument: (tripId: string, formData: FormData): Promise<ApiResponse> =>
     ApiClient.uploadFile(`/trips/${tripId}/upload-loading-docs`, formData),
-
 };
 
 // Location endpoints
 export const locationApi = {
-
   markLocation: (
     tripId: string,
     name: string,
@@ -78,9 +74,6 @@ export const locationApi = {
   ): Promise<ApiResponse> =>
     ApiClient.post(`/location/mark/${tripId}`, { name, coordinates }),
 };
-
-
- 
 
 // Notification endpoints
 export const notificationApi = {

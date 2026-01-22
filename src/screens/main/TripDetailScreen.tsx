@@ -19,7 +19,7 @@ export const TripDetailScreen: React.FC = () => {
   const route = useRoute<TripDetailRouteProp>();
   const navigation = useNavigation<TripDetailNavigationProp>();
   const { tripId } = route.params;
-  const { showSuccess } = useToast();
+  const { showSuccess,showError } = useToast();
 
 
   const [refreshing, setRefreshing] = useState(false);
@@ -167,10 +167,12 @@ export const TripDetailScreen: React.FC = () => {
   // Add this inside your TripDetailScreen component
 
   const handleSlideAction = async () => {
+
+  
     if (!trip) return;
 
     // Only start trip if status is "Assigned"
-    if (trip.status !== 'Assigned') {
+    if (trip.status !== 'ASSIGNED') {
       showSuccess('Trip cannot be started from current status');
       // Reset slider anyway
       Animated.spring(slideProgress, {
@@ -223,25 +225,25 @@ export const TripDetailScreen: React.FC = () => {
     });
   };
 
-  const handleCall = (phoneNumber: string) => {
-    if (!phoneNumber) {
-      console.log('Error', 'Phone number not available');
-      return;
-    }
+  // const handleCall = (phoneNumber: string) => {
+  //   if (!phoneNumber) {
+  //     console.log('Error', 'Phone number not available');
+  //     return;
+  //   }
 
-    // Create a tel URL
-    const url = `tel:${phoneNumber}`;
+  //   // Create a tel URL
+  //   const url = `tel:${phoneNumber}`;
 
-    Linking.canOpenURL(url)
-      .then((supported) => {
-        if (!supported) {
-          console.log('Error', 'Cannot make a call from this device');
-        } else {
-          return Linking.openURL(url);
-        }
-      })
-      .catch((err) => console.log('Error making call:', err));
-  };
+  //   Linking.canOpenURL(url)
+  //     .then((supported) => {
+  //       if (!supported) {
+  //         console.log('Error', 'Cannot make a call from this device');
+  //       } else {
+  //         return Linking.openURL(url);
+  //       }
+  //     })
+  //     .catch((err) => console.log('Error making call:', err));
+  // };
 
   const getNextAction = (s: TripStatus) => {
     const map: Record<string, { title: string; status: TripStatus }> = {

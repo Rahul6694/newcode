@@ -12,21 +12,36 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { TodoStackParamList } from '@/types';
-import { Button, Card, useToast, Typography, ProofDocumentUpload } from '@/components';
+import {
+  Button,
+  Card,
+  useToast,
+  Typography,
+  ProofDocumentUpload,
+} from '@/components';
 import { Header } from '@/components/Header';
-import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
+import {
+  colors,
+  spacing,
+  typography,
+  borderRadius,
+  shadows,
+} from '@/theme/colors';
 import { Animated } from 'react-native';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { usePermissions } from '@/hooks/usePermissions';
 import { tripApi } from '@/apiservice';
 
 type LocationMarkRouteProp = RouteProp<TodoStackParamList, 'LocationMark'>;
-type LocationMarkNavigationProp = StackNavigationProp<TodoStackParamList, 'LocationMark'>;
+type LocationMarkNavigationProp = StackNavigationProp<
+  TodoStackParamList,
+  'LocationMark'
+>;
 
 export const LocationMarkScreen: React.FC = () => {
   const route = useRoute<LocationMarkRouteProp>();
   const navigation = useNavigation<LocationMarkNavigationProp>();
-  const { tripId, stage, } = route.params;
+  const { tripId, stage } = route.params;
   const { showSuccess, showError } = useToast();
   const permissions = usePermissions();
 
@@ -35,65 +50,73 @@ export const LocationMarkScreen: React.FC = () => {
   const [location] = useState(true); // Always show location for UI
   const [marking, setMarking] = useState(false);
   const [pulseAnim] = useState(new Animated.Value(1));
-  const [documents, setDocuments] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const [cameraAttempts, setCameraAttempts] = useState(0);
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const [docsUploaded, setDocsUploaded] = useState(false);
- const [data, setData] = useState([]);
+  const [data, setData] = useState<any>(null);
 
+  useEffect(() => {
+    getActiveTrips();
+  }, []);
 
+  const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
-  useEffect(() => {  
-      getActiveTrips() 
-     },[]); 
-  
-  
-    const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
-    
-    
-    
-      const getActiveTrips = async () => {
-        try {
-          const res = await tripApi.getActiveTrip();
-          if (res) {
-            console.log('Profile data:', res);
-            const data = res.data || res;
-            setData(data||[])
-            console.log('efefe',data);
-          } else {
-            const errorMsg = res?.message || 'Failed to load profile';
-            console.log('Profile data:', res);
-          }
-        } catch (error: any) {
-          console.log('Load profile error:', error);
-        } finally {
-        }
-      };  
+  const getActiveTrips = async () => {
+    try {
+      const res = await tripApi.getActiveTrip();
+      if (res && res.success) {
+        console.log('Profile data:', res);
+        const data = res.data || res;
+        setData(data || []);
+        console.log('efefe', data);
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+        console.log('Profile data failed:', res);
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+    } finally {
+    }
+  };
   // UI handlers only
   const handleTakePhoto = async () => {
-    console.log('[LocationMarkScreen] handleTakePhoto called, attempt:', cameraAttempts + 1);
+    console.log(
+      '[LocationMarkScreen] handleTakePhoto called, attempt:',
+      cameraAttempts + 1,
+    );
 
     // Request camera permission first
     console.log('[LocationMarkScreen] Requesting camera permission...');
     const cameraGranted = await permissions.requestCameraPermission();
-    console.log('[LocationMarkScreen] Camera permission granted:', cameraGranted);
+    console.log(
+      '[LocationMarkScreen] Camera permission granted:',
+      cameraGranted,
+    );
 
     if (!cameraGranted) {
       const newAttempts = cameraAttempts + 1;
       setCameraAttempts(newAttempts);
-      console.warn('[LocationMarkScreen] Camera permission denied, attempt:', newAttempts);
+      console.warn(
+        '[LocationMarkScreen] Camera permission denied, attempt:',
+        newAttempts,
+      );
 
       if (newAttempts >= 2) {
         // Automatically open settings after 2 attempts
-        console.warn('[LocationMarkScreen] Max attempts reached, opening settings automatically...');
+        console.warn(
+          '[LocationMarkScreen] Max attempts reached, opening settings automatically...',
+        );
         showError('Opening Settings to enable camera permission...');
         setTimeout(() => {
           permissions.openSettings();
           setCameraAttempts(0); // Reset attempts
         }, 500);
       } else {
-        showError(`Camera permission required (Attempt ${newAttempts}/2). Try again.`);
+        showError(
+          `Camera permission required (Attempt ${newAttempts}/2). Try again.`,
+        );
       }
       return;
     }
@@ -104,18 +127,18 @@ export const LocationMarkScreen: React.FC = () => {
     try {
       console.log('[LocationMarkScreen] Launching camera...');
       const image = await ImageCropPicker.openCamera({
-        width: 1920,
-        height: 1920,
+        width: 720,
+        height: 720,
         cropping: true,
         cropperCircleOverlay: false,
-        compressImageQuality: 0.8,
+        compressImageQuality: 0.5,
         mediaType: 'photo',
         includeExif: true,
       });
 
       console.log('[LocationMarkScreen] Photo captured:', image.path);
-      setDocuments([...documents, image.path]);
-      showSuccess('Photo added successfully');
+      setDocuments([...documents, image]);
+      // showSuccess('Photo added successfully');
     } catch (error: any) {
       console.log('[LocationMarkScreen] Camera error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
@@ -127,35 +150,53 @@ export const LocationMarkScreen: React.FC = () => {
   };
 
   const handlePickImage = async () => {
-    console.log('[LocationMarkScreen] handlePickImage called, attempt:', galleryAttempts + 1);
+    console.log(
+      '[LocationMarkScreen] handlePickImage called, attempt:',
+      galleryAttempts + 1,
+    );
 
     // Check current permission status first
     console.log('[LocationMarkScreen] Checking gallery permission status...');
     const currentStatus = await permissions.checkGalleryPermission();
-    console.log('[LocationMarkScreen] Current gallery permission status:', currentStatus);
+    console.log(
+      '[LocationMarkScreen] Current gallery permission status:',
+      currentStatus,
+    );
 
     // Request gallery permission
     console.log('[LocationMarkScreen] Requesting gallery permission...');
     const galleryGranted = await permissions.requestGalleryPermission();
-    console.log('[LocationMarkScreen] Gallery permission granted:', galleryGranted);
+    console.log(
+      '[LocationMarkScreen] Gallery permission granted:',
+      galleryGranted,
+    );
 
     if (!galleryGranted) {
       const newAttempts = galleryAttempts + 1;
       setGalleryAttempts(newAttempts);
-      console.warn('[LocationMarkScreen] Gallery permission DENIED, attempt:', newAttempts);
+      console.warn(
+        '[LocationMarkScreen] Gallery permission DENIED, attempt:',
+        newAttempts,
+      );
 
       if (newAttempts >= 2) {
         // Automatically open settings after 2 attempts
-        console.warn('[LocationMarkScreen] Max attempts reached, opening settings automatically...');
+        console.warn(
+          '[LocationMarkScreen] Max attempts reached, opening settings automatically...',
+        );
         showError('Opening Settings to enable gallery permission...');
         setTimeout(() => {
           permissions.openSettings();
           setGalleryAttempts(0); // Reset attempts
         }, 500);
       } else {
-        showError(`Gallery permission required (Attempt ${newAttempts}/2). Try again.`);
+        showError(
+          `Gallery permission required (Attempt ${newAttempts}/2). Try again.`,
+        );
       }
-      console.log('[LocationMarkScreen] Returning early - permission not granted');
+      console.log(
+        '[LocationMarkScreen] Returning early - permission not granted',
+      );
       return; // IMPORTANT: Exit the function here
     }
 
@@ -165,11 +206,11 @@ export const LocationMarkScreen: React.FC = () => {
     try {
       console.log('[LocationMarkScreen] Launching image picker...');
       const images = await ImageCropPicker.openPicker({
-        width: 1920,
-        height: 1920,
+        width: 720,
+        height: 720,
         cropping: true,
         cropperCircleOverlay: false,
-        compressImageQuality: 0.8,
+        compressImageQuality: 0.5,
         mediaType: 'photo',
         multiple: true,
         maxFiles: 10,
@@ -177,10 +218,13 @@ export const LocationMarkScreen: React.FC = () => {
       });
 
       const selectedImages = Array.isArray(images) ? images : [images];
-      console.log('[LocationMarkScreen] Images selected:', selectedImages.length);
+      console.log(
+        '[LocationMarkScreen] Images selected:',
+        selectedImages.length,
+      );
       const newPhotos = selectedImages.map(img => img.path);
-      setDocuments([...documents, ...newPhotos]);
-      showSuccess(`${newPhotos.length} photo(s) added`);
+      setDocuments([...documents, ...selectedImages]);
+      // showSuccess(`${newPhotos.length} photo(s) added`);
     } catch (error: any) {
       console.log('[LocationMarkScreen] Gallery error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
@@ -211,23 +255,34 @@ export const LocationMarkScreen: React.FC = () => {
 
       documents.forEach((doc, index) => {
         formData.append('document', {
-          uri: doc,
-          name: `loading_${index}.jpg`,
-          type: 'image/jpeg',
-        } as any);
+          uri: doc.path,
+          name: doc.filename || `document_${index}.jpg`,
+          type: doc.mime || 'image/jpeg',
+        });
       });
 
-   
+      //  uri: selectedPhoto?.path || selectedPhoto?.uri,
+      //     name: selectedPhoto?.name || '',
+      //     type: selectedPhoto?.mime || 'image/jpeg',
+
       formData.append('remarks', 'Loading completed');
+      console.log(formData, documents, 'formData=======>');
 
-      await tripApi.uploadDocument(tripId, formData);
+      const response = await tripApi.uploadDocument(tripId, formData);
 
-      showSuccess('Documents uploaded successfully');
-      setDocsUploaded(true); 
+      console.log(response, 'upload response===============>');
 
+      if (response.success) {
+        showSuccess('Documents uploaded successfully');
+        setDocsUploaded(true);
+      } else {
+        const errorMsg = response.message || response.error || 'Failed to upload documents';
+        showError(errorMsg);
+      }
     } catch (error: any) {
-      console.log(error);
-     
+      console.log('Upload error:', error);
+      const errorMsg = error?.message || 'Failed to upload documents. Please try again.';
+      showError(errorMsg);
     } finally {
       setUploadingDocs(false);
     }
@@ -241,7 +296,6 @@ export const LocationMarkScreen: React.FC = () => {
 
       showSuccess('Trip marked as loaded');
       navigation.replace('TripInProgress', { tripId });
-
     } catch (error: any) {
       console.log(error);
       showError(error.message || 'Failed to mark trip as loaded');
@@ -251,35 +305,59 @@ export const LocationMarkScreen: React.FC = () => {
   };
   const handlePrimaryAction = () => {
     if (!docsUploaded) {
-      uploadDocuments();   // step 1
+      uploadDocuments(); // step 1
     } else {
-      markTripAsLoaded();  // step 2
+      markTripAsLoaded(); // step 2
     }
   };
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-
       <Header title="Mark as Loaded" onBackPress={() => navigation.goBack()} />
-
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}>
-
+        contentContainerStyle={styles.content}
+      >
         {/* Loading State */}
         {loading && (
           <View style={styles.loadingWrapper}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Typography variant="body" color="textSecondary" style={styles.loadingText}>Accessing location...</Typography>
+            <Typography
+              variant="body"
+              color="textSecondary"
+              style={styles.loadingText}
+            >
+              Accessing location...
+            </Typography>
           </View>
         )}
 
         {/* Error State */}
         {!loading && !location && (
           <View style={styles.errorWrapper}>
-            <Typography variant="h1" color="warning" weight="400" style={styles.errorIcon}>⚠️</Typography>
-            <Typography variant="h4" color="textPrimary" weight="700" style={styles.errorTitle}>Location Required</Typography>
-            <Typography variant="body" color="textSecondary" style={styles.errorDesc}>Enable location services to continue</Typography>
+            <Typography
+              variant="h1"
+              color="warning"
+              weight="400"
+              style={styles.errorIcon}
+            >
+              ⚠️
+            </Typography>
+            <Typography
+              variant="h4"
+              color="textPrimary"
+              weight="700"
+              style={styles.errorTitle}
+            >
+              Location Required
+            </Typography>
+            <Typography
+              variant="body"
+              color="textSecondary"
+              style={styles.errorDesc}
+            >
+              Enable location services to continue
+            </Typography>
             <Button
               title="🔄 Retry"
               onPress={() => showSuccess('Location accessed')}
@@ -289,7 +367,6 @@ export const LocationMarkScreen: React.FC = () => {
           </View>
         )}
 
-
         {/* Combined Banner Section - All in One */}
         <Card style={styles.combinedBannerCard}>
           <View style={styles.combinedBanner}>
@@ -297,19 +374,50 @@ export const LocationMarkScreen: React.FC = () => {
             <View style={styles.combinedHeader}>
               <View style={styles.headerTop}>
                 <View style={styles.headerLeft}>
-                  <Typography variant="h3" color="textPrimary" weight="700" style={styles.combinedTitle}>Trip Loaded Successfully!</Typography>
+                  <Typography
+                    variant="h3"
+                    color="textPrimary"
+                    weight="700"
+                    style={styles.combinedTitle}
+                  >
+                    Trip Loading...
+                  </Typography>
                   <View style={styles.weightBadgeInline}>
-                    <Typography variant="smallMedium" color="white" weight="700" style={styles.weightBadgeTextInline}>{trip?.assignedWeight ?? 'N/A'} TON</Typography>
+                    <Typography
+                      variant="smallMedium"
+                      color="white"
+                      weight="700"
+                      style={styles.weightBadgeTextInline}
+                    >
+                      {trip?.assignedWeight ?? 'N/A'} TON
+                    </Typography>
                   </View>
                 </View>
                 <View style={styles.statusBadgeInline}>
-                  <View style={[styles.statusDotInline, documents.length > 0 && styles.statusDotReady]} />
-                  <Typography variant="caption" color={documents.length > 0 ? 'success' : 'warning'} weight="700" style={[styles.statusTextInline, documents.length > 0 && styles.statusTextReady]}>
+                  <View
+                    style={[
+                      styles.statusDotInline,
+                      documents.length > 0 && styles.statusDotReady,
+                    ]}
+                  />
+                  <Typography
+                    variant="caption"
+                    color={documents.length > 0 ? 'success' : 'warning'}
+                    weight="700"
+                    style={[
+                      styles.statusTextInline,
+                      documents.length > 0 && styles.statusTextReady,
+                    ]}
+                  >
                     {documents.length > 0 ? 'READY' : 'PENDING'}
                   </Typography>
                 </View>
               </View>
-              <Typography variant="body" color="textSecondary" style={styles.combinedSubtitle}>
+              <Typography
+                variant="body"
+                color="textSecondary"
+                style={styles.combinedSubtitle}
+              >
                 All items loaded properly and ready for delivery
               </Typography>
             </View>
@@ -318,13 +426,41 @@ export const LocationMarkScreen: React.FC = () => {
             <View style={styles.tripInfoSection}>
               <View style={styles.tripInfoRow}>
                 <View style={styles.tripInfoItem}>
-                  <Typography variant="body" color="textSecondary" weight="500" style={styles.tripInfoLabel}>Trip Number</Typography>
-                  <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.tripInfoValue}>{trip?.tripNumber ?? 'N/A'}</Typography>
+                  <Typography
+                    variant="body"
+                    color="textSecondary"
+                    weight="500"
+                    style={styles.tripInfoLabel}
+                  >
+                    Trip Number
+                  </Typography>
+                  <Typography
+                    variant="bodyMedium"
+                    color="textPrimary"
+                    weight="600"
+                    style={styles.tripInfoValue}
+                  >
+                    {trip?.tripNumber ?? 'N/A'}
+                  </Typography>
                 </View>
                 <View style={styles.tripInfoDivider} />
                 <View style={styles.tripInfoItem}>
-                  <Typography variant="body" color="textSecondary" weight="500" style={styles.tripInfoLabel}>Total Weight</Typography>
-                  <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.tripInfoValue}>{trip?.assignedWeight ?? 'N/A'} TON</Typography>
+                  <Typography
+                    variant="body"
+                    color="textSecondary"
+                    weight="500"
+                    style={styles.tripInfoLabel}
+                  >
+                    Total Weight
+                  </Typography>
+                  <Typography
+                    variant="bodyMedium"
+                    color="textPrimary"
+                    weight="600"
+                    style={styles.tripInfoValue}
+                  >
+                    {trip?.assignedWeight ?? 'N/A'} TON
+                  </Typography>
                 </View>
               </View>
             </View>
@@ -348,10 +484,10 @@ export const LocationMarkScreen: React.FC = () => {
                   marking
                     ? 'Processing...'
                     : uploadingDocs
-                      ? 'Uploading...'
-                      : docsUploaded
-                        ? 'Mark as Loaded'
-                        : 'Upload Documents'
+                    ? 'Uploading...'
+                    : docsUploaded
+                    ? 'Mark as Loaded'
+                    : 'Upload Documents'
                 }
                 onPress={handlePrimaryAction}
                 loading={uploadingDocs || marking}
@@ -360,17 +496,10 @@ export const LocationMarkScreen: React.FC = () => {
                 size="lg"
                 style={styles.combinedButton}
               />
-
             </View>
           </View>
         </Card>
-
-
-
-
-
       </ScrollView>
-
     </SafeAreaView>
   );
 };
@@ -382,7 +511,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-
   },
   loadingWrapper: {
     flex: 1,
@@ -523,7 +651,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     textAlign: 'center',
     fontSize: 13,
-
   },
   combinedBannerCard: {
     marginHorizontal: spacing.lg,
@@ -606,7 +733,6 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textSecondary,
     fontSize: 14,
-    
   },
   tripInfoSection: {
     padding: spacing.lg,

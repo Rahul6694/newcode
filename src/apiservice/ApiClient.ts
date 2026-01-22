@@ -106,6 +106,7 @@ class ApiClient {
         ...config,
         headers: {
           'Content-Type': 'multipart/form-data',
+           "Accept": 'application/json',
           ...config?.headers,
         },
       });
