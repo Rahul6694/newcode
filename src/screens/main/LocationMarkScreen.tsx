@@ -257,7 +257,7 @@ export const LocationMarkScreen: React.FC = () => {
       const formData = new FormData();
 
       documents.forEach((doc, index) => {
-        formData.append('document', {
+        formData.append('documents', {
           uri: doc.path,
           name: doc.filename || `document_${index}.jpg`,
           type: doc.mime || 'image/jpeg',

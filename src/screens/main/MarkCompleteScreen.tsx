@@ -25,15 +25,15 @@ export const MarkCompleteScreen: React.FC = () => {
   const route = useRoute<MarkCompleteRouteProp>();
   const navigation = useNavigation<MarkCompleteNavigationProp>();
   const { tripId } = route.params;
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   // UI state only
-  const [deliveryPhotos, setDeliveryPhotos] = useState<string[]>([]);
+  const [deliveryPhotos, setDeliveryPhotos] = useState<any[]>([]);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [cameraAttempts, setCameraAttempts] = useState(0);
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const permissions = usePermissions();
- const [data, setData] = useState([]);
+ const [data, setData] = useState<any>(null);
   // Dummy trip data
 
 useEffect(() => {  
@@ -128,7 +128,7 @@ const tripData = {
       });
       
       console.log('[MarkCompleteScreen] Photo captured:', image.path);
-      setDeliveryPhotos([...deliveryPhotos, image.path]);
+      setDeliveryPhotos([...deliveryPhotos, image]);
       showSuccess('Photo captured successfully');
     } catch (error: any) {
       console.log('[MarkCompleteScreen] Camera error:', error);
@@ -188,7 +188,7 @@ const tripData = {
       const images = Array.isArray(result) ? result : [result];
       const newPhotos = images.map(img => img.path);
       console.log('[MarkCompleteScreen] Photos selected:', newPhotos);
-      setDeliveryPhotos([...deliveryPhotos, ...newPhotos]);
+      setDeliveryPhotos([...deliveryPhotos, ...images]);
       showSuccess(`${newPhotos.length} photo(s) added`);
     } catch (error: any) {
       console.log('[MarkCompleteScreen] Gallery error:', error);
@@ -211,7 +211,7 @@ const tripData = {
   if (!tripId) return;
 
   if (deliveryPhotos.length === 0) {
-    showSuccess('Please upload delivery photo');
+    showError('Please upload delivery photo');
     return;
   }
 
@@ -219,16 +219,18 @@ const tripData = {
     const formData = new FormData();
 
     // 🔹 same keys as Postman
-    formData.append('latitude', 22.3569);
-    formData.append('longitude', 91.7832);
-    formData.append('deliveredWeight', 25.0);
+    // TODO: Replace with actual GPS location in production
+    // For now using test coordinates (Chittagong, Bangladesh)
+    formData.append('latitude', '22.3569');
+    formData.append('longitude', '91.7832');
+    formData.append('deliveredWeight', '25.0');
 
     // 🔹 multiple files supported
-    deliveryPhotos.forEach((path, index) => {
+    deliveryPhotos.forEach((photo, index) => {
       formData.append('unloadingDocuments', {
-        uri: path,
-        type: 'image/jpeg',
-        name: `delivery_${index}.jpg`,
+        uri: photo.path,
+        type: photo.mime ||'image/jpeg',
+        name: photo.filename || `delivery_${index}.jpg`,
       } as any);
     });
 
@@ -238,7 +240,7 @@ const tripData = {
       showSuccess('Trip completed successfully');
       setShowCongratulations(true);
     } else {
-      showSuccess(res?.message || 'Failed to complete trip');
+      showError(res?.message || 'Failed to complete trip');
     }
   } catch (error) {
     console.log('Complete trip error:', error);
