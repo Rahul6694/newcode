@@ -213,7 +213,7 @@ export const TripDetailScreen: React.FC = () => {
 
 
 
-  const handleCall = (phone: string) => Linking.openURL(`tel:${phone}`);
+  // const handleCall = (phone: string) => Linking.openURL(`tel:${phone}`);
 
   const handleNavigate = (type: 'loading' | 'unloading') => {
     if (!trip) return;
