@@ -50,12 +50,12 @@ export const LocationMarkScreen: React.FC = () => {
   const [location] = useState(true); // Always show location for UI
   const [marking, setMarking] = useState(false);
   const [pulseAnim] = useState(new Animated.Value(1));
-  const [documents, setDocuments] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const [cameraAttempts, setCameraAttempts] = useState(0);
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const [docsUploaded, setDocsUploaded] = useState(false);
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any>(null);
 
   useEffect(() => {
     getActiveTrips();
@@ -66,14 +66,14 @@ export const LocationMarkScreen: React.FC = () => {
   const getActiveTrips = async () => {
     try {
       const res = await tripApi.getActiveTrip();
-      if (res) {
+      if (res && res.success) {
         console.log('Profile data:', res);
         const data = res.data || res;
         setData(data || []);
         console.log('efefe', data);
       } else {
         const errorMsg = res?.message || 'Failed to load profile';
-        console.log('Profile data:', res);
+        console.log('Profile data failed:', res);
       }
     } catch (error: any) {
       console.log('Load profile error:', error);
@@ -268,14 +268,21 @@ export const LocationMarkScreen: React.FC = () => {
       formData.append('remarks', 'Loading completed');
       console.log(formData, documents, 'formData=======>');
 
-      const success = await tripApi.uploadDocument(tripId, formData);
+      const response = await tripApi.uploadDocument(tripId, formData);
 
-      console.log(success, 'sucess===============>');
-      return;
-      showSuccess('Documents uploaded successfully');
-      setDocsUploaded(true);
+      console.log(response, 'upload response===============>');
+
+      if (response.success) {
+        showSuccess('Documents uploaded successfully');
+        setDocsUploaded(true);
+      } else {
+        const errorMsg = response.message || response.error || 'Failed to upload documents';
+        showError(errorMsg);
+      }
     } catch (error: any) {
-      console.log(error);
+      console.log('Upload error:', error);
+      const errorMsg = error?.message || 'Failed to upload documents. Please try again.';
+      showError(errorMsg);
     } finally {
       setUploadingDocs(false);
     }
