@@ -45,6 +45,9 @@ export const LocationMarkScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const permissions = usePermissions();
 
+
+  console.log(stage, 'stage===============>');
+
   // UI state only
   const [loading] = useState(false);
   const [location] = useState(true); // Always show location for UI
