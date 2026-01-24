@@ -198,7 +198,7 @@ const loadHistory = async (page: number = 1) => {
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.assignedWeight || 'N/A'} Kg</Typography>
+            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.assignedWeight || 'N/A'} TON</Typography>
       </View>
           <View style={styles.gridItem}>
             <Image 
@@ -214,14 +214,14 @@ const loadHistory = async (page: number = 1) => {
               })}
             </Typography>
         </View>
-          <View style={styles.gridItem}>
+          {/* <View style={styles.gridItem}>
             <Image 
               source={require('@/assets/images/contact-form.png')} 
               style={styles.gridIcon}
               resizeMode="contain"
             />
             <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>Docs: {item.documents.loading.length + item.documents.unloading.length > 0 ? 'Uploaded' : 'Pending'}</Typography>
-        </View>
+        </View> */}
         </View>
 
         {/* Action Button */}
@@ -270,7 +270,7 @@ const loadHistory = async (page: number = 1) => {
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
+      {/* <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterTab, selectedFilter === 'all' && styles.filterTabActive]}
           onPress={() => setSelectedFilter('all')}
@@ -295,7 +295,7 @@ const loadHistory = async (page: number = 1) => {
             Completed
           </Typography>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 

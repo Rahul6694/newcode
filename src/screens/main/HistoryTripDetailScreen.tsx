@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator} from 'react-native';
+import {View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useRoute, useNavigation, RouteProp, CommonActions} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -99,6 +99,10 @@ export const HistoryTripDetailScreen: React.FC = () => {
     fetchTripDetails();
   }, [tripId]);
 
+const handleCall = (phoneNumber: string) => {
+  Linking.openURL(`tel:${phoneNumber}`);
+};
+  
   const fetchTripDetails = async () => {
     try {
       setLoading(true);
@@ -343,7 +347,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
               <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.contact}>{trip.loadingLocation.contactPerson.name}</Typography>
               <TouchableOpacity
                 style={styles.callBtn}
-                onPress={() => {}}>
+               onPress={() => handleCall(trip.loadingLocation.contactPerson.phoneNumber || 'NA')}>
                 <Image 
                   source={require('@/assets/images/phone-call.png')} 
                   style={styles.callIcon}
@@ -375,7 +379,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
               <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.contact}>{trip.unloadingLocation.contactPerson.name}</Typography>
               <TouchableOpacity
                 style={styles.callBtn}
-                onPress={() => {}}>
+                onPress={() => handleCall(trip.unloadingLocation.contactPerson.phoneNumber || 'NA')}>
                 <Image 
                   source={require('@/assets/images/phone-call.png')} 
                   style={styles.callIcon}
@@ -440,7 +444,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
               </View>
               <TouchableOpacity
                 style={styles.callDriverBtn}
-                onPress={() => {}}>
+             onPress={() => handleCall(trip.driver.mobileNumber || 'NA')}>
                 <Image 
                   source={require('@/assets/images/phone-call.png')} 
                   style={styles.callDriverIcon}

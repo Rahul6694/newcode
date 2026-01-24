@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useActionState, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   StatusBar,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -39,6 +40,7 @@ export const TodoScreen: React.FC = () => {
   const { showError } = useToast();
   const [loading, setloading] = useState();
   const [data, setData] = useState([]);
+  const [datalenght, setDatalenght] = useState([]);
 
   // Use dummy data if active trips are empty - show only first trip
   const allTrips = data;
@@ -62,8 +64,27 @@ export const TodoScreen: React.FC = () => {
     }
   };
 
+  const loadHistory = async (page: number = 1) => {
+    try {
+  
+      const response = await tripApi.getTripHistory(page, 10);
+  
+  
+      const trips = response?.data?.trips || [];
+      setDatalenght(trips.length);
+  
+    } catch (error: any) {
+      console.log('Load History Error:', error);
+ 
+     
+    } finally {
+    ;
+    }
+  };
+
   useEffect(() => {
     getActiveTrips();
+    loadHistory();
   }, [useIsFocused()]);
 
  const handleTripPress = (trip: Trip) => {
@@ -309,15 +330,15 @@ export const TodoScreen: React.FC = () => {
           {/* Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Typography style={styles.statValue}>1</Typography>
+              <Typography style={styles.statValue}>{displayTrips.length ? displayTrips.length : 'NA'}</Typography>
               <Typography style={styles.statLabel}>Active Trip</Typography>
             </View>
 
             <View style={styles.statDivider} />
 
             <View style={styles.statBox}>
-              <Typography style={styles.statValue}>12</Typography>
-              <Typography style={styles.statLabel}>This Month</Typography>
+              <Typography style={styles.statValue}>{datalenght ? datalenght : 'NA'}</Typography>
+              <Typography style={styles.statLabel}>Total Trips</Typography>
             </View>
           </View>
 
@@ -351,8 +372,10 @@ export const TodoScreen: React.FC = () => {
       <SafeAreaView style={styles.container} edges={['top']}>
         {/* Full Screen Linear Gradient Background */}
 
+
         <FlatList
           data={displayTrips}
+        
           renderItem={renderTripCard}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
@@ -363,6 +386,7 @@ export const TodoScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
+      
       </SafeAreaView>
     </>
   );
@@ -373,9 +397,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-
   listContent: {
-    paddingBottom: spacing.xxxl,
+    paddingBottom: 110,
     zIndex: 1,
   },
   headerWrapper: {

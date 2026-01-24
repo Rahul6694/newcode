@@ -34,8 +34,8 @@ export const tripApi = {
     payload: { latitude: number; longitude: number },
   ): Promise<ApiResponse> => ApiClient.post(`/trips/${tripId}/start`, payload),
 
-  completeTrip: (tripId: string, data: any): Promise<ApiResponse> =>
-    ApiClient.post(`/trips/${tripId}/complete`, data),
+  completeTrip: (tripId: string, formData: FormData): Promise<ApiResponse> =>
+    ApiClient.uploadFile(`/trips/${tripId}/complete`, formData),
 
   getTripHistory: (
     page: number = 1,
@@ -63,6 +63,12 @@ export const tripApi = {
 
   uploadDocument: (tripId: string, formData: FormData): Promise<ApiResponse> =>
     ApiClient.uploadFile(`/trips/${tripId}/upload-loading-docs`, formData),
+
+  updateLocation: (
+    tripId: string,
+    payload: { latitude: number; longitude: number },
+  ): Promise<ApiResponse> =>
+    ApiClient.put(`/trips/${tripId}/location`, payload),
 };
 
 // Location endpoints
