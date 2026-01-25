@@ -43,7 +43,8 @@ export const TripInProgressScreen: React.FC = () => {
   const bottomSheetMaxHeight = screenHeight * 0.7; // Maximum height (70% of screen)
   const bottomSheetMinHeight = 220; // Minimum height when collapsed
   // Start collapsed (down position) by default
-  const bottomSheetTranslateY = useRef(new Animated.Value(bottomSheetMaxHeight - bottomSheetMinHeight)).current;
+  // const bottomSheetTranslateY = useRef(new Animated.Value(bottomSheetMaxHeight - bottomSheetMinHeight)).current;
+  const bottomSheetTranslateY = useRef(new Animated.Value(bottomSheetMinHeight)).current;
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   

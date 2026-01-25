@@ -204,7 +204,7 @@ const handleLogout = async () => {
               <View style={styles.avatarContainer}>
                 <View style={styles.avatarWrapper}>
                   <View style={styles.avatarCircle}>
-                    <Typography variant="h1" color="white" style={styles.avatarText}>
+                    <Typography  style={styles.avatarText}>
                       {getInitials(dummyUser?.fullName)}
                     </Typography>
                   </View>
@@ -489,6 +489,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: '700',
     color: colors.primary,
+  paddingTop: Platform.OS === 'ios' ? spacing.xxxl : 0,
   },
   statusIndicator: {
     position: 'absolute',

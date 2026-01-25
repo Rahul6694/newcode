@@ -110,6 +110,7 @@ export const Input: React.FC<InputProps> = ({
           ]}
           placeholderTextColor={colors.textTertiary}
           onFocus={() => setIsFocused(true)}
+          
           onBlur={() => setIsFocused(false)}
           secureTextEntry={actualSecureEntry}
           {...props}
@@ -139,6 +140,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.lg,
+   
   },
   inputFocused: {
     borderColor: colors.primary,
