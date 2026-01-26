@@ -134,9 +134,9 @@ export const TodoScreen: React.FC = () => {
         {/* Route Section */}
         <View style={styles.routeContainer}>
           <View style={styles.timelineContainer}>
-            <View style={[styles.dot, { backgroundColor: colors.success }]} />
+            <View style={[styles.dot, { backgroundColor: colors.success, marginTop:10 }]} />
             <View style={styles.line} />
-            <View style={[styles.dot, { backgroundColor: colors.error }]} />
+            <View style={[styles.dot, { backgroundColor: colors.error ,marginBottom:10}]} />
           </View>
 
           <View style={styles.locations}>
@@ -145,6 +145,7 @@ export const TodoScreen: React.FC = () => {
                 variant="bodyMedium"
                 color="textPrimary"
                 weight="700"
+               
                 style={styles.cityText}
               >
                 {loadingCity}
@@ -152,8 +153,9 @@ export const TodoScreen: React.FC = () => {
               <Typography
                 variant="small"
                 color="textSecondary"
+                  numberOfLines={2}
                 style={styles.addressText}
-                numberOfLines={1}
+               
               >
                 {loadingAddress}
               </Typography>
@@ -163,6 +165,7 @@ export const TodoScreen: React.FC = () => {
                 variant="bodyMedium"
                 color="textPrimary"
                 weight="700"
+                
                 style={styles.cityText}
               >
                 {unloadingCity}
@@ -171,7 +174,7 @@ export const TodoScreen: React.FC = () => {
                 variant="small"
                 color="textSecondary"
                 style={styles.addressText}
-                numberOfLines={1}
+          numberOfLines={2}
               >
                 {unloadingAddress}
               </Typography>
@@ -667,9 +670,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   line: {
-    borderWidth: 1,
+    borderWidth: 0.8,
     borderStyle: 'dashed',
-    borderColor: colors.textPrimary,
+    borderColor: 'black',
     flex: 1,
     marginVertical: spacing.sm,
   },

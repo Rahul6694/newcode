@@ -115,6 +115,7 @@ export const TripInProgressScreen: React.FC = () => {
     }
   };
 
+  
   const unloadingAddress = trip?.order?.unloadingAddress ?? 'N/A';
   const unloadingContactName = trip?.order?.unloadingContactName ?? 'N/A';
   const unloadingContactNumber = trip?.order?.unloadingContactNumber ?? 'N/A';
