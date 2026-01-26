@@ -181,38 +181,50 @@ const handleTripPress = async () => {
     extrapolate: 'clamp',
   });
 
-  const slidePanResponder = PanResponder.create({
+  const slideOffset = useRef(0);
+
+const slidePanResponder = useRef(
+  PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, g) =>
+      Math.abs(g.dx) > Math.abs(g.dy), // 👈 vertical scroll ignore
+
     onPanResponderGrant: () => {
       setIsSliding(true);
+      slideProgress.stopAnimation();
+      slideOffset.current = (slideProgress as any)._value || 0;
     },
-    onPanResponderMove: (evt, gestureState) => {
-      const maxWidth = slideButtonWidth - thumbSize - (thumbPadding * 2);
-      const newValue = Math.max(0, Math.min(maxWidth, gestureState.dx));
-      slideProgress.setValue(newValue);
+
+    onPanResponderMove: (_, g) => {
+      const max = maxSlideDistance;
+      let value = slideOffset.current + g.dx;
+
+      value = Math.max(0, Math.min(max, value));
+      slideProgress.setValue(value);
     },
-    onPanResponderRelease: (evt, gestureState) => {
+
+    onPanResponderRelease: (_, g) => {
       setIsSliding(false);
-      const maxWidth = slideButtonWidth - thumbSize - (thumbPadding * 2);
-      if (gestureState.dx >= maxWidth * 0.8) {
-        // Complete the slide
-        Animated.spring(slideProgress, {
-          toValue: maxWidth,
-          useNativeDriver: false,
-        }).start(() => {
-          // handleSlideAction();
-          handleTripPress()
-        });
-      } else {
-        // Reset
-        Animated.spring(slideProgress, {
-          toValue: 0,
-          useNativeDriver: false,
-        }).start();
-      }
+      const max = maxSlideDistance;
+      const current = slideProgress.__getValue();
+
+      const shouldComplete =
+        current > max * 0.7 || g.vx > 0.8;
+
+      Animated.spring(slideProgress, {
+        toValue: shouldComplete ? max : 0,
+        useNativeDriver: false,
+        tension: 40,
+        friction: 7,
+      }).start(() => {
+        if (shouldComplete) {
+          handleTripPress(); // 👈 ONLY here
+        }
+      });
     },
-  });
+  })
+).current;
+
 
   // UI handlers only
   // Add this inside your TripDetailScreen component

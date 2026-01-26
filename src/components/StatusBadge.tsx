@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<TripStatus, {color: string; bg: string; label: string}> = {
-  ASSIGNED: {
+ 'ASSIGNED': {
     color: colors.statusAssigned,
     bg: '#F3E8FF',
     label: 'ASSIGNED',
@@ -19,17 +19,17 @@ const statusConfig: Record<TripStatus, {color: string; bg: string; label: string
     bg: colors.primaryLight,
     label: 'In Progress',
   },
-  Loaded: {
+  'LOADED': {
     color: colors.statusLoaded,
     bg: colors.warningLight,
     label: 'Loaded',
   },
-  Arrived: {
+  'ARRIVED': {
     color: colors.statusArrived,
     bg: colors.successLight,
     label: 'Arrived',
   },
-  Completed: {
+  'COMPLETED': {
     color: colors.statusCompleted,
     bg: '#D1FAE5',
     label: 'Completed',

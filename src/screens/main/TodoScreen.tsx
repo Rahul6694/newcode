@@ -50,7 +50,7 @@ export const TodoScreen: React.FC = () => {
     try {
       const res = await tripApi.getActiveTrip();
       if (res) {
-        console.log('Profile data:', res);
+        console.log('Profile datas:', res);
         const data = res.data || res;
         setData(data || [])
         console.log(data, 'data==============>');
