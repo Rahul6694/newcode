@@ -252,11 +252,11 @@ export const LocationMarkScreen: React.FC = () => {
       showError('Please add documents before uploading');
       return;
     }
-    if (LoadedValue === null || LoadedValue === '') {
-      showError('Please enter loaded weight');
+    // if (LoadedValue === null || LoadedValue === '') {
+    //   showError('Please enter loaded weight');
 
-      return;
-    }
+    //   return;
+    // }
 
     setUploadingDocs(true);
 
@@ -276,7 +276,7 @@ export const LocationMarkScreen: React.FC = () => {
       //     type: selectedPhoto?.mime || 'image/jpeg',
 
       formData.append('remarks', 'Loading completed');
-     formData.append('LoadWeight', LoadedValue.toString());
+    //  formData.append('LoadWeight', LoadedValue.toString());
       console.log(formData, documents, 'formData=======>');
 
       const response = await tripApi.uploadDocument(tripId, formData);
