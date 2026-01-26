@@ -18,7 +18,8 @@
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    
 
     <application
       android:name=".MainApplication"
@@ -32,7 +33,7 @@
       <!-- Google Maps API Key -->
       <meta-data
         android:name="com.google.android.geo.API_KEY"
-        android:value="AIzaSyCt8jw_uRbRfr9_8CBRdauiHY8rWCjV6WU" />
+        android:value="AIzaSyAqBEGD7SlCdvqKeL8rom-hyz46dCULdNs" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
