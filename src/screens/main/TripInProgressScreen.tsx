@@ -1,17 +1,18 @@
-import React, {useEffect, useState, useRef} from 'react';
-import {StyleSheet, Dimensions, ActivityIndicator, View, Text, TouchableOpacity, Modal, Linking, PermissionsAndroid, Platform, Animated, PanResponder, ScrollView, Image} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation, RouteProp} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Dimensions, ActivityIndicator, View, Text, TouchableOpacity, Modal, Linking, PermissionsAndroid, Platform, Animated, PanResponder, ScrollView, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
-import {check, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import {TodoStackParamList} from '@/types';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
-import {Header} from '@/components/Header';
+import { check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { TodoStackParamList } from '@/types';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
+import { Header } from '@/components/Header';
+import { Typography } from '@/components';
 import { tripApi } from '@/apiservice';
 
-const {height} = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 type TripInProgressRouteProp = RouteProp<TodoStackParamList, 'TripInProgress'>;
 type TripInProgressNavigationProp = StackNavigationProp<TodoStackParamList, 'TripInProgress'>;
@@ -22,7 +23,7 @@ type TripInProgressNavigationProp = StackNavigationProp<TodoStackParamList, 'Tri
 export const TripInProgressScreen: React.FC = () => {
   const route = useRoute<TripInProgressRouteProp>();
   const navigation = useNavigation<TripInProgressNavigationProp>();
-  const {tripId} = route.params;
+  const { tripId } = route.params;
 
   // Location from GPS (null initially, will be set when GPS location is received)
   const [location, setLocation] = useState<any>(null);
@@ -30,22 +31,29 @@ export const TripInProgressScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [routeLoading, setRouteLoading] = useState(false);
   const [isNearDestination, setIsNearDestination] = useState(false);
+
+  // Actual route data from Google Maps
+  const [actualRouteDistance, setActualRouteDistance] = useState<number | null>(null);
+  const [actualRouteDuration, setActualRouteDuration] = useState<number | null>(null);
   const [showArrivedModal, setShowArrivedModal] = useState(false);
   const mapRef = useRef<MapView>(null);
 
   // Bottom Sheet animation values
   const screenHeight = Dimensions.get('window').height;
-  const bottomSheetHeight = screenHeight * 0.5; // 50% of screen
-  const bottomSheetMinHeight = 140; // Minimum height when collapsed
+  const bottomSheetMaxHeight = screenHeight * 0.45; // ya jitna chaaho (75%–85%)
+  const bottomSheetMinHeight = 220; // Minimum height when collapsed
   // Start collapsed (down position) by default
-  const bottomSheetTranslateY = useRef(new Animated.Value(bottomSheetHeight - bottomSheetMinHeight)).current;
-  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
-  
+  // const bottomSheetTranslateY = useRef(new Animated.Value(bottomSheetMaxHeight - bottomSheetMinHeight)).current;
+  // Yeh line change karo:
+  const bottomSheetTranslateY = useRef(new Animated.Value(0)).current; // 0 = fully open/upar
+  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+
   // Animation values for card sections
   const headerAnim = useRef(new Animated.Value(0)).current;
   const destinationAnim = useRef(new Animated.Value(0)).current;
   const detailsAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Calculate distance to destination
   const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<string>('');
@@ -57,22 +65,22 @@ export const TripInProgressScreen: React.FC = () => {
   const maxSlideDistance = slideButtonWidth - thumbSize - (thumbPadding * 2);
   const slideProgress = useRef(new Animated.Value(0)).current;
   const [isSliding, setIsSliding] = useState(false);
-  const [data, setData] = useState([]);
- useEffect(() => {
-  getActiveTrips();
-}, []);
+  const [data, setData] = useState<any[]>([]);
+  useEffect(() => {
+    getActiveTrips();
+  }, []);
 
-const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
+  const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
 
 
   const getActiveTrips = async () => {
     try {
-      const res = await tripApi.getActiveTrip();
+      const res: any = await tripApi.getActiveTrip();
       if (res) {
         console.log('Profile data:', res);
         const data = res.data || res;
-        setData(data||[])
+        setData(data || [])
         console.log(data, 'data==============>');
       } else {
         const errorMsg = res?.message || 'Failed to load profile';
@@ -82,45 +90,120 @@ const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
       console.log('Load profile error:', error);
     } finally {
     }
-  };  
+  };
 
-const unloadingAddress = trip?.order?.unloadingAddress ?? 'N/A';
-const unloadingContactName = trip?.order?.unloadingContactName ?? 'N/A';
-const unloadingContactNumber = trip?.order?.unloadingContactNumber ?? 'N/A';
+  // Function to update location to API
+  const updateLocationToAPI = async () => {
+    if (!tripId || !location) return;
 
-const sampleTrip: any = {
+    try {
+      const payload = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+      };
 
-  tripNumber: 'TRP-2024-001',
-  // orderNumber: 'ORD-12345',
-  // vehicleNumber: 'RJ-14-AB-1234',
-  // assignedWeight: '5000',
-  // deliveredWeight: null,
-  // status: 'In Progress',
-  // distance: '497',
-  // loadingLocation: {
-  //   address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
-  //   coordinates: {
-  //     latitude: 26.9124,
-  //     longitude: 75.7873,
-  //   },
-  //   contactPerson: {
-  //     name: 'Rajesh Kumar',
-  //     phoneNumber: '+91-9876543210',
-  //   },
-  // },
-  unloadingLocation: {
-    address: unloadingAddress ,
-    coordinates: {
-      latitude: 28.6139,
-      longitude: 77.209,
+      console.log('Updating location to API:', payload);
+      const res = await tripApi.updateLocation(tripId, payload);
+
+      if (res?.success) {
+        console.log('Location updated successfully');
+      } else {
+        console.log('Location update failed:', res);
+      }
+    } catch (error: any) {
+      console.log('Location update error:', error);
+    }
+  };
+
+  const unloadingAddress = trip?.order?.unloadingAddress ?? 'N/A';
+  const unloadingContactName = trip?.order?.unloadingContactName ?? 'N/A';
+  const unloadingContactNumber = trip?.order?.unloadingContactNumber ?? 'N/A';
+
+  // Function to geocode address to coordinates
+  const geocodeAddress = async (address: string) => {
+    try {
+      if (!address || address === 'N/A') return null;
+
+      // Use Google Maps Geocoding API
+      const apiKey = 'AIzaSyDKbLlbS2U7upE8jxgpIkA-RGrhqFRR8eI'; // Same key used in the app
+      const encodedAddress = encodeURIComponent(address);
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+
+      console.log('Geocoding address:', address);
+      console.log('Geocoding URL:', url);
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.status === 'OK' && data.results && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        const coordinates = {
+          latitude: location.lat,
+          longitude: location.lng,
+        };
+
+        console.log('Geocoded coordinates:', coordinates);
+        return coordinates;
+      } else {
+        console.log('Geocoding failed:', data.status, data.error_message);
+        return null;
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
+  // Get coordinates from unloading address
+  const [unloadingCoordinates, setUnloadingCoordinates] = useState<{ latitude: number, longitude: number } | null>(null);
+
+  // Format duration from minutes to readable format
+  const formatDuration = (minutes: number | null) => {
+    if (!minutes) return null;
+
+    if (minutes < 60) {
+      return `${Math.round(minutes)} min`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const mins = Math.round(minutes % 60);
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+  };
+
+
+  const sampleTrip: any = {
+
+    tripNumber: 'TRP-2024-001',
+    // orderNumber: 'ORD-12345',
+    // vehicleNumber: 'RJ-14-AB-1234',
+    // assignedWeight: '5000',
+    // deliveredWeight: null,
+    // status: 'In Progress',
+    // distance: '497',
+    // loadingLocation: {
+    //   address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
+    //   coordinates: {
+    //     latitude: 26.9124,
+    //     longitude: 75.7873,
+    //   },
+    //   contactPerson: {
+    //     name: 'Rajesh Kumar',
+    //     phoneNumber: '+91-9876543210',
+    //   },
+    // },
+    unloadingLocation: {
+      address: unloadingAddress,
+      coordinates: {
+        latitude: 28.6139,
+        longitude: 77.209,
+      },
+      contactPerson: {
+        name: unloadingContactName,
+        phoneNumber: unloadingContactNumber,
+      },
     },
-    contactPerson: {
-      name: unloadingContactName,
-      phoneNumber: unloadingContactNumber,
-    },
-  },
-};
- 
+  };
+
 
 
   const thumbLeft = slideProgress.interpolate({
@@ -159,7 +242,7 @@ const sampleTrip: any = {
         const maxWidth = slideButtonWidth - thumbSize - (thumbPadding * 2);
         const currentValue = gestureState.dx;
         const velocity = gestureState.vx;
-        
+
         // Lower threshold for completion (70% instead of 80%)
         // Also check velocity for quick swipes
         if (currentValue >= maxWidth * 0.7 || (currentValue >= maxWidth * 0.5 && velocity > 0.5)) {
@@ -227,16 +310,16 @@ const sampleTrip: any = {
       latitude: 28.5355,
       longitude: 77.3910,
     };
-    
+
     console.log('Current Location (Noida):');
     console.log('Latitude:', noidaLocation.latitude);
     console.log('Longitude:', noidaLocation.longitude);
     console.log('Location: Noida, Uttar Pradesh, India');
-    
+
     setLocation(noidaLocation);
     setHasGpsLocation(true);
     setLoading(false);
-    
+
     // Center map on Noida location
     setTimeout(() => {
       recenterMap(noidaLocation);
@@ -254,6 +337,18 @@ const sampleTrip: any = {
     };
   }, []);
 
+  // Geocode unloading address to get coordinates
+  useEffect(() => {
+    const getUnloadingCoordinates = async () => {
+      if (unloadingAddress && unloadingAddress !== 'N/A') {
+        const coordinates = await geocodeAddress(unloadingAddress);
+        setUnloadingCoordinates(coordinates);
+      }
+    };
+
+    getUnloadingCoordinates();
+  }, [unloadingAddress]);
+
   // Calculate distance to destination
   useEffect(() => {
     if (location && destination) {
@@ -264,7 +359,7 @@ const sampleTrip: any = {
         destination.longitude
       );
       setDistanceToDestination(distance);
-      
+
       // Estimate time (assuming average speed of 40 km/h)
       const timeInHours = distance / 1000 / 40; // Convert meters to km, divide by speed
       const timeInMinutes = Math.round(timeInHours * 60);
@@ -304,6 +399,26 @@ const sampleTrip: any = {
     }
   }, [hasGpsLocation, loading]);
 
+  // Update location to API when location is first received
+  useEffect(() => {
+    if (location && tripId) {
+      updateLocationToAPI();
+    }
+  }, [location, tripId]);
+
+  // Set up periodic location updates every 5 minutes (300,000 ms)
+  useEffect(() => {
+    if (!location || !tripId) return;
+
+    const interval = setInterval(() => {
+      updateLocationToAPI();
+    }, 300000); // 5 minutes = 300,000 milliseconds
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [location, tripId]);
+
   // Bottom Sheet Pan Responder - only responds to vertical gestures
   const bottomSheetPanResponder = useRef(
     PanResponder.create({
@@ -314,6 +429,7 @@ const sampleTrip: any = {
       },
       onPanResponderTerminationRequest: () => true, // Allow slide button to take over if needed
       onPanResponderGrant: () => {
+        setIsDragging(true);
         bottomSheetTranslateY.setOffset((bottomSheetTranslateY as any)._value);
       },
       onPanResponderMove: (_, gestureState) => {
@@ -321,23 +437,24 @@ const sampleTrip: any = {
         if (Math.abs(gestureState.dy) > Math.abs(gestureState.dx)) {
           const currentValue = (bottomSheetTranslateY as any)._value;
           const newValue = currentValue + gestureState.dy;
-          // Clamp between 0 and bottomSheetHeight
-          const clampedValue = Math.max(0, Math.min(bottomSheetHeight, newValue));
+          // Clamp between 0 and bottomSheetMaxHeight
+          const clampedValue = Math.max(0, Math.min(bottomSheetMaxHeight, newValue));
           bottomSheetTranslateY.setValue(clampedValue - currentValue);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
+        setIsDragging(false);
         bottomSheetTranslateY.flattenOffset();
         const currentValue = (bottomSheetTranslateY as any)._value;
         const velocity = gestureState.vy;
-        
+
         // Only process if it was a vertical gesture
         if (Math.abs(gestureState.dy) > Math.abs(gestureState.dx)) {
           // Determine if should expand or collapse
-          if (velocity > 0.5 || (currentValue > bottomSheetHeight * 0.5 && velocity > -0.5)) {
+          if (velocity > 0.5 || (currentValue > bottomSheetMaxHeight * 0.5 && velocity > -0.5)) {
             // Collapse
             Animated.spring(bottomSheetTranslateY, {
-              toValue: bottomSheetHeight - bottomSheetMinHeight,
+              toValue: bottomSheetMaxHeight - bottomSheetMinHeight,
               useNativeDriver: true,
               tension: 50,
               friction: 8,
@@ -356,6 +473,9 @@ const sampleTrip: any = {
             });
           }
         }
+      },
+      onPanResponderTerminate: () => {
+        setIsDragging(false);
       },
     })
   ).current;
@@ -397,7 +517,7 @@ const sampleTrip: any = {
     if (locToUse && mapRef.current) {
       // Calculate bearing from current location to destination
       const bearing = calculateBearing(locToUse, destination);
-      
+
       // Use setTimeout to ensure map is ready
       setTimeout(() => {
         if (mapRef.current) {
@@ -413,7 +533,7 @@ const sampleTrip: any = {
               altitude: 5000, // Zoom level for navigation view
               zoom: 17, // Closer zoom for navigation mode
             },
-            {duration: 1000}
+            { duration: 1000 }
           );
         }
       }, 300);
@@ -441,41 +561,72 @@ const sampleTrip: any = {
   }, [location, hasGpsLocation]);
 
   // Function to open Google Maps app with destination coordinates
-  const openGoogleMaps = () => {
-    const {latitude, longitude} = destination;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    Linking.openURL(url).catch((err) => console.log('Failed to open Google Maps:', err));
+
+  const handleNavigate = (address: string, label: string) => {
+    if (!address) return;
+
+    console.log('Navigation Address:', address);
+
+    // Clean the address - replace commas with spaces for better Google Maps handling
+    const cleanAddress = address.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // Use geocoded coordinates from unloading address if available
+    const coords = unloadingCoordinates ?
+      `${unloadingCoordinates.latitude},${unloadingCoordinates.longitude}` : null;
+
+    console.log('Clean Address:', cleanAddress);
+    console.log('Geocoded Coordinates available:', !!coords);
+
+    // Use coordinates if available (more accurate), otherwise use address
+    const googleMapsUrl = coords
+      ? `https://maps.google.com/maps?q=${coords}(${encodeURIComponent(cleanAddress)})`
+      : `https://maps.google.com/maps?q=${encodeURIComponent(cleanAddress)}`;
+
+    console.log('Google Maps URL:', googleMapsUrl);
+
+    Linking.openURL(googleMapsUrl).catch(err => {
+      console.log('Failed to open Google Maps:', err);
+      // Fallback to general maps app
+      const fallbackUrl = Platform.select({
+        ios: coords ? `maps://app?daddr=${coords}` : `maps://app?daddr=${encodeURIComponent(cleanAddress)}`,
+        android: coords ? `geo:${coords}?q=${encodeURIComponent(cleanAddress)}` : `geo:0,0?q=${encodeURIComponent(cleanAddress)}`,
+      });
+      if (fallbackUrl) {
+        console.log('Fallback URL:', fallbackUrl);
+        Linking.openURL(fallbackUrl).catch(console.log);
+      }
+    });
   };
 
   // Function to handle Mark as Arrived
- const handleMarkAsArrived = async () => {
-  if (!tripId) return;
+  const handleMarkAsArrived = async () => {
+    if (!tripId) return;
 
-  try {
-    const payload = {
-      arrivedLatitude: 22.3569,
-      arrivedLongitude: 72.3569,
-    };
+    try {
+      const payload = {
+        arrivedLatitude: 22.3569,
+        arrivedLongitude: 72.3569,
+      };
 
-    const res = await tripApi.markArrived(tripId, payload);
+      const res = await tripApi.markArrived(tripId, payload);
 
-    if (res?.success) {
-      console.log('Trip marked as arrived', res.data);
-      navigation.navigate('MarkComplete', {
-        tripId: tripId,
-      });
+      if (res?.success) {
+        console.log('Trip marked as arrived', res.data);
+        navigation.navigate('MarkComplete', {
+          tripId: tripId,
+        });
+      }
+    } catch (error) {
+      console.log('Mark arrived error:', error);
     }
-  } catch (error) {
-    console.log('Mark arrived error:', error);
-  }
-};
+  };
 
-  
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header title="Trip In Progress" onBackPress={() => navigation.goBack()} />
-      
+
       {/* Show loading until GPS location is received */}
       {loading || !hasGpsLocation ? (
         <View style={styles.loadingContainer}>
@@ -483,107 +634,160 @@ const sampleTrip: any = {
           <Text style={styles.loadingText}>Fetching current location...</Text>
         </View>
       ) : null}
-      
+
       {/* Map Container - Hidden until GPS location is received, but rendered to get GPS */}
       <View style={[
         styles.mapContainer,
         (!hasGpsLocation || loading) && styles.mapContainerHidden
       ]}>
         <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        mapType="standard"
-        initialRegion={{
-          latitude: 28.6139, // Default to destination (will update when GPS location comes)
-          longitude: 77.209,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        showsUserLocation={false} // Hide blue dot
-        showsMyLocationButton={false} // Hide current location button
-        zoomEnabled={true}
-        scrollEnabled={true}
-        rotateEnabled={true}
-        // pitchEnabled={true}
-        loadingEnabled={false}>
-          
-        {/* Directions Route - Only show when we have actual GPS current location */}
-        {location && hasGpsLocation && (
-          <MapViewDirections
-            origin={location} // Start from current GPS location
-            destination={destination}
-            apikey={GOOGLE_API_KEY}
-            strokeWidth={5}
-            optimizeWaypoints={true}
-            strokeColor="#2563EB"
-            mode="DRIVING"
-            resetOnChange={true}
-            tappable={false}
-            precision="high"
-            onStart={(params) => {
-              console.log('Route calculation started from GPS location');
-              setRouteLoading(true);
-            }}
-            onReady={(result) => {
-              console.log('Route ready:', {
-                distance: result.distance,
-                duration: result.duration,
-                coordinates: result.coordinates?.length || 0,
-              });
-              setRouteLoading(false);
-            }}
-            onError={(errorMessage) => {
-              console.log('Route error:', errorMessage);
-              setRouteLoading(false);
-            }}
-          />
-        )}
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          mapType="standard"
+          initialRegion={{
+            latitude: 28.6139, // Default to destination (will update when GPS location comes)
+            longitude: 77.209,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          showsUserLocation={false} // Hide blue dot
+          showsMyLocationButton={false} // Hide current location button
+          zoomEnabled={true}
+          scrollEnabled={true}
+          rotateEnabled={true}
+          // pitchEnabled={true}
+          loadingEnabled={false}>
 
-        {/* Truck Marker - Only show when we have actual GPS current location */}
-        {location && hasGpsLocation && (
-          <Marker
-            coordinate={location}
-            title="Truck"
-            anchor={{x: 0.5, y: 0.5}}
-            flat={true}>
-            <View style={styles.truckContainer}>
-              <Text style={styles.truckEmoji}>🚛</Text>
-            </View>
-          </Marker>
-        )}
+          {/* Directions Route - Only show when we have GPS location and unloading coordinates */}
+          {location && hasGpsLocation && unloadingCoordinates && (
+            <MapViewDirections
+              origin={location} // Start from current GPS location
+              destination={unloadingCoordinates} // End at geocoded unloading location
+              apikey={GOOGLE_API_KEY}
+              strokeWidth={5}
+              optimizeWaypoints={true}
+              strokeColor="#2563EB"
+              mode="DRIVING"
+              resetOnChange={true}
+              tappable={false}
+              precision="high"
+              onStart={(params) => {
+                console.log('Route calculation started from GPS location to unloading destination');
+                setRouteLoading(true);
+              }}
+              onReady={(result) => {
+                console.log('Route ready:', {
+                  distance: result.distance,
+                  duration: result.duration,
+                  coordinates: result.coordinates?.length || 0,
+                });
+
+                // Store actual route data from Google Maps
+                setActualRouteDistance(result.distance);
+                setActualRouteDuration(result.duration);
+                setRouteLoading(false);
+              }}
+              onError={(errorMessage) => {
+                console.log('Route error:', errorMessage);
+                setRouteLoading(false);
+              }}
+            />
+          )}
+
+          {/* Truck Marker - Only show when we have actual GPS current location */}
+          {location && hasGpsLocation && (
+            <Marker
+              coordinate={location}
+              title="Truck"
+              anchor={{ x: 0.5, y: 0.5 }}
+              flat={true}>x
+              <View style={styles.truckContainer}>
+                <Text style={styles.truckEmoji}>🚛</Text>
+              </View>
+            </Marker>
+          )}
+
+          {/* Delivery Location Marker */}
+          {unloadingCoordinates && (
+            <Marker
+              coordinate={unloadingCoordinates}
+              title="Delivery Location"
+              description={unloadingAddress}
+              anchor={{ x: 0.5, y: 0.5 }}
+              flat={true}>
+              <View style={[styles.truckContainer, styles.deliveryMarker]}>
+                <Text style={styles.deliveryEmoji}>📦</Text>
+              </View>
+            </Marker>
+          )}
         </MapView>
-        
+
         {/* Center Button - Center map on truck location (Top Right) */}
         {location && hasGpsLocation && (
           <TouchableOpacity
             style={styles.centerButton}
             onPress={() => recenterMap(location)}
             activeOpacity={0.7}>
-            <Image 
-              source={require('@/assets/images/location.png')} 
+            <Image
+              source={require('@/assets/images/location.png')}
               style={styles.centerButtonIcon}
               resizeMode="contain"
             />
           </TouchableOpacity>
         )}
+        <TouchableOpacity
+ style={ {position: 'absolute',
+    top: 80,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    elevation: 5,
+    zIndex: 1000,}}
+          onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
+          activeOpacity={0.7}>
+          <Image
+            source={require('@/assets/images/m.png')}
+            style={{
+              width: 20,
+              height: 20,
+            }}
+            resizeMode="contain"
+          />
+
+        </TouchableOpacity>
       </View>
 
       {/* Bottom Sheet */}
       {hasGpsLocation && !loading && (
-        <Animated.View 
-          style={[
-            styles.bottomSheet,
-            {
-              transform: [{translateY: bottomSheetTranslateY}],
-            }
-          ]}
-          {...bottomSheetPanResponder.panHandlers}>
-          {/* Bottom Sheet Handle */}
+
+        // <Animated.View 
+        //   style={[
+        //     styles.bottomSheet,
+        //     {
+        //         height: bottomSheetMaxHeight,
+        //       transform: [{translateY: bottomSheetTranslateY}],
+        //     }
+        //   ]}
+        //   {...bottomSheetPanResponder.panHandlers}>
+        <View style={styles.bottomSheet}>
           <View style={styles.bottomSheetHandle}>
             <View style={styles.handleBar} />
           </View>
-          <View style={styles.cardContent}>
+          <ScrollView
+            style={styles.cardContent}
+            contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.lg, }}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            scrollEnabled={!isDragging}
+          >
             {/* Arrival Time Section */}
             <View style={styles.arrivalTimeCard}>
               <View style={styles.arrivalTimeContent}>
@@ -592,20 +796,24 @@ const sampleTrip: any = {
                     <Text style={styles.arrivalTimeIcon}>⏱️</Text>
                   </View>
                   <View style={styles.arrivalTimeTextContainer}>
-                    <Text style={styles.arrivalTimeLabel}>Estimated Arrival</Text>
-                    {estimatedTime && (
-                      <Text style={styles.arrivalTimeValue}>
-                        {estimatedTime.replace(' min', ' MINS')}
-                      </Text>
+                    <Typography variant="bodyMedium" weight="600" style={{ color: colors.textSecondary }}>
+                      Estimated Arrival
+                    </Typography>
+                    {actualRouteDuration && (
+                      <Typography variant="h3" weight="700" style={{ color: colors.primary }}>
+                        {formatDuration(actualRouteDuration)}
+                      </Typography>
                     )}
                   </View>
                 </View>
-                {distanceToDestination && (
+                {actualRouteDistance && (
                   <View style={styles.distanceContainer}>
-                    <Text style={styles.distanceValue}>
-                      {(distanceToDestination / 1000).toFixed(1)} km
-                    </Text>
-                    <Text style={styles.distanceLabel}>Distance</Text>
+                    <Typography variant="bodyMedium" weight="700" style={{ color: colors.textPrimary }}>
+                      {actualRouteDistance.toFixed(1)} km
+                    </Typography>
+                    <Typography variant="caption" weight="500" style={{ color: colors.textSecondary }}>
+                      Distance
+                    </Typography>
                   </View>
                 )}
               </View>
@@ -616,21 +824,23 @@ const sampleTrip: any = {
               <View style={styles.deliveryHeader}>
                 <View style={styles.deliveryHeaderLeft}>
                   <View style={styles.deliveryIconWrapper}>
-                    <Image 
-                      source={require('@/assets/images/location.png')} 
+                    <Image
+                      source={require('@/assets/images/location.png')}
                       style={styles.deliveryIcon}
                       resizeMode="contain"
                     />
                   </View>
                   <View style={styles.deliveryHeaderText}>
-                    <Text style={styles.deliveryTitle}>Delivery Location</Text>
-                    <Text style={styles.deliveryAddress} numberOfLines={2}>
+                    <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
+                      Delivery Location
+                    </Typography>
+                    <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
                       {sampleTrip.unloadingLocation.address}
-                    </Text>
+                    </Typography>
                   </View>
                 </View>
               </View>
-              
+
               {sampleTrip.unloadingLocation.contactPerson && (
                 <>
                   <View style={styles.deliveryDivider} />
@@ -638,22 +848,24 @@ const sampleTrip: any = {
                     <View style={styles.deliveryContactRow}>
                       <View style={styles.deliveryContactInfo}>
                         <View style={styles.deliveryContactIconWrapper}>
-                          <Image 
-                            source={require('@/assets/images/phone-call.png')} 
+                          <Image
+                            source={require('@/assets/images/phone-call.png')}
                             style={styles.deliveryContactIcon}
                             resizeMode="contain"
                           />
                         </View>
                         <View style={styles.deliveryContactDetails}>
-                          <Text style={styles.deliveryContactLabel}>Contact Person</Text>
-                          <Text style={styles.deliveryContactName} numberOfLines={1}>
+                          <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
+                            Contact Person
+                          </Typography>
+                          <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
                             {sampleTrip.unloadingLocation.contactPerson.name}
-                          </Text>
+                          </Typography>
                         </View>
                       </View>
-                      
+
                       <View style={styles.deliveryActionButtonsRow}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.deliveryCallButton}
                           onPress={() => {
                             if (sampleTrip.unloadingLocation.contactPerson?.phoneNumber) {
@@ -661,24 +873,26 @@ const sampleTrip: any = {
                             }
                           }}
                           activeOpacity={0.7}>
-                          <Image 
-                            source={require('@/assets/images/phone-call.png')} 
+                          <Image
+                            source={require('@/assets/images/phone-call.png')}
                             style={styles.deliveryCallButtonIcon}
                             resizeMode="contain"
                           />
-                       
+
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.deliveryNavigateButton}
-                          onPress={openGoogleMaps}
+                          onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
                           activeOpacity={0.7}>
-                          <Image 
-                            source={require('@/assets/images/location.png')} 
+                          <Image
+                            source={require('@/assets/images/location.png')}
                             style={styles.deliveryNavigateButtonIcon}
                             resizeMode="contain"
                           />
-                         
+
                         </TouchableOpacity>
+
+
                       </View>
                     </View>
                   </View>
@@ -708,13 +922,13 @@ const sampleTrip: any = {
                       left: thumbLeft,
                     }
                   ]}>
-                  <Image 
-                    source={require('@/assets/images/next.png')} 
+                  <Image
+                    source={require('@/assets/images/next.png')}
                     style={styles.slideThumbIcon}
                     resizeMode="contain"
                   />
                 </Animated.View>
-                <Animated.Text 
+                <Animated.Text
                   style={[
                     styles.slideButtonText,
                     {
@@ -729,11 +943,12 @@ const sampleTrip: any = {
                 </Animated.Text>
               </Animated.View>
             </View>
-          </View>
-        </Animated.View>
+          </ScrollView>
+        </View>
+        // </Animated.View>
       )}
 
-     
+
     </SafeAreaView>
   );
 };
@@ -782,6 +997,12 @@ const styles = StyleSheet.create({
   },
   truckEmoji: {
     fontSize: 28,
+  },
+  deliveryMarker: {
+    borderColor: '#10B981', // Green border for delivery
+  },
+  deliveryEmoji: {
+    fontSize: 24,
   },
   centerButton: {
     position: 'absolute',
@@ -837,7 +1058,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 24,
     textAlign: 'center',
-    
+
   },
   modalButtons: {
     flexDirection: 'row',
@@ -879,8 +1100,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    right: 0,
-    height: height * 0.5,
+    right: 0,           // ← Yeh important hai
     backgroundColor: colors.white,
     borderTopLeftRadius: borderRadius.xl + 8,
     borderTopRightRadius: borderRadius.xl + 8,
@@ -901,8 +1121,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   cardContent: {
-    padding: spacing.lg,
-    paddingBottom: spacing.lg,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg
+    // Padding moved to ScrollView contentContainerStyle
   },
   arrivalTimeCard: {
     backgroundColor: colors.white,
@@ -913,6 +1134,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
     overflow: 'hidden',
+    width: '100%',
+    paddingLeft: 5
   },
   arrivalTimeContent: {
     flexDirection: 'row',
@@ -925,8 +1148,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   arrivalTimeIconContainer: {
-    width: 56,
-    height: 56,
+    width: 40,
+    height: 40,
     borderRadius: 28,
     backgroundColor: '#EFF6FF',
     justifyContent: 'center',
@@ -936,7 +1159,7 @@ const styles = StyleSheet.create({
     borderColor: '#3B82F6',
   },
   arrivalTimeIcon: {
-    fontSize: 28,
+    fontSize: 18,
   },
   arrivalTimeTextContainer: {
     flex: 1,
@@ -949,7 +1172,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs / 2,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    
+
   },
   arrivalTimeValue: {
     ...typography.bodySemibold,
@@ -971,7 +1194,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: 0.3,
-    
+
     marginBottom: 2,
   },
   distanceLabel: {
@@ -980,7 +1203,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: 0.3,
-    
+
   },
   orderHeader: {
     flexDirection: 'row',
@@ -998,7 +1221,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.xs / 2,
     letterSpacing: -0.3,
-    
+
   },
   orderNumber: {
     ...typography.bodyMedium,
@@ -1006,7 +1229,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: 0.2,
-    
+
   },
   statusBadge: {
     flexDirection: 'row',
@@ -1048,7 +1271,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs / 2,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    
+
   },
   orderDetailValue: {
     ...typography.bodyMedium,
@@ -1056,7 +1279,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    
+
   },
   divider: {
     height: 1,
@@ -1093,7 +1316,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    
+
   },
   deliveryStatusSection: {
     flex: 1,
@@ -1106,7 +1329,7 @@ const styles = StyleSheet.create({
     color: '#10B981',
     marginBottom: 4,
     letterSpacing: 0.8,
-    
+
   },
   estimatedLabel: {
     ...typography.small,
@@ -1114,13 +1337,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: 0.3,
-    
+
   },
   deliverySection: {
     marginBottom: spacing.lg,
   },
   deliveryHeader: {
-marginTop: spacing.md,
+    marginTop: spacing.md,
   },
   deliveryHeaderLeft: {
     flexDirection: 'row',
@@ -1149,7 +1372,7 @@ marginTop: spacing.md,
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    
+
     marginBottom: spacing.xs,
   },
   deliveryAddress: {
@@ -1157,7 +1380,7 @@ marginTop: spacing.md,
     fontSize: 14,
     fontWeight: '500',
     color: colors.textSecondary,
-    
+
     letterSpacing: 0.1,
   },
   deliveryDivider: {
@@ -1167,7 +1390,7 @@ marginTop: spacing.md,
     marginHorizontal: -spacing.lg,
   },
   deliveryContactSection: {
- 
+
   },
   deliveryContactRow: {
     flexDirection: 'row',
@@ -1204,7 +1427,7 @@ marginTop: spacing.md,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    
+
     marginBottom: spacing.xs / 2,
   },
   deliveryContactName: {
@@ -1213,7 +1436,7 @@ marginTop: spacing.md,
     fontWeight: '700',
     color: colors.textPrimary,
     letterSpacing: 0.2,
-    
+
   },
   deliveryActionButtonsRow: {
     flexDirection: 'row',
@@ -1221,7 +1444,7 @@ marginTop: spacing.md,
     flexShrink: 0,
   },
   deliveryCallButton: {
-    backgroundColor: colors.primary,
+backgroundColor: colors.primaryLight,
     paddingVertical: spacing.sm,
 
     borderRadius: borderRadius.md,
@@ -1247,7 +1470,7 @@ marginTop: spacing.md,
   deliveryNavigateButton: {
     backgroundColor: '#10B981',
     paddingVertical: spacing.sm,
- 
+
     borderRadius: borderRadius.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1301,7 +1524,7 @@ marginTop: spacing.md,
     fontSize: 16,
     fontWeight: '700',
     color: colors.textPrimary,
-    
+
   },
   tripDetailsRow: {
     flexDirection: 'row',
@@ -1349,7 +1572,7 @@ marginTop: spacing.md,
     fontSize: 14,
     fontWeight: '500',
     color: colors.textPrimary,
-    
+
     marginLeft: 24,
     marginTop: spacing.xs,
   },
@@ -1413,8 +1636,8 @@ marginTop: spacing.md,
   slideButton: {
     width: '100%',
     height: 56,
-bottom:10,
-    backgroundColor: colors.primary,
+    bottom: 10,
+   backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1430,7 +1653,7 @@ bottom:10,
     backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
- 
+
   },
   slideThumbIcon: {
     width: 24,
@@ -1443,6 +1666,6 @@ bottom:10,
     fontWeight: '700',
     color: colors.white,
     letterSpacing: 0.5,
-    
+
   },
 });

@@ -63,6 +63,12 @@ export const tripApi = {
 
   uploadDocument: (tripId: string, formData: FormData): Promise<ApiResponse> =>
     ApiClient.uploadFile(`/trips/${tripId}/upload-loading-docs`, formData),
+
+  updateLocation: (
+    tripId: string,
+    payload: { latitude: number; longitude: number },
+  ): Promise<ApiResponse> =>
+    ApiClient.put(`/trips/${tripId}/location`, payload),
 };
 
 // Location endpoints

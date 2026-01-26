@@ -26,7 +26,7 @@ export const TodoNavigator: React.FC = () => {
       screenOptions={{
         headerStyle: {backgroundColor: colors.background, elevation: 0, shadowOpacity: 0},
         headerTitleStyle: {...typography.h4, color: colors.textPrimary},
-        headerTintColor: colors.primary,
+        headerTintColor: colors.primaryLight,
         headerBackTitleVisible: false,
       }}>
       <Stack.Screen

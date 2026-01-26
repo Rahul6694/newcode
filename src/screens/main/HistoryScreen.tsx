@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,13 +7,13 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {Trip, TripStatus, HistoryStackParamList} from '@/types';
-import {Card, StatusBadge, Typography, useToast} from '@/components';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
-import {apiService} from '@/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { Trip, TripStatus, HistoryStackParamList } from '@/types';
+import { Card, StatusBadge, Typography, useToast } from '@/components';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
+import { apiService } from '@/api';
 import { tripApi } from '@/apiservice';
 
 type HistoryScreenNavigationProp = StackNavigationProp<HistoryStackParamList>;
@@ -78,46 +78,47 @@ export const HistoryScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'completed'>('all');
-  const {showError} = useToast();
+  const { showError } = useToast();
 
   const handleTripPress = (trip: Trip) => {
-    navigation.navigate('HistoryTripDetail', {tripId: trip.id});
+    navigation.navigate('HistoryTripDetail', { tripId: trip.id });
   };
 
   useEffect(() => {
     loadHistory();
   }, []);
 
-const loadHistory = async (page: number = 1) => {
-  try {
-    setLoading(true);
+  const loadHistory = async (page: number = 1) => {
+    try {
+      setLoading(true);
 
-    const response = await tripApi.getTripHistory(page, 10);
+      const response = await tripApi.getTripHistory(page, 10);
 
 
-    const trips = response?.data?.trips || [];
+      const trips = response?.data?.trips || [];
 
-    const convertedTrips = trips.map(convertApiResponseToTrip);
-    setHistory(convertedTrips);
-  } catch (error: any) {
-    console.log('Load History Error:', error);
-    showError(error?.response?.data?.message || 'Failed to load trip history');
-    setHistory([]);
-  } finally {
-    setLoading(false);
-  }
-};
+      const convertedTrips = trips.map(convertApiResponseToTrip);
+      setHistory(convertedTrips);
+      console.log('Loaded Trips heistory:', convertedTrips);
+    } catch (error: any) {
+      console.log('Load History Error:', error);
+      showError(error?.response?.data?.message || 'Failed to load trip history');
+      setHistory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
   const handleRefresh = async () => {
-  setRefreshing(true);
-  try {
-    await loadHistory(1); 
-  } finally {
-    setRefreshing(false);
-  }
-};
+    setRefreshing(true);
+    try {
+      await loadHistory(1);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const filteredHistory = selectedFilter === 'completed'
     ? history.filter(t => t.status === 'Completed')
@@ -141,8 +142,8 @@ const loadHistory = async (page: number = 1) => {
   // Custom dashed line component
   const DashedLine = () => {
     const dashCount = 8;
-    const dashArray = Array.from({length: dashCount}, (_, i) => i);
-    
+    const dashArray = Array.from({ length: dashCount }, (_, i) => i);
+
     return (
       <View style={styles.dashedLineContainer}>
         {dashArray.map((_, index) => (
@@ -152,7 +153,7 @@ const loadHistory = async (page: number = 1) => {
     );
   };
 
-  const renderTripCard = ({item}: {item: Trip}) => {
+  const renderTripCard = ({ item }: { item: Trip }) => {
     const loadingCity = item.loadingLocation.address.split(',')[0];
     const unloadingCity = item.unloadingLocation.address.split(',')[0];
     const loadingAddress = item.loadingLocation.address;
@@ -161,27 +162,32 @@ const loadHistory = async (page: number = 1) => {
     return (
       <View style={styles.card}>
         {/* Header */}
-      <View style={styles.cardHeader}>
-          <Typography variant="smallMedium" color="textSecondary" weight="600" style={styles.tripId}>{item.tripNumber || `#${item.id.slice(-6).toUpperCase()}`}</Typography>
+        <View style={styles.cardHeader}>
+          <Typography variant="smallMedium"  weight="600" style={styles.tripId}>{item.tripNumber || `#${item.id.slice(-6).toUpperCase()}`}</Typography>
           <StatusBadge status={item.status} />
-      </View>
-
+        </View>
+        <Image
+          source={require('@/assets/images/map.png')}
+          style={styles.map}
+          resizeMode="cover"
+        />
         <View style={styles.divider} />
+
 
         {/* Route Section */}
         <View style={styles.routeContainer}>
           <View style={styles.timelineContainer}>
-            <View style={[styles.dot, {backgroundColor: colors.success}]} />
+            <View style={[styles.dot, { backgroundColor: colors.success }]} />
             <DashedLine />
-            <View style={[styles.dot, {backgroundColor: colors.error}]} />
+            <View style={[styles.dot, { backgroundColor: colors.error }]} />
           </View>
-          
+
           <View style={styles.locations}>
             <View style={styles.locationItem}>
               <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{loadingCity}</Typography>
               <Typography variant="small" color="textSecondary" style={styles.addressText} numberOfLines={1}>{loadingAddress}</Typography>
             </View>
-            <View style={[styles.locationItem, {marginTop: 20}]}>
+            <View style={[styles.locationItem, { marginTop: 20 }]}>
               <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{unloadingCity}</Typography>
               <Typography variant="small" color="textSecondary" style={styles.addressText} numberOfLines={1}>{unloadingAddress}</Typography>
             </View>
@@ -193,16 +199,16 @@ const loadHistory = async (page: number = 1) => {
         {/* Info Grid */}
         <View style={styles.grid}>
           <View style={styles.gridItem}>
-            <Image 
-              source={require('@/assets/images/shipped.png')} 
+            <Image
+              source={require('@/assets/images/shipped.png')}
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.assignedWeight || 'N/A'} Kg</Typography>
-      </View>
+            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.assignedWeight || 'N/A'} TON</Typography>
+          </View>
           <View style={styles.gridItem}>
-            <Image 
-              source={require('@/assets/images/calendar.png')} 
+            <Image
+              source={require('@/assets/images/calendar.png')}
               style={styles.gridIcon}
               resizeMode="contain"
             />
@@ -213,31 +219,31 @@ const loadHistory = async (page: number = 1) => {
                 year: 'numeric',
               })}
             </Typography>
-        </View>
-          <View style={styles.gridItem}>
+          </View>
+          {/* <View style={styles.gridItem}>
             <Image 
               source={require('@/assets/images/contact-form.png')} 
               style={styles.gridIcon}
               resizeMode="contain"
             />
             <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>Docs: {item.documents.loading.length + item.documents.unloading.length > 0 ? 'Uploaded' : 'Pending'}</Typography>
-        </View>
+        </View> */}
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.button}
           onPress={() => handleTripPress(item)}
           activeOpacity={0.8}>
-          <Typography variant="smallMedium" color="white" weight="700" style={styles.buttonText}>VIEW TRIP HISTORY</Typography>
-          <Image 
-            source={require('@/assets/images/next.png')} 
+          <Typography variant="smallMedium" color="white" weight="700" style={styles.buttonText}>VIEW DETAILS</Typography>
+          <Image
+            source={require('@/assets/images/next.png')}
             style={styles.buttonArrow}
             resizeMode="contain"
           />
         </TouchableOpacity>
       </View>
-  );
+    );
   };
 
   const renderHeader = () => (
@@ -250,27 +256,27 @@ const loadHistory = async (page: number = 1) => {
               <Typography variant="caption" color="white" weight="700" style={styles.bannerBadgeText}>History</Typography>
             </View>
             <View style={styles.bannerIconWrapper}>
-              <Image 
-                source={require('@/assets/images/history.png')} 
+              <Image
+                source={require('@/assets/images/history.png')}
                 style={styles.bannerIcon}
                 resizeMode="contain"
               />
             </View>
           </View>
           <View style={styles.bannerContent}>
-            <Typography variant="h3" color="textPrimary" weight="700" style={styles.bannerTitle}>Your Success Journey</Typography>
-            <Typography variant="body" color="textSecondary" style={styles.bannerSubtitle}>
+            <Typography variant="h3" color="white" weight="700" style={styles.bannerTitle}>Your Success Journey</Typography>
+            <Typography style={styles.bannerSubtitle}>
               {filteredHistory.length} successful deliveries completed with excellence
             </Typography>
-            <View style={styles.bannerHighlight}>
+            {/* <View style={styles.bannerHighlight}>
               <Typography variant="smallMedium" color="primary" weight="700" style={styles.bannerHighlightText}>100% On-Time Delivery Rate</Typography>
-            </View>
+            </View> */}
           </View>
         </View>
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
+      {/* <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterTab, selectedFilter === 'all' && styles.filterTabActive]}
           onPress={() => setSelectedFilter('all')}
@@ -295,15 +301,15 @@ const loadHistory = async (page: number = 1) => {
             Completed
           </Typography>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={styles.emptyIconContainer}>
-        <Image 
-          source={require('@/assets/images/trip.png')} 
+        <Image
+          source={require('@/assets/images/trip.png')}
           style={styles.emptyIcon}
           resizeMode="contain"
         />
@@ -328,8 +334,8 @@ const loadHistory = async (page: number = 1) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+            tintColor={colors.primaryLight}
+            colors={[colors.primaryLight]}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -359,7 +365,7 @@ const styles = StyleSheet.create({
     ...shadows.lg,
   },
   bannerInner: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     padding: spacing.xl,
     position: 'relative',
   },
@@ -394,14 +400,14 @@ const styles = StyleSheet.create({
   bannerIcon: {
     width: 28,
     height: 28,
-    tintColor: colors.primary,
+    tintColor: colors.primaryLight,
   },
   bannerContent: {
     marginTop: spacing.xs,
   },
   bannerTitle: {
     ...typography.h3,
-    color: colors.textPrimary,
+    color: colors.white,
     fontWeight: '700',
     marginBottom: spacing.sm,
     fontSize: 22,
@@ -409,9 +415,9 @@ const styles = StyleSheet.create({
   },
   bannerSubtitle: {
     ...typography.body,
-    color: colors.textSecondary,
+  color: colors.white,
     fontSize: 14,
-
+    fontWeight: '500',
     marginBottom: spacing.md,
   },
   bannerHighlight: {
@@ -424,7 +430,7 @@ const styles = StyleSheet.create({
   },
   bannerHighlightText: {
     ...typography.smallMedium,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
     fontSize: 12,
   },
@@ -453,11 +459,11 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   filterTabActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
   },
   filterTabText: {
     ...typography.smallMedium,
-  
+
     fontWeight: '600',
   },
   filterTabTextActive: {
@@ -476,11 +482,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.sm,
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
   },
   tripId: {
     ...typography.smallMedium,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: 'black',
   },
   divider: {
     height: 1,
@@ -539,6 +550,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
+  map: {
+    height: 160,
+    width: '100%',
+
+
+  },
   gridIcon: {
     width: 18,
     height: 18,
@@ -550,7 +567,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   button: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -580,7 +597,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.xl,
@@ -588,7 +605,7 @@ const styles = StyleSheet.create({
   emptyIcon: {
     width: 40,
     height: 40,
-    tintColor: colors.primary,
+    tintColor: colors.primaryLight,
   },
   emptyTitle: {
     ...typography.h4,

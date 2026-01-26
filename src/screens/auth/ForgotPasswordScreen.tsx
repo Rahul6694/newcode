@@ -104,10 +104,10 @@ export const ForgotPasswordScreen: React.FC = () => {
     <>
       <StatusBar
         barStyle={Platform.OS === 'ios' ? 'dark-content' : 'dark-content'}
-        backgroundColor={Platform.OS === 'android' ? colors.primarySoft : undefined}
+        backgroundColor={Platform.OS === 'android' ? colors.primaryLight : undefined}
         translucent={Platform.OS === 'android' ? false : undefined}
       />
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.backgroundGradient} />
         <KeyboardAvoidingView
           style={styles.keyboardView}

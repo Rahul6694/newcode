@@ -18,6 +18,7 @@ import {
   useToast,
   Typography,
   ProofDocumentUpload,
+  Input,
 } from '@/components';
 import { Header } from '@/components/Header';
 import {
@@ -59,6 +60,7 @@ export const LocationMarkScreen: React.FC = () => {
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const [docsUploaded, setDocsUploaded] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [LoadedValue, setLoadedValue] = useState<any>(null)
 
   useEffect(() => {
     getActiveTrips();
@@ -132,7 +134,7 @@ export const LocationMarkScreen: React.FC = () => {
       const image = await ImageCropPicker.openCamera({
         width: 720,
         height: 720,
-        cropping: true,
+        cropping: false,
         cropperCircleOverlay: false,
         compressImageQuality: 0.5,
         mediaType: 'photo',
@@ -211,7 +213,7 @@ export const LocationMarkScreen: React.FC = () => {
       const images = await ImageCropPicker.openPicker({
         width: 720,
         height: 720,
-        cropping: true,
+        cropping: false,
         cropperCircleOverlay: false,
         compressImageQuality: 0.5,
         mediaType: 'photo',
@@ -250,6 +252,11 @@ export const LocationMarkScreen: React.FC = () => {
       showError('Please add documents before uploading');
       return;
     }
+    if (LoadedValue === null || LoadedValue === '') {
+      showError('Please enter loaded weight');
+
+      return;
+    }
 
     setUploadingDocs(true);
 
@@ -269,6 +276,7 @@ export const LocationMarkScreen: React.FC = () => {
       //     type: selectedPhoto?.mime || 'image/jpeg',
 
       formData.append('remarks', 'Loading completed');
+     formData.append('LoadWeight', LoadedValue.toString());
       console.log(formData, documents, 'formData=======>');
 
       const response = await tripApi.uploadDocument(tripId, formData);
@@ -292,7 +300,12 @@ export const LocationMarkScreen: React.FC = () => {
   };
 
   const markTripAsLoaded = async () => {
-    setMarking(true);
+    // setMarking(true);
+    //  if (LoadedValue === null || LoadedValue === '') {
+    //   showError('Please enter loaded weight');
+
+    //   return;
+    // }
 
     try {
       await tripApi.markLoaded(tripId, 'All items loaded properly');
@@ -468,6 +481,15 @@ export const LocationMarkScreen: React.FC = () => {
               </View>
             </View>
 
+            <Input
+              label="Loaded Weight (TON)"
+              containerStyle={{ marginTop: spacing.xl, marginHorizontal: spacing.sm, marginBottom: 0 }}
+              placeholder="Enter loaded weight"
+              keyboardType="numeric"
+              editable={true}
+              value={LoadedValue}
+            onChangeText={setLoadedValue}
+            />
             {/* Document Upload Section */}
             <View style={styles.documentSection}>
               <ProofDocumentUpload
@@ -487,10 +509,10 @@ export const LocationMarkScreen: React.FC = () => {
                   marking
                     ? 'Processing...'
                     : uploadingDocs
-                    ? 'Uploading...'
-                    : docsUploaded
-                    ? 'Mark as Loaded'
-                    : 'Upload Documents'
+                      ? 'Uploading...'
+                      : docsUploaded
+                        ? 'Mark as Loaded'
+                        : 'Upload Documents'
                 }
                 onPress={handlePrimaryAction}
                 loading={uploadingDocs || marking}
@@ -690,7 +712,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   weightBadgeInline: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
@@ -922,7 +944,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   combinedButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
     ...shadows.md,
   },

@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { TodoStackParamList } from '@/types';
-import { Button, Card, useToast, Typography, ProofDocumentUpload } from '@/components';
+import { Button, Card, useToast, Typography, ProofDocumentUpload, Input } from '@/components';
 import { Header } from '@/components/Header';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import ImageCropPicker from 'react-native-image-crop-picker';
@@ -26,7 +26,7 @@ export const MarkCompleteScreen: React.FC = () => {
   const navigation = useNavigation<MarkCompleteNavigationProp>();
   const { tripId } = route.params;
   const { showSuccess, showError } = useToast();
-
+  const [LoadedValue, setLoadedValue] = useState<any>(null)
   // UI state only
   const [deliveryPhotos, setDeliveryPhotos] = useState<any[]>([]);
   const [showCongratulations, setShowCongratulations] = useState(false);
@@ -120,7 +120,7 @@ const tripData = {
       const image = await ImageCropPicker.openCamera({
         width: 1920,
         height: 1920,
-        cropping: true,
+        cropping: false,
         cropperCircleOverlay: false,
         compressImageQuality: 0.8,
         mediaType: 'photo',
@@ -214,7 +214,11 @@ const tripData = {
     showError('Please upload delivery photo');
     return;
   }
+if (LoadedValue === null || LoadedValue === '') {
+      showError('Please enter loaded weight');
 
+      return;
+    }
   try {
     const formData = new FormData();
 
@@ -223,7 +227,7 @@ const tripData = {
     // For now using test coordinates (Chittagong, Bangladesh)
     formData.append('latitude', '22.3569');
     formData.append('longitude', '91.7832');
-    formData.append('deliveredWeight', '25.0');
+    formData.append('deliveredWeight', LoadedValue.toString());
 
     // 🔹 multiple files supported
     deliveryPhotos.forEach((photo, index) => {
@@ -284,7 +288,7 @@ const tripData = {
             </View>
             <View style={styles.orderDetailRow}>
               <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-              <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.assignedWeight} KG</Typography>
+              <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.assignedWeight} TON</Typography>
             </View>
           </View>
 
@@ -325,7 +329,15 @@ const tripData = {
             </View>
           </View>
         </Card>
-
+  <Input
+              label="Unloaded Weight (TON)"
+              containerStyle={{ marginTop: spacing.xl, marginHorizontal: spacing.sm, marginBottom: 0 }}
+              placeholder="Enter unloaded weight"
+              keyboardType="numeric"
+              editable={true}
+              value={LoadedValue}
+            onChangeText={setLoadedValue}
+            />
         {/* Proof of Delivery Photo */}
         <ProofDocumentUpload
           documents={deliveryPhotos}
@@ -580,7 +592,7 @@ const styles = StyleSheet.create({
   },
   progressPercentage: {
     ...typography.bodyMedium,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -595,7 +607,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.full,
   },
   progressSteps: {
@@ -650,13 +662,13 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.primaryLight,
     borderStyle: 'dashed',
     borderRadius: borderRadius.lg,
     padding: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     minHeight: 200,
     marginTop: spacing.sm,
   },
@@ -664,7 +676,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -679,7 +691,7 @@ const styles = StyleSheet.create({
   },
   cameraButtonText: {
     ...typography.h4,
-    color: colors.primary,
+    color: colors.primaryLight,
     marginBottom: spacing.xs,
     fontWeight: '700',
   },
@@ -725,7 +737,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.md,
     alignItems: 'center',
   },
@@ -757,20 +769,20 @@ const styles = StyleSheet.create({
   uploadOption: {
     flex: 1,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.primaryLight,
     borderStyle: 'dashed',
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     minHeight: 100,
   },
   uploadOptionIcon: {
     width: 50,
     height: 50,
     borderRadius: 12,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -798,7 +810,7 @@ const styles = StyleSheet.create({
 
   },
   completeButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
     ...shadows.md,
   },
@@ -819,12 +831,12 @@ const styles = StyleSheet.create({
   addMoreButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.md,
   },
   addMoreButtonText: {
     ...typography.bodyMedium,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
   },
   photosGrid: {

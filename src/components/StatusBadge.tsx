@@ -16,7 +16,7 @@ const statusConfig: Record<TripStatus, {color: string; bg: string; label: string
   },
   'IN_PROGRESS': {
     color: colors.statusInProgress,
-    bg: colors.primarySoft,
+    bg: colors.primaryLight,
     label: 'In Progress',
   },
   Loaded: {

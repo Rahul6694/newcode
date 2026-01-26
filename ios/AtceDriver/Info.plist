@@ -24,6 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GMSApiKey</key>
+	<string>AIzaSyCt8jw_uRbRfr9_8CBRdauiHY8rWCjV6WU</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -33,16 +35,16 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>ATCE Driver needs your location to track trips and provide navigation.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>ATCE Driver needs your location to track trips even when the app is in the background.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>ATCE Driver needs camera access to capture documents for loading and unloading verification.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>ATCE Driver needs photo library access to select documents for loading and unloading verification.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>ATCE Driver needs your location to track trips even when the app is in the background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ATCE Driver needs your location to track trips and provide navigation.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>ATCE Driver needs permission to save captured photos to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ATCE Driver needs photo library access to select documents for loading and unloading verification.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -59,7 +61,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>GMSApiKey</key>
-	<string>AIzaSyCt8jw_uRbRfr9_8CBRdauiHY8rWCjV6WU</string>
 </dict>
 </plist>

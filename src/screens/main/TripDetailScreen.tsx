@@ -1,9 +1,9 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Linking, RefreshControl, Image, Animated, PanResponder, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Linking, RefreshControl, Image, Animated, PanResponder, Dimensions, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation, RouteProp, useIsFocused } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp, useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { navigationService } from '@/services/navigationService';
 import { TripStatus, TodoStackParamList, DocumentStage } from '@/types';
 import { Button, Card, Modal, Input, useToast, Typography } from '@/components';
 import { Header } from '@/components/Header';
@@ -34,13 +34,26 @@ export const TripDetailScreen: React.FC = () => {
   // console.log()
 
 
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any[]>([]);
 
 
 
   useEffect(() => {
     getActiveTrips()
   }, []);
+
+  useFocusEffect(
+  React.useCallback(() => {
+    slideProgress.setValue(0);
+    setIsSliding(false);
+
+    return () => {
+      slideProgress.setValue(0);
+      setIsSliding(false);
+    };
+  }, [])
+);
+
 
 
   const trips = Array.isArray(data) && data.length > 0 ? data[0] : null;
@@ -49,14 +62,14 @@ export const TripDetailScreen: React.FC = () => {
 
   const getActiveTrips = async () => {
     try {
-      const res = await tripApi.getActiveTrip();
+      const res: any = await tripApi.getActiveTrip();
       if (res) {
         console.log('Profile data:', res);
         const data = res.data || res;
         setData(data || [])
         console.log('efefe', data);
       } else {
-        const errorMsg = res?.message || 'Failed to load profile';
+        const errorMsg = 'Failed to load profile';
         console.log('Profile data:', res);
       }
     } catch (error: any) {
@@ -90,6 +103,7 @@ export const TripDetailScreen: React.FC = () => {
       if (res) {
         const data = res.data || res;
         setTrip(data);
+        console.log('Trip details:', data);
       } else {
         console.log('Profile data:', res);
       }
@@ -106,6 +120,42 @@ export const TripDetailScreen: React.FC = () => {
   }, [useIsFocused()]);
 
 
+const handleTripPress = async () => {
+  try {
+    if (trip.status === 'ASSIGNED') {
+     handleSlideAction ()
+    }
+
+    switch (trip.status) {
+      case 'IN_PROGRESS':
+        navigation.navigate('LocationMark', {
+          tripId: trip.id,
+          stage: null,
+        });
+        break;
+
+      case 'LOADED':
+        navigation.navigate('TripInProgress', {
+          tripId: trip.id,
+        });
+        break;
+
+      case 'ARRIVED':
+        navigation.navigate('MarkComplete', {
+          tripId: trip.id,
+        });
+        break;
+
+      default:
+        navigation.navigate('TripDetail', {
+          tripId: trip.id,
+        });
+    }
+  } catch (error: any) {
+    console.log('Start Trip Error:', error);
+    showError(error?.response?.data?.message || 'Something went wrong');
+  }
+};
 
 
   // Simple refresh handler (UI only)
@@ -151,7 +201,8 @@ export const TripDetailScreen: React.FC = () => {
           toValue: maxWidth,
           useNativeDriver: false,
         }).start(() => {
-          handleSlideAction();
+          // handleSlideAction();
+          handleTripPress()
         });
       } else {
         // Reset
@@ -210,40 +261,52 @@ export const TripDetailScreen: React.FC = () => {
 
 
   };
+const getSlideTextByStatus = (status?: string) => {
+  if (!status) return 'Start Trip';
+
+  switch (status) {
+    case 'ASSIGNED':
+      return 'Slide to Start Trip';
+
+    case 'IN_PROGRESS':
+      return 'Slide to Mark Loaded';
+
+    case 'LOADED':
+      return 'Slide to Mark Arrived';
+
+    case 'ARRIVED':
+      return 'Slide to Complete Trip';
+
+    default:
+      return 'Slide';
+  }
+};
 
 
 
   // const handleCall = (phone: string) => Linking.openURL(`tel:${phone}`);
 
-  const handleNavigate = (type: 'loading' | 'unloading') => {
-    if (!trip) return;
-    const loc = type === 'loading' ? trip.loadingLocation : trip.unloadingLocation;
-    navigationService.navigateToLocation({
-      address: trip?.order.loadingCity,
-      coordinates: trip?.order.unloadingCity,
-      label: type === 'loading' ? 'Pickup' : 'Delivery',
+  const handleNavigate = (address: string, label: string) => {
+    if (!address) return;
+
+    // Open Google Maps with address-based directions
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+    Linking.openURL(googleMapsUrl).catch(err => {
+      console.log('Failed to open Google Maps:', err);
+      // Fallback to general maps app
+      const fallbackUrl = Platform.select({
+        ios: `maps://app?daddr=${encodeURIComponent(address)}`,
+        android: `geo:0,0?q=${encodeURIComponent(address)}`,
+      });
+      if (fallbackUrl) {
+        Linking.openURL(fallbackUrl).catch(console.log);
+      }
     });
   };
 
-  // const handleCall = (phoneNumber: string) => {
-  //   if (!phoneNumber) {
-  //     console.log('Error', 'Phone number not available');
-  //     return;
-  //   }
-
-  //   // Create a tel URL
-  //   const url = `tel:${phoneNumber}`;
-
-  //   Linking.canOpenURL(url)
-  //     .then((supported) => {
-  //       if (!supported) {
-  //         console.log('Error', 'Cannot make a call from this device');
-  //       } else {
-  //         return Linking.openURL(url);
-  //       }
-  //     })
-  //     .catch((err) => console.log('Error making call:', err));
-  // };
+const handleCall = (phoneNumber: string) => {
+  Linking.openURL(`tel:${phoneNumber}`);
+};
 
   const getNextAction = (s: TripStatus) => {
     const map: Record<string, { title: string; status: TripStatus }> = {
@@ -334,7 +397,7 @@ export const TripDetailScreen: React.FC = () => {
             {trip?.assignedWeight && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.assignedWeight} KG</Typography>
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.assignedWeight} TON</Typography>
               </View>
             )}
           </View>
@@ -348,7 +411,7 @@ export const TripDetailScreen: React.FC = () => {
             color="textPrimary"
             weight="600"
             style={styles.sectionTitle}>
-            Route & Timeline
+            Active Log
           </Typography>
 
           {/* ---------- ROUTE ---------- */}
@@ -476,13 +539,15 @@ export const TripDetailScreen: React.FC = () => {
             </Typography>
           </View>
 
+
+
           {/* ADDRESS */}
           <Typography
             variant="bodyMedium"
             color="textPrimary"
             weight="500"
             style={styles.address}>
-            {trip?.order?.loadingCity || 'Location not specified'}
+            {trips?.order?.loadingAddress || trip?.order?.loadingAddress || 'Location not specified'}
           </Typography>
 
           {/* DRIVER CONTACT */}
@@ -521,12 +586,7 @@ export const TripDetailScreen: React.FC = () => {
             title="Navigate"
             variant="outline"
             style={styles.navBtn}
-            onPress={() =>
-              handleNavigate({
-                latitude: Number(trip.startLatitude),
-                longitude: Number(trip.startLongitude),
-              })
-            }
+            onPress={() => handleNavigate(trips?.order?.loadingAddress || trip?.order?.loadingAddress, 'Pickup Location')}
           />
 
 
@@ -557,8 +617,9 @@ export const TripDetailScreen: React.FC = () => {
             color="textPrimary"
             weight="500"
             style={styles.address}>
-            {trip?.order?.unloadingCity || 'Location not specified'}
+            {trips?.order?.unloadingAddress || trip?.order?.unloadingAddress || 'Location not specified'}
           </Typography>
+
 
           {/* CONTACT */}
           {trip?.driver?.mobileNumber ? (
@@ -592,19 +653,12 @@ export const TripDetailScreen: React.FC = () => {
           )}
 
           {/* NAVIGATE */}
-          {Number(trip?.endLatitude) !== 0 && (
-            <Button
-              title="Navigate"
-              variant="outline"
-              style={styles.navBtn}
-              onPress={() =>
-                handleNavigate({
-                  latitude: Number(trip.endLatitude),
-                  longitude: Number(trip.endLongitude),
-                })
-              }
-            />
-          )}
+          <Button
+            title="Navigate"
+            variant="outline"
+            style={styles.navBtn}
+            onPress={() => handleNavigate(trips?.order?.unloadingAddress || trip?.order?.unloadingAddress, 'Delivery Location')}
+          />
 
 
         </Card>
@@ -637,7 +691,7 @@ export const TripDetailScreen: React.FC = () => {
                       color="textPrimary"
                       weight="700"
                       style={styles.weightValue}>
-                      {trip.deliveredWeight} kg
+                      {trip.deliveredWeight} TON
                     </Typography>
 
                     <Typography
@@ -653,36 +707,75 @@ export const TripDetailScreen: React.FC = () => {
                         variant="small"
                         color="warning"
                         style={styles.assignedWeight}>
-                        Assigned: {trip.assignedWeight} kg
+                        Assigned: {trip.assignedWeight} TON
                       </Typography>
                     )}
                   </View>
                 </View>
               )}
 
-              {/* VEHICLE INFO */}
-              {trip?.vehicle?.maxLoadCapacity && (
+              
                 <View style={styles.vehicleInfoRow}>
                   <Typography
                     variant="smallMedium"
                     color="textSecondary"
                     style={styles.vehicleInfoText}>
-                    Vehicle Capacity: {trip.vehicle.maxLoadCapacity} kg
+                    Load : {trip?.assignedWeight ||"NA"} TON
                   </Typography>
 
-                  {trip?.vehicle?.registrationNumber && (
+                 
                     <Typography
                       variant="smallMedium"
                       color="textSecondary"
                       style={styles.vehicleInfoText}>
-                      Vehicle Number: {trip.vehicle.registrationNumber}
+                      Material: {trip.material?.materialType ||"NA"}
                     </Typography>
-                  )}
+                  
                 </View>
-              )}
+            
             </View>
           </Card>
         )}
+
+        {/* Payment Information */}
+        <Card style={styles.section}>
+          <Typography
+            variant="bodyMedium"
+            color="textPrimary"
+            weight="600"
+            style={styles.sectionTitle}>
+            Payment Details
+          </Typography>
+
+          <View style={styles.paymentInfo}>
+            <View style={styles.paymentLeft}>
+               <Typography
+                variant="bodyMedium"
+                color="textSecondary"
+                weight="600"
+                style={[styles.paymentLabel, {fontSize: 14}]}>
+                Total Amount
+              </Typography>
+              <Typography
+                variant="h3"
+                color="primary"
+                weight="700"
+                style={styles.paymentAmount}>
+                ₹{trip?.tripAmount || 'NA'}
+              </Typography>
+             
+            </View>
+
+            
+          </View>
+           <Typography
+                variant="bodyMedium"
+                color="textSecondary"
+                weight="500"
+                style={[styles.paymentDetail, {textAlign: 'left', fontSize: 13}]}>
+                Distance: {trip?.order?.distance || 'NA'} km
+              </Typography>
+        </Card>
 
         <View style={styles.slideContainer}>
           <Animated.View
@@ -690,7 +783,7 @@ export const TripDetailScreen: React.FC = () => {
               styles.slideButton,
               {
                 opacity: slideButtonOpacity, // always active
-                backgroundColor: colors.primary, // always primary color
+                backgroundColor: colors.primaryLight, // always primary color
               }
             ]}
             {...slidePanResponder.panHandlers} // always allow sliding
@@ -709,14 +802,18 @@ export const TripDetailScreen: React.FC = () => {
               />
             </Animated.View>
 
-            <Typography
-              variant="bodyMedium"
-              color="white"
-              weight="700"
-              style={styles.slideButtonText}
-            >
-              {isSliding ? 'Sliding...' : next?.title || 'Start Trip'}
-            </Typography>
+           <Typography
+  variant="bodyMedium"
+  color="white"
+  weight="700"
+  style={styles.slideButtonText}
+>
+  {isSliding
+    ? 'Sliding...'
+    : getSlideTextByStatus(trip?.status)
+  }
+</Typography>
+
           </Animated.View>
         </View>
 
@@ -896,7 +993,6 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textPrimary,
     marginBottom: spacing.md,
-    
     fontSize: 15,
     fontWeight: '500',
   },
@@ -1162,29 +1258,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
-  vehicleId: {
-    ...typography.small,
-    color: colors.textTertiary,
-  },
-  callDriverBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  callDriverIcon: {
-    width: 18,
-    height: 18,
-    tintColor: colors.white,
-  },
-  callDriverText: {
-    ...typography.bodyMedium,
-    color: colors.white,
-    fontWeight: '600',
-  },
   paymentInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1192,6 +1265,9 @@ const styles = StyleSheet.create({
   },
   paymentLeft: {
     flex: 1,
+    flexDirection:'row',
+    alignItems:'center',
+    justifyContent:'space-between',
   },
   paymentAmount: {
     ...typography.h3,
@@ -1217,6 +1293,29 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontSize: 13,
     fontWeight: '500',
+  },
+  vehicleId: {
+    ...typography.small,
+    color: colors.textTertiary,
+  },
+  callDriverBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  callDriverIcon: {
+    width: 18,
+    height: 18,
+    tintColor: colors.white,
+  },
+  callDriverText: {
+    ...typography.bodyMedium,
+    color: colors.white,
+    fontWeight: '600',
   },
   topHeader: {
     flexDirection: 'row',

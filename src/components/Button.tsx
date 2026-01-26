@@ -41,7 +41,7 @@ export const Button: React.FC<ButtonProps> = ({
     switch (variant) {
       case 'primary':
         return {
-          container: {backgroundColor: colors.primary},
+          container: {backgroundColor: colors.primaryLight},
           text: {color: colors.white},
         };
       case 'secondary':
@@ -51,13 +51,13 @@ export const Button: React.FC<ButtonProps> = ({
         };
       case 'outline':
         return {
-          container: {backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary},
-          text: {color: colors.primary},
+          container: {backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primaryLight},
+          text: {color: colors.primaryLight},
         };
       case 'ghost':
         return {
           container: {backgroundColor: 'transparent'},
-          text: {color: colors.primary},
+          text: {color: colors.primaryLight},
         };
       case 'danger':
         return {
@@ -66,7 +66,7 @@ export const Button: React.FC<ButtonProps> = ({
         };
       default:
         return {
-          container: {backgroundColor: colors.primary},
+          container: {backgroundColor: colors.primaryLight},
           text: {color: colors.white},
         };
     }
@@ -112,7 +112,7 @@ export const Button: React.FC<ButtonProps> = ({
       activeOpacity={0.8}>
       {loading ? (
         <ActivityIndicator
-          color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.white}
+          color={variant === 'outline' || variant === 'ghost' ? colors.primaryLight : colors.white}
           size="small"
         />
       ) : (
