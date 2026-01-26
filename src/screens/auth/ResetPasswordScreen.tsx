@@ -180,7 +180,7 @@ const handleResetPassword = async () => {
     <> m
       <StatusBar
         barStyle={Platform.OS === 'ios' ? 'dark-content' : 'dark-content'}
-        backgroundColor={Platform.OS === 'android' ? colors.primarySoft : undefined}
+        backgroundColor={Platform.OS === 'android' ? colors.primaryLight : undefined}
         translucent={Platform.OS === 'android' ? false : undefined}
       />
       <SafeAreaView style={styles.container} edges={['bottom', 'top']}>

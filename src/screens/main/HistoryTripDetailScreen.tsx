@@ -208,7 +208,7 @@ const handleCall = (phoneNumber: string) => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.primaryLight} />
         <Typography variant="body" color="textSecondary" style={styles.loadingText}>Loading...</Typography>
       </View>
     );
@@ -265,7 +265,7 @@ const handleCall = (phoneNumber: string) => {
             {trip.assignedWeight && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.assignedWeight} KG</Typography>
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.assignedWeight} TON</Typography>
               </View>
             )}
           </View>
@@ -342,7 +342,7 @@ const handleCall = (phoneNumber: string) => {
           <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.address}>
             {trip.loadingLocation.address || 'Location not specified'}
           </Typography>
-          {trip.loadingLocation.contactPerson.phoneNumber ? (
+          {/* {trip.loadingLocation.contactPerson.phoneNumber ? (
             <View style={styles.contactRow}>
               <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.contact}>{trip.loadingLocation.contactPerson.name}</Typography>
               <TouchableOpacity
@@ -358,7 +358,7 @@ const handleCall = (phoneNumber: string) => {
             </View>
           ) : (
             <Typography variant="small" color="textTertiary" style={styles.noContact}>No contact information available</Typography>
-          )}
+          )} */}
         </Card>
 
         {/* Delivery Location */}
@@ -374,7 +374,7 @@ const handleCall = (phoneNumber: string) => {
           <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.address}>
             {trip.unloadingLocation.address || 'Location not specified'}
           </Typography>
-          {trip.unloadingLocation.contactPerson.phoneNumber ? (
+          {/* {trip.unloadingLocation.contactPerson.phoneNumber ? (
             <View style={styles.contactRow}>
               <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.contact}>{trip.unloadingLocation.contactPerson.name}</Typography>
               <TouchableOpacity
@@ -390,7 +390,7 @@ const handleCall = (phoneNumber: string) => {
             </View>
           ) : (
             <Typography variant="small" color="textTertiary" style={styles.noContact}>No contact information available</Typography>
-          )}
+          )} */}
         </Card>
 
         {/* Weight & Load Information */}
@@ -406,10 +406,10 @@ const handleCall = (phoneNumber: string) => {
                     resizeMode="contain"
                   />
                   <View style={styles.weightDetails}>
-                    <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.weightValue}>{trip.deliveredWeight} kg</Typography>
+                    <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.weightValue}>{trip.deliveredWeight} TON</Typography>
                     <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.weightLabel}>Delivered Weight</Typography>
                     {trip.assignedWeight && (
-                      <Typography variant="small" color="warning" style={styles.assignedWeight}>Assigned: {trip.assignedWeight} kg</Typography>
+                      <Typography variant="small" color="warning" style={styles.assignedWeight}>Assigned: {trip.assignedWeight} TON</Typography>
                     )}
                   </View>
                 </View>
@@ -427,7 +427,7 @@ const handleCall = (phoneNumber: string) => {
         )}
 
         {/* Driver & Vehicle Details */}
-        {trip.driver && (
+        {/* {trip.driver && (
           <Card style={styles.section}>
             <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Driver & Vehicle Details</Typography>
             <View style={styles.driverInfo}>
@@ -454,7 +454,7 @@ const handleCall = (phoneNumber: string) => {
               </TouchableOpacity>
             </View>
           </Card>
-        )}
+        )} */}
 
         {/* Material Information */}
         {trip.material && (
@@ -573,12 +573,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     marginRight: spacing.xs,
   },
   statusText: {
     ...typography.caption,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
     fontSize: 11,
   },
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
   },
   distanceText: {
     ...typography.bodyMedium,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
     fontSize: 15,
   },
@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   callBtn: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
@@ -728,11 +728,11 @@ const styles = StyleSheet.create({
   callIcon: {
     width: 14,
     height: 14,
-    tintColor: colors.primary,
+    tintColor: colors.primaryLight,
   },
   callText: {
     ...typography.smallMedium,
-    color: colors.primary,
+    color: colors.primaryLight,
   },
   weightInfo: {
     gap: spacing.md,
@@ -754,13 +754,13 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textPrimary,
     fontWeight: '700',
-    marginBottom: spacing.xs,
+
     fontSize: 15,
   },
   weightLabel: {
     ...typography.bodyMedium,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
+
     fontSize: 14,
     fontWeight: '600',
   },
@@ -785,13 +785,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   driverAvatarText: {
     ...typography.h3,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
   },
   driverDetails: {
@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   callDriverBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
   },
   paymentAmount: {
     ...typography.h3,
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
     marginBottom: spacing.xs,
     fontSize: 20,

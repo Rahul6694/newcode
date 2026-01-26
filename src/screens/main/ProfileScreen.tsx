@@ -293,7 +293,7 @@ const handleLogout = async () => {
                 </View>
                 <View style={styles.cardBody}>
                   <InfoField iconImage={require('@/assets/images/user.png')} label="User Type" value={dummyUser.userType} />
-                  <InfoField iconImage={require('@/assets/images/briefcase.png')} label="Designation" value={dummyUser.designation} />
+                  <InfoField iconImage={require('@/assets/images/briefcase.png')} label="Company Name" value={dummyUser?.companyName || 'N/A'} />
                   {/* <InfoField iconImage={require('@/assets/images/organization.png')} label="Organization Name" value={dummyUser.organizationName || 'N/A'} />
                   <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast /> */}
                 </View>
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
 
   },
   completeButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
     ...shadows.md,
     
@@ -488,8 +488,8 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 48,
     fontWeight: '700',
-    color: colors.primary,
-  paddingTop: Platform.OS === 'ios' ? spacing.xxxl : 0,
+    color: colors.primaryLight,
+  // paddingTop: Platform.OS === 'ios' ? spacing.xl : 0,
   },
   statusIndicator: {
     position: 'absolute',
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   fieldIconImage: {
     width: 24,
     height: 24,
-    tintColor: colors.primary,
+    tintColor: colors.primaryLight,
   },
   fieldContent: {
     flex: 1,
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderRadius: borderRadius.lg,
     marginBottom: 10,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
 
   },
   bottomPadding: {

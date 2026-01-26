@@ -190,7 +190,7 @@ const handleLogin = async () => {
         <StatusBar
           barStyle="dark-content"
           backgroundColor={
-            Platform.OS === 'android' ? colors.primarySoft : undefined
+            Platform.OS === 'android' ? colors.primaryLight : undefined
           }
         />
         <View style={styles.backgroundGradient} />
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     borderColor: colors.primary,
   },
   checkmark: {

@@ -13,7 +13,7 @@ export const ProfileNavigator: React.FC = () => {
       screenOptions={{
         headerStyle: {backgroundColor: colors.white, elevation: 0, shadowOpacity: 0},
         headerTitleStyle: {...typography.h4, color: colors.textPrimary},
-        headerTintColor: colors.primary,
+        headerTintColor: colors.primaryLight,
         headerBackTitleVisible: false,
       }}>
       <Stack.Screen

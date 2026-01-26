@@ -52,7 +52,7 @@ export const TodoScreen: React.FC = () => {
       if (res) {
         console.log('Profile data:', res);
         const data = res.data || res;
-        setData(data||[])
+        setData(data || [])
         console.log(data, 'data==============>');
       } else {
         const errorMsg = res?.message || 'Failed to load profile';
@@ -66,19 +66,19 @@ export const TodoScreen: React.FC = () => {
 
   const loadHistory = async (page: number = 1) => {
     try {
-  
+
       const response = await tripApi.getTripHistory(page, 10);
-  
-  
+
+
       const trips = response?.data?.trips || [];
       setDatalenght(trips.length);
-  
+
     } catch (error: any) {
       console.log('Load History Error:', error);
- 
-     
+
+
     } finally {
-    ;
+      ;
     }
   };
 
@@ -87,29 +87,13 @@ export const TodoScreen: React.FC = () => {
     loadHistory();
   }, [useIsFocused()]);
 
- const handleTripPress = (trip: Trip) => {
-  if(!trip.id){
-    console.log("Trip ID is missing");
-    return;
-  }
-  switch (trip.status) {
+  const handleTripPress = (trip: Trip) => {
+   
 
-    case 'IN_PROGRESS':
-      navigation.navigate('LocationMark', { tripId: trip.id ,stage:null});
-      break;
-
-    case 'LOADED':
-      navigation.navigate('TripInProgress', { tripId: trip.id });
-      break;
-
-    case 'ARRIVED':
-      navigation.navigate('MarkComplete', { tripId: trip.id });
-      break;
-
-    default:
-      navigation.navigate('TripDetail', { tripId: trip.id })
-  }
-};
+    
+        navigation.navigate('TripDetail', { tripId: trip.id, })
+    
+  };
 
 
   const formatDate = (date: Date) => {
@@ -142,7 +126,7 @@ export const TodoScreen: React.FC = () => {
           {
             item?.status && <StatusBadge status={item?.status || "ASSIGNED"} />
           }
-          
+
         </View>
 
         <View style={styles.divider} />
@@ -308,8 +292,8 @@ export const TodoScreen: React.FC = () => {
       hour < 12
         ? 'Good Morning'
         : hour < 18
-        ? 'Good Afternoon'
-        : 'Good Evening';
+          ? 'Good Afternoon'
+          : 'Good Evening';
 
     return (
       <View style={styles.headerWrapper}>
@@ -320,11 +304,12 @@ export const TodoScreen: React.FC = () => {
               <Typography style={styles.greeting}>{greeting} 👋</Typography>
               <Typography style={styles.userName}>{user?.fullName}</Typography>
             </View>
-
-            <Image
-              source={require('@/assets/images/drive.png')}
-              style={styles.avatar}
-            />
+            <TouchableOpacity>
+              <Image
+                source={require('@/assets/images/notification.png')}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Stats */}
@@ -360,6 +345,15 @@ export const TodoScreen: React.FC = () => {
     );
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await    getActiveTrips();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <>
       <StatusBar
@@ -375,7 +369,7 @@ export const TodoScreen: React.FC = () => {
 
         <FlatList
           data={displayTrips}
-        
+         
           renderItem={renderTripCard}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
@@ -385,8 +379,16 @@ export const TodoScreen: React.FC = () => {
           }
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          refreshControl={
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+      tintColor={colors.primaryLight}
+      colors={[colors.primaryLight]}
+    />
+  }
         />
-      
+
       </SafeAreaView>
     </>
   );
@@ -405,6 +407,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
+  
   },
   heroSection: {
     borderRadius: borderRadius.xl,
@@ -454,7 +457,7 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.primaryLight,
     letterSpacing: 0.3,
     textTransform: 'uppercase',
     marginBottom: spacing.xs,
@@ -510,7 +513,7 @@ const styles = StyleSheet.create({
   heroStatIcon: {
     width: 20,
     height: 20,
-    tintColor: colors.primary,
+    tintColor: colors.primaryLight,
   },
   heroStatTextContainer: {
     gap: spacing.xs,
@@ -606,7 +609,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   filterTabActive: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     ...shadows.sm,
   },
   filterTabText: {
@@ -616,7 +619,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   filterTabTextActive: {
-    color: colors.primary,
+    color: colors.primaryLight,
     fontWeight: '700',
   },
   card: {
@@ -624,7 +627,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
     borderRadius: borderRadius.xl,
-    overflow: 'hidden',
+
     ...shadows.lg,
   },
   cardHeader: {
@@ -636,6 +639,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderTopRightRadius: borderRadius.xl,
+    borderTopLeftRadius: borderRadius.xl,
   },
   tripId: {
     ...typography.bodyMedium,
@@ -709,7 +714,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   button: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -750,7 +755,7 @@ const styles = StyleSheet.create({
   emptyIcon: {
     width: 40,
     height: 40,
-    tintColor: colors.primary,
+    tintColor: colors.primaryLight,
   },
   emptyTitle: {
     ...typography.h4,
@@ -763,7 +768,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroCard: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.primaryLight,
     borderRadius: 24,
     padding: 20,
     ...shadows.lg,
@@ -790,8 +795,8 @@ const styles = StyleSheet.create({
   },
 
   avatar: {
-    width: 50,
-    height: 50,
+    width: 30,
+    height: 30,
     tintColor: 'white',
   },
 
