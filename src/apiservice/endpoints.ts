@@ -31,7 +31,7 @@ export const tripApi = {
 
   startTrip: (
     tripId: string,
-    payload: { latitude: number; longitude: number },
+    payload: { latitude: any; longitude: any },
   ): Promise<ApiResponse> => ApiClient.post(`/trips/${tripId}/start`, payload),
 
   completeTrip: (tripId: string, formData: FormData): Promise<ApiResponse> =>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, Dimensions, ActivityIndicator, View, Text, TouchableOpacity, Modal, Linking, PermissionsAndroid, Platform, Animated, PanResponder, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp, useIsFocused } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
@@ -11,6 +11,8 @@ import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colo
 import { Header } from '@/components/Header';
 import { Typography } from '@/components';
 import { tripApi } from '@/apiservice';
+import useLocation from '@/hooks/useLocation';
+ 
 
 const { height } = Dimensions.get('window');
 
@@ -37,7 +39,8 @@ export const TripInProgressScreen: React.FC = () => {
   const [actualRouteDuration, setActualRouteDuration] = useState<number | null>(null);
   const [showArrivedModal, setShowArrivedModal] = useState(false);
   const mapRef = useRef<MapView>(null);
-
+const isFocused = useIsFocused();
+ const { latitude, longitude, heading, error } = useLocation(isFocused);
   // Bottom Sheet animation values
   const screenHeight = Dimensions.get('window').height;
   const bottomSheetMaxHeight = screenHeight * 0.45; // ya jitna chaaho (75%–85%)
@@ -66,10 +69,20 @@ export const TripInProgressScreen: React.FC = () => {
   const slideProgress = useRef(new Animated.Value(0)).current;
   const [isSliding, setIsSliding] = useState(false);
   const [data, setData] = useState<any[]>([]);
+
+  const [bearing, setBearing] = useState(0);
   useEffect(() => {
     getActiveTrips();
   }, []);
 
+
+
+useEffect(() => {
+  if (location && destination) {
+    const angle = calculateBearing(location, destination); // your existing function
+    setBearing(angle);
+  }
+}, [location, unloadingCoordinates]);
   const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
 
@@ -98,8 +111,8 @@ export const TripInProgressScreen: React.FC = () => {
 
     try {
       const payload = {
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
       };
 
       console.log('Updating location to API:', payload);
@@ -304,13 +317,19 @@ export const TripInProgressScreen: React.FC = () => {
     provider?: string;
     timestamp?: number | null;
   };
-
+useEffect(() => {
+  if (latitude && longitude) {
+    setLocation({ latitude, longitude });
+    setHasGpsLocation(true);
+    setLoading(false);
+  }
+}, [latitude, longitude]);
   // Set Noida location as current location (hardcoded for testing)
   const fetchLocationFromGoogle = async () => {
     // Noida, Uttar Pradesh, India coordinates
     const noidaLocation = {
-      latitude: 28.5355,
-      longitude: 77.3910,
+      latitude: Number(latitude),
+      longitude: Number(longitude),
     };
 
     console.log('Current Location (Noida):');
@@ -329,15 +348,12 @@ export const TripInProgressScreen: React.FC = () => {
   };
 
 
-  // Get current location on mount using Google Geolocation API
   useEffect(() => {
+  if (!latitude || !longitude) {
     fetchLocationFromGoogle();
+  }
+}, [latitude, longitude]);
 
-    // Cleanup
-    return () => {
-      // Cleanup if needed
-    };
-  }, []);
 
   // Geocode unloading address to get coordinates
   useEffect(() => {
@@ -606,8 +622,8 @@ export const TripInProgressScreen: React.FC = () => {
 
     try {
       const payload = {
-        arrivedLatitude: 22.3569,
-        arrivedLongitude: 72.3569,
+        arrivedLatitude: Number(latitude),
+        arrivedLongitude: Number(longitude),
       };
 
       const res = await tripApi.markArrived(tripId, payload);
@@ -648,8 +664,8 @@ export const TripInProgressScreen: React.FC = () => {
           style={styles.map}
           mapType="standard"
           initialRegion={{
-            latitude: 28.6139, // Default to destination (will update when GPS location comes)
-            longitude: 77.209,
+            latitude: location?.latitude , // Default to destination (will update when GPS location comes)
+            longitude: location?.longitude ,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           }}
@@ -699,15 +715,16 @@ export const TripInProgressScreen: React.FC = () => {
 
           {/* Truck Marker - Only show when we have actual GPS current location */}
           {location && hasGpsLocation && (
-            <Marker
-              coordinate={location}
-              title="Truck"
-              anchor={{ x: 0.5, y: 0.5 }}
-              flat={true}>x
-              <View style={styles.truckContainer}>
-                <Text style={styles.truckEmoji}>🚛</Text>
-              </View>
-            </Marker>
+           <Marker
+  coordinate={location}
+  title="Truck"
+  anchor={{ x: 0.5, y: 0.5 }}
+  flat={true} 
+>
+  <View style={[styles.truckContainer, { transform: [{ rotate: `${bearing}deg` }] }]}>
+    <Text style={styles.truckEmoji}>🚛</Text>
+  </View>
+</Marker>
           )}
 
           {/* Delivery Location Marker */}

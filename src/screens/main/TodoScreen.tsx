@@ -84,110 +84,14 @@ export const TodoScreen: React.FC = () => {
       ;
     }
   };
-
- const requestPermissionsHere = async () => {
-  try {
-    const granted = await request(
-      Platform.OS === 'ios'
-        ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE
-        : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-      {
-        title: 'Geolocation Permission',
-        message: 'Can we access your location?',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      },
-    );
-
-    // console.log(granted, 'granted========>');
-
-    // Handling permission results
-    if (granted === 'granted') {
-      // console.log('Location permission granted');
-      return true;
-    } else if (granted === 'blocked') {
-      console.log('Location permission blocked');
-    } else if (granted === 'denied') {
-      console.log('Location permission denied');
-    } else {
-      console.log('Permission status unknown');
-    }
-  } catch (err) {
-    console.error('Error requesting location permission', err);
-    return false;
-  }
-};
-
-let watchId = null;
-
- const fetchCurrentLocation = async () => {
-  try {
-    const hasPermission = await requestPermissionsHere();
-    if (!hasPermission) return null;
-
-    const result =
-      Platform.OS === 'ios'
-        ? await Geolocation.requestAuthorization('always')
-        : await requestPermissionsHere();
-
-    if (!result) return null;
-
-    return new Promise((resolve, reject) => {
-      watchId = Geolocation.watchPosition(
-        position => {
-          
-          const { latitude, longitude, heading } = position?.coords || {};
-          console.log(latitude, longitude, "================>")
-            resolve({ latitude, longitude, heading });
-          },
-        error => {
-          console.error('❌ Error fetching location:', error);
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          distanceFilter: 0.1,
-          interval: 5000,
-          fastestInterval: 2000,
-        }
-      );
-    });
-  } catch (error) {
-    console.error('⚠️ Error during location fetch:', error);
-    return null;
-  }
-};
-
-
-  useEffect(() => {
-    fetchCurrentLocation()
-  }, [useIsFocused()]);
-
-
   useEffect(() => {
     getActiveTrips();
     loadHistory();
   }, [useIsFocused()]);
 
   const handleTripPress = (trip: Trip) => {
-   
-
-    
         navigation.navigate('TripDetail', { tripId: trip.id, })
-    
   };
-
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const renderTripCard = ({ item }: { item: Trip }) => {
     const loadingCity = item?.order?.loadingCity?.split(',')[0];
     const unloadingCity = item?.order?.unloadingCity?.split(',')[0];

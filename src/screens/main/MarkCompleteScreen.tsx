@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp, CommonActions, useIsFocused } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { TodoStackParamList } from '@/types';
 import { Button, Card, useToast, Typography, ProofDocumentUpload, Input } from '@/components';
@@ -17,6 +17,7 @@ import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colo
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { usePermissions } from '@/hooks/usePermissions';
 import { tripApi } from '@/apiservice';
+import useLocation from '@/hooks/useLocation';
 
 type MarkCompleteRouteProp = RouteProp<TodoStackParamList, 'MarkComplete'>;
 type MarkCompleteNavigationProp = StackNavigationProp<TodoStackParamList, 'MarkComplete'>;
@@ -34,6 +35,8 @@ export const MarkCompleteScreen: React.FC = () => {
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const permissions = usePermissions();
  const [data, setData] = useState<any>(null);
+   const isFocused = useIsFocused();
+ const { latitude, longitude, heading, error } = useLocation(isFocused);
   // Dummy trip data
 
 useEffect(() => {  
@@ -225,8 +228,8 @@ if (LoadedValue === null || LoadedValue === '') {
     // 🔹 same keys as Postman
     // TODO: Replace with actual GPS location in production
     // For now using test coordinates (Chittagong, Bangladesh)
-    formData.append('latitude', '22.3569');
-    formData.append('longitude', '91.7832');
+    formData.append('latitude', Number(latitude));
+    formData.append('longitude', Number(longitude));
     formData.append('deliveredWeight', LoadedValue.toString());
 
     // 🔹 multiple files supported
