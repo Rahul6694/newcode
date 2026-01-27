@@ -280,7 +280,8 @@ export const TripInProgressScreen: React.FC = () => {
     })
   ).current;
 
-  const GOOGLE_API_KEY = 'AIzaSyDKbLlbS2U7upE8jxgpIkA-RGrhqFRR8eI';
+  // const GOOGLE_API_KEY = 'AIzaSyDKbLlbS2U7upE8jxgpIkA-RGrhqFRR8eI';
+   const GOOGLE_API_KEY = 'AIzaSyAqBEGD7SlCdvqKeL8rom-hyz46dCULdNs';
 
   // Destination from trip data (delivery location)
   const destination = sampleTrip.unloadingLocation.coordinates || {

@@ -43,3 +43,4 @@ async function uploadLoadingDocument(tripId) {
 // Usage example:
 const tripId = 'eec75852-be05-47bc-9678-c9c8bcc67d20';
 uploadLoadingDocument(tripId);
+
