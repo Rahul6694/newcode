@@ -664,7 +664,7 @@ useEffect(() => {
           style={styles.map}
           mapType="standard"
           initialRegion={{
-            latitude: location?.latitude , // Default to destination (will update when GPS location comes)
+            latitude: location?.latitude, // Default to destination (will update when GPS location comes)
             longitude: location?.longitude ,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,

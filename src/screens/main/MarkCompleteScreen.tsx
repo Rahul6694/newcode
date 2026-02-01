@@ -178,7 +178,6 @@ const tripData = {
     
     // Reset attempts on success
     setGalleryAttempts(0);
-
     try {
       console.log('[MarkCompleteScreen] Launching image picker...');
       const result = await ImageCropPicker.openPicker({
@@ -219,7 +218,6 @@ const tripData = {
   }
 if (LoadedValue === null || LoadedValue === '') {
       showError('Please enter loaded weight');
-
       return;
     }
   try {
@@ -240,9 +238,7 @@ if (LoadedValue === null || LoadedValue === '') {
         name: photo.filename || `delivery_${index}.jpg`,
       } as any);
     });
-
     const res = await tripApi.completeTrip(tripId, formData);
-
     if (res?.success) {
       showSuccess('Trip completed successfully');
       setShowCongratulations(true);
