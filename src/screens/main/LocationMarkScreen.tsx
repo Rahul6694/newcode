@@ -276,7 +276,7 @@ export const LocationMarkScreen: React.FC = () => {
       //     type: selectedPhoto?.mime || 'image/jpeg',
 
       formData.append('remarks', 'Loading completed');
-     formData.append('LoadWeight', LoadedValue);
+     formData.append('loadedWeight', LoadedValue.toString());
       console.log(formData, documents, 'formData=======>');
 
       const response = await tripApi.uploadDocument(tripId, formData);

@@ -1,12 +1,12 @@
-import React, {useEffect, useState} from 'react';
-import {View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation, RouteProp, CommonActions} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {HistoryStackParamList, Trip, TripStatus, MainTabParamList} from '@/types';
-import {Card, StatusBadge, Typography, useToast} from '@/components';
-import {Header} from '@/components/Header';
-import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation, RouteProp, CommonActions } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { HistoryStackParamList, Trip, TripStatus, MainTabParamList } from '@/types';
+import { Card, StatusBadge, Typography, useToast } from '@/components';
+import { Header } from '@/components/Header';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { tripApi } from '@/apiservice/endpoints';
 
 
@@ -89,8 +89,8 @@ type HistoryTripDetailNavigationProp = StackNavigationProp<HistoryStackParamList
 export const HistoryTripDetailScreen: React.FC = () => {
   const route = useRoute<HistoryTripDetailRouteProp>();
   const navigation = useNavigation<HistoryTripDetailNavigationProp>();
-  const {tripId} = route.params;
-  const {showError} = useToast();
+  const { tripId } = route.params;
+  const { showError } = useToast();
 
   const [trip, setTrip] = useState<ExtendedTrip | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,29 +99,29 @@ export const HistoryTripDetailScreen: React.FC = () => {
     fetchTripDetails();
   }, [tripId]);
 
-const handleCall = (phoneNumber: string) => {
-  Linking.openURL(`tel:${phoneNumber}`);
-};
-  
+  const handleCall = (phoneNumber: string) => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
   const fetchTripDetails = async () => {
     try {
       setLoading(true);
       console.log('=== Fetching Trip Details ===');
       console.log('Trip ID:', tripId);
-      
+
       const response = await tripApi.getTripById(tripId);
-      
+
       console.log('Trip Details API Response:', {
         response: response,
         hasData: !!response?.data,
         responseType: typeof response,
         keys: response ? Object.keys(response) : [],
       });
-      
+
       // Handle different response structures
       if (response) {
         let apiTrip = null;
-        
+
         // Structure 1: {success, statusCode, message, data: {id, tripNumber, ...}}
         if (response.data && response.data.id) {
           apiTrip = response.data;
@@ -138,13 +138,13 @@ const handleCall = (phoneNumber: string) => {
         else if ((response as any).data) {
           apiTrip = (response as any).data;
         }
-        
+
         console.log('Extracted trip data:', {
           hasApiTrip: !!apiTrip,
           tripId: apiTrip?.id,
           tripNumber: apiTrip?.tripNumber,
         });
-        
+
         if (apiTrip && (apiTrip.id || apiTrip.tripNumber)) {
           // Convert API response to ExtendedTrip format
           const convertedTrip = convertApiResponseToTrip(apiTrip);
@@ -158,7 +158,7 @@ const handleCall = (phoneNumber: string) => {
             material: apiTrip.material,
             vehicleMake: apiTrip.vehicle?.vehicleMake,
           };
-          
+
           setTrip(extendedTrip);
           console.log('Trip details loaded successfully');
         } else {
@@ -177,7 +177,7 @@ const handleCall = (phoneNumber: string) => {
       console.log('Error response:', error?.response);
       console.log('Error status:', error?.response?.status);
       console.log('Error data:', error?.response?.data);
-      
+
       // Check if it's a 404 error
       if (error?.response?.status === 404) {
         showError('Trip not found');
@@ -235,13 +235,13 @@ const handleCall = (phoneNumber: string) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}>
-        
+
         {/* Header Card */}
         <Card style={styles.headerCard}>
           <View style={styles.headerCardHeader}>
             <View style={styles.headerCardHeaderLeft}>
               <Typography variant="h4" color="textPrimary" weight="700" style={styles.headerCardTitle}>Order Details</Typography>
-              <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.headerCardSubtitle}>{trip.tripNumber || `#${trip.id.slice(-6).toUpperCase()}`}</Typography>
+              {/* <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.headerCardSubtitle}>{trip.tripNumber || `#${trip.id.slice(-6).toUpperCase()}`}</Typography> */}
             </View>
             <View style={styles.statusBadge}>
               <View style={styles.statusDot} />
@@ -250,6 +250,12 @@ const handleCall = (phoneNumber: string) => {
           </View>
 
           <View style={styles.orderDetailsList}>
+            {trip.tripNumber && (
+              <View style={styles.orderDetailRow}>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Trip ID</Typography>
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.tripNumber}</Typography>
+              </View>
+            )}
             {trip.orderNumber && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Order ID</Typography>
@@ -277,8 +283,8 @@ const handleCall = (phoneNumber: string) => {
           {trip.distance && (
             <View style={styles.routeInfo}>
               <View style={styles.routeTextContainer}>
-                <Image 
-                  source={require('@/assets/images/location.png')} 
+                <Image
+                  source={require('@/assets/images/location.png')}
                   style={styles.routeIcon}
                   resizeMode="contain"
                 />
@@ -286,8 +292,8 @@ const handleCall = (phoneNumber: string) => {
                   <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.routeText}>
                     {trip.loadingLocation.address.split(',')[0]}
                   </Typography>
-                  <Image 
-                    source={require('@/assets/images/next.png')} 
+                  <Image
+                    source={require('@/assets/images/next.png')}
                     style={styles.routeArrow}
                     resizeMode="contain"
                   />
@@ -332,8 +338,8 @@ const handleCall = (phoneNumber: string) => {
         {/* Pickup Location */}
         <Card style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Image 
-              source={require('@/assets/images/location.png')} 
+            <Image
+              source={require('@/assets/images/location.png')}
               style={styles.sectionTitleIcon}
               resizeMode="contain"
             />
@@ -364,8 +370,8 @@ const handleCall = (phoneNumber: string) => {
         {/* Delivery Location */}
         <Card style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Image 
-              source={require('@/assets/images/location.png')} 
+            <Image
+              source={require('@/assets/images/location.png')}
               style={styles.sectionTitleIcon}
               resizeMode="contain"
             />
@@ -400,17 +406,23 @@ const handleCall = (phoneNumber: string) => {
             <View style={styles.weightInfo}>
               {trip.deliveredWeight && (
                 <View style={styles.weightRow}>
-                  <Image 
-                    source={require('@/assets/images/shipped.png')} 
+                  {/* <Image
+                    source={require('@/assets/images/shipped.png')}
                     style={styles.weightIcon}
                     resizeMode="contain"
-                  />
+                  /> */}
                   <View style={styles.weightDetails}>
-                    <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.weightValue}>{trip.deliveredWeight} TON</Typography>
-                    <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.weightLabel}>Delivered Weight</Typography>
-                    {trip.assignedWeight && (
+                     <View style={styles.infoRow}>
+                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Delivered Weight</Typography>
+                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.deliveredWeight} TON</Typography>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Material Type</Typography>
+                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.material.materialType}</Typography>
+                    </View>
+                    {/* {trip.assignedWeight && (
                       <Typography variant="small" color="warning" style={styles.assignedWeight}>Assigned: {trip.assignedWeight} TON</Typography>
-                    )}
+                    )} */}
                   </View>
                 </View>
               )}
@@ -457,7 +469,7 @@ const handleCall = (phoneNumber: string) => {
         )} */}
 
         {/* Material Information */}
-        {trip.material && (
+        {/* {trip.material && (
           <Card style={styles.section}>
             <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Material Information</Typography>
             <View style={styles.infoRow}>
@@ -465,7 +477,7 @@ const handleCall = (phoneNumber: string) => {
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.material.materialType}</Typography>
             </View>
           </Card>
-        )}
+        )} */}
 
         {/* Payment Summary */}
         {trip.payment && (
@@ -473,8 +485,7 @@ const handleCall = (phoneNumber: string) => {
             <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Payment Summary</Typography>
             <View style={styles.paymentInfo}>
               <View style={styles.paymentLeft}>
-                <Typography variant="h3" color="primary" weight="700" style={styles.paymentAmount}>₹{parseFloat(trip.payment.tripAmount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</Typography>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.paymentLabel}>Trip Payout</Typography>
+                <Typography variant="h3" color="primary" weight="700" style={styles.paymentAmount}>SAR {parseFloat(trip.payment.tripAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Typography>
               </View>
             </View>
           </Card>
@@ -693,7 +704,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.textPrimary,
     marginBottom: spacing.md,
-    
+
     fontSize: 15,
     fontWeight: '500',
   },

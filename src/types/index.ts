@@ -179,6 +179,7 @@ export type TodoStackParamList = {
   LocationMark: {tripId: string ,stage:any};
   TripInProgress: {tripId: string};
   MarkComplete: {tripId: string};
+  Notifications: undefined;
 };
 
 export type HistoryStackParamList = {

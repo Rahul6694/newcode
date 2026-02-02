@@ -30,6 +30,7 @@ import { useSelector } from 'react-redux';
 import { tripApi } from '@/apiservice';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
+import type { RootState } from '@/redux/store';
 
 type TodoScreenNavigationProp = StackNavigationProp<
   TodoStackParamList,
@@ -46,7 +47,7 @@ export const TodoScreen: React.FC = () => {
   const [datalenght, setDatalenght] = useState([]);
 
   // Use dummy data if active trips are empty - show only first trip
-  const allTrips = data;
+  const allTrips = Array.isArray(data) ? data : [];
   const displayTrips = allTrips.slice(0, 1); // Show only first trip
 
   const getActiveTrips = async () => {
@@ -54,11 +55,12 @@ export const TodoScreen: React.FC = () => {
       const res = await tripApi.getActiveTrip();
       if (res) {
         console.log('Profile datas:', res);
-        const data = res.data || res;
-        setData(data || [])
-        console.log(data, 'data==============>');
+        // API sometimes returns an object; normalize to an array to avoid `slice` crash
+        const payload = (res as any)?.data ?? res;
+        const nextTrips = Array.isArray(payload) ? payload : Array.isArray((payload as any)?.data) ? (payload as any).data : [];
+        setData(nextTrips);
+        console.log(nextTrips, 'data==============>');
       } else {
-        const errorMsg = res?.message || 'Failed to load profile';
         console.log('Profile data:', res);
       }
     } catch (error: any) {
@@ -93,10 +95,13 @@ export const TodoScreen: React.FC = () => {
         navigation.navigate('TripDetail', { tripId: trip.id, })
   };
   const renderTripCard = ({ item }: { item: Trip }) => {
-    const loadingCity = item?.order?.loadingCity?.split(',')[0];
-    const unloadingCity = item?.order?.unloadingCity?.split(',')[0];
-    const loadingAddress = item?.order?.loadingAddress;
-    const unloadingAddress = item?.order?.unloadingAddress;
+    // `Trip` typing in this project doesn't currently include `order` in TS,
+    // but runtime data does. Normalize here to avoid TS errors.
+    const order = (item as any)?.order;
+    const loadingCity = order?.loadingCity?.split(',')[0];
+    const unloadingCity = order?.unloadingCity?.split(',')[0];
+    const loadingAddress = order?.loadingAddress;
+    const unloadingAddress = order?.unloadingAddress;
 
     return (
       <View style={styles.card}>
@@ -185,7 +190,7 @@ export const TodoScreen: React.FC = () => {
               weight="500"
               style={styles.infoText}
             >
-              {item?.assignedWeight || 'N/A'} ton
+              {item?.assignedWeight || 'N/A'} TON
             </Typography>
           </View>
           <View style={styles.gridItem}>
@@ -200,7 +205,7 @@ export const TodoScreen: React.FC = () => {
               weight="500"
               style={styles.infoText}
             >
-              {new Date(item?.order?.startDate).toLocaleDateString('en-GB', {
+              {new Date(order?.startDate).toLocaleDateString('en-GB', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
@@ -292,9 +297,9 @@ export const TodoScreen: React.FC = () => {
           <View style={styles.heroTopRow}>
             <View>
               <Typography style={styles.greeting}>{greeting} 👋</Typography>
-              <Typography style={styles.userName}>{user?.fullName}</Typography>
+              <Typography style={styles.userName}>{(user as any)?.fullName ?? (user as any)?.name ?? ''}</Typography>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} activeOpacity={0.8}>
               <Image
                 source={require('@/assets/images/notification.png')}
                 style={styles.avatar}
@@ -455,7 +460,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: 'white',
     letterSpacing: -0.5,
     lineHeight: 34,
   },
@@ -778,7 +783,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  userName: {
+  heroUserName: {
     fontSize: 26,
     fontWeight: '800',
     color: '#FFFFFF',

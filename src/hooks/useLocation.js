@@ -11,10 +11,10 @@ const requestLocationPermission = async () => {
         : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION
     );
 
-    return permission === RESULTS.GRANTED;
+    return { granted: permission === RESULTS.GRANTED, status: permission };
   } catch (e) {
     console.log('Permission error:', e);
-    return false;
+    return { granted: false, status: 'error' };
   }
 };
 
@@ -33,18 +33,40 @@ const useLocation = (isFocused = true) => {
     if (!isFocused) return;
 
     const startTracking = async () => {
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) return;
+      const { granted, status } = await requestLocationPermission();
+      if (!granted) {
+        setError({ code: 'PERMISSION_DENIED', message: `Location permission not granted (${status})` });
+        return;
+      }
 
       if (watchId.current !== null) {
         Geolocation.clearWatch(watchId.current);
         watchId.current = null;
       }
 
+      // Grab an initial fix ASAP (watchPosition can be slow on first load)
+      Geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude, heading } = position.coords;
+          setLocation({ latitude, longitude, heading });
+          setError(null);
+        },
+        err => {
+          console.log('Initial location error:', err);
+          setError(err);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+
       watchId.current = Geolocation.watchPosition(
         position => {
           const { latitude, longitude, heading } = position.coords;
           setLocation({ latitude, longitude, heading });
+          setError(null);
         },
         err => {
           console.log('Location error:', err);
@@ -55,6 +77,8 @@ const useLocation = (isFocused = true) => {
           distanceFilter: 1,
           interval: 5000,
           fastestInterval: 2000,
+          timeout: 15000,
+          maximumAge: 0,
         }
       );
     };

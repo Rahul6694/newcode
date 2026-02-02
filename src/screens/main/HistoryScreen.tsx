@@ -15,11 +15,17 @@ import { Card, StatusBadge, Typography, useToast } from '@/components';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { apiService } from '@/api';
 import { tripApi } from '@/apiservice';
+import { TripMapPreview } from '@/components/TripMapPreview';
 
 type HistoryScreenNavigationProp = StackNavigationProp<HistoryStackParamList>;
 
 // Convert API response to Trip format
 const convertApiResponseToTrip = (apiTrip: any): Trip => {
+  const loadingLat = Number(apiTrip?.order?.loadingLat);
+  const loadingLng = Number(apiTrip?.order?.loadingLng);
+  const unloadingLat = Number(apiTrip?.order?.unloadingLat);
+  const unloadingLng = Number(apiTrip?.order?.unloadingLng);
+
   return {
     id: apiTrip.id,
     tripNumber: apiTrip.tripNumber,
@@ -27,50 +33,64 @@ const convertApiResponseToTrip = (apiTrip: any): Trip => {
     vehicleNumber: apiTrip.vehicle?.registrationNumber || '',
     assignedWeight: apiTrip.assignedWeight || '0',
     deliveredWeight: apiTrip.deliveredWeight || null,
-    status: (apiTrip.status === 'COMPLETED' ? 'Completed' : apiTrip.status) as TripStatus,
+    order: apiTrip?.order,
+
+    status:
+      (apiTrip.status === 'COMPLETED'
+        ? 'Completed'
+        : apiTrip.status) as TripStatus,
+
     loadingLocation: {
       address: apiTrip.order?.loadingCity || 'Loading Location',
       coordinates: {
-        latitude: 0,
-        longitude: 0,
+        latitude: loadingLat || 0,
+        longitude: loadingLng || 0,
         accuracy: 10,
-        timestamp: apiTrip.startTime ? new Date(apiTrip.startTime) : new Date(apiTrip.createdAt),
+        timestamp: new Date(),
       },
       contactPerson: {
         name: 'Contact Person',
         phoneNumber: '0000000000',
       },
     },
+
     unloadingLocation: {
       address: apiTrip.order?.unloadingCity || 'Unloading Location',
       coordinates: {
-        latitude: 0,
-        longitude: 0,
+        latitude: unloadingLat || 0,
+        longitude: unloadingLng || 0,
         accuracy: 10,
-        timestamp: apiTrip.endTime ? new Date(apiTrip.endTime) : new Date(apiTrip.createdAt),
+        timestamp: new Date(),
       },
       contactPerson: {
         name: 'Contact Person',
         phoneNumber: '0000000000',
       },
     },
+
     timeline: {
       assigned: new Date(apiTrip.createdAt),
       started: apiTrip.startTime ? new Date(apiTrip.startTime) : undefined,
       loaded: apiTrip.loadingDate ? new Date(apiTrip.loadingDate) : undefined,
       completed: apiTrip.endTime ? new Date(apiTrip.endTime) : undefined,
     },
+
     documents: {
       loading: [],
       unloading: [],
     },
+
     remarks: {
       loading: undefined,
       unloading: undefined,
     },
+
     trackingData: [],
   };
 };
+
+
+
 
 export const HistoryScreen: React.FC = () => {
   const navigation = useNavigation<HistoryScreenNavigationProp>();
@@ -84,6 +104,8 @@ export const HistoryScreen: React.FC = () => {
     navigation.navigate('HistoryTripDetail', { tripId: trip.id });
   };
 
+
+  
   useEffect(() => {
     loadHistory();
   }, []);
@@ -139,6 +161,8 @@ export const HistoryScreen: React.FC = () => {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   };
 
+
+  
   // Custom dashed line component
   const DashedLine = () => {
     const dashCount = 8;
@@ -154,10 +178,18 @@ export const HistoryScreen: React.FC = () => {
   };
 
   const renderTripCard = ({ item }: { item: Trip }) => {
-    const loadingCity = item.loadingLocation.address.split(',')[0];
-    const unloadingCity = item.unloadingLocation.address.split(',')[0];
-    const loadingAddress = item.loadingLocation.address;
-    const unloadingAddress = item.unloadingLocation.address;
+
+
+    const loadingCity = item?.order?.loadingCity;
+    const unloadingCity = item?.order?.unloadingCity;
+    const loadingAddress = item?.order?.loadingAddress;
+    const unloadingAddress = item?.order?.unloadingAddress
+
+
+    console.log(loadingCity);
+    console.log(unloadingCity);
+    console.log(loadingAddress);
+    console.log(unloadingAddress);
 
     return (
       <View style={styles.card}>
@@ -166,11 +198,12 @@ export const HistoryScreen: React.FC = () => {
           <Typography variant="smallMedium"  weight="600" style={styles.tripId}>{item.tripNumber || `#${item.id.slice(-6).toUpperCase()}`}</Typography>
           <StatusBadge status={item.status} />
         </View>
-        <Image
+        <TripMapPreview trip={item} />
+        {/* <Image
           source={require('@/assets/images/map.png')}
           style={styles.map}
           resizeMode="cover"
-        />
+        /> */}
         <View style={styles.divider} />
 
 
@@ -184,12 +217,12 @@ export const HistoryScreen: React.FC = () => {
 
           <View style={styles.locations}>
             <View style={styles.locationItem}>
-              <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{loadingCity}</Typography>
-              <Typography variant="small" color="textSecondary" style={styles.addressText} numberOfLines={1}>{loadingAddress}</Typography>
+              <Typography numberOfLines={3} variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{loadingCity}</Typography>
+              <Typography numberOfLines={3} variant="small" color="textSecondary" style={styles.addressText} >{loadingAddress}</Typography>
             </View>
             <View style={[styles.locationItem, { marginTop: 20 }]}>
-              <Typography variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{unloadingCity}</Typography>
-              <Typography variant="small" color="textSecondary" style={styles.addressText} numberOfLines={1}>{unloadingAddress}</Typography>
+              <Typography numberOfLines={3} variant="bodyMedium" color="textPrimary" weight="700" style={styles.cityText}>{unloadingCity}</Typography>
+              <Typography numberOfLines={3} variant="small" color="textSecondary" style={styles.addressText} >{unloadingAddress}</Typography>
             </View>
           </View>
         </View>
@@ -204,7 +237,7 @@ export const HistoryScreen: React.FC = () => {
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.assignedWeight || 'N/A'} TON</Typography>
+            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.deliveredWeight || 'N/A'} TON</Typography>
           </View>
           <View style={styles.gridItem}>
             <Image
@@ -220,14 +253,7 @@ export const HistoryScreen: React.FC = () => {
               })}
             </Typography>
           </View>
-          {/* <View style={styles.gridItem}>
-            <Image 
-              source={require('@/assets/images/contact-form.png')} 
-              style={styles.gridIcon}
-              resizeMode="contain"
-            />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>Docs: {item.documents.loading.length + item.documents.unloading.length > 0 ? 'Uploaded' : 'Pending'}</Typography>
-        </View> */}
+         
         </View>
 
         {/* Action Button */}
@@ -251,18 +277,6 @@ export const HistoryScreen: React.FC = () => {
       {/* Trending Banner */}
       <View style={styles.banner}>
         <View style={styles.bannerInner}>
-          <View style={styles.bannerTop}>
-            <View style={styles.bannerBadge}>
-              <Typography variant="caption" color="white" weight="700" style={styles.bannerBadgeText}>History</Typography>
-            </View>
-            <View style={styles.bannerIconWrapper}>
-              <Image
-                source={require('@/assets/images/history.png')}
-                style={styles.bannerIcon}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
           <View style={styles.bannerContent}>
             <Typography variant="h3" color="white" weight="700" style={styles.bannerTitle}>Your Success Journey</Typography>
             <Typography style={styles.bannerSubtitle}>
@@ -272,36 +286,18 @@ export const HistoryScreen: React.FC = () => {
               <Typography variant="smallMedium" color="primary" weight="700" style={styles.bannerHighlightText}>100% On-Time Delivery Rate</Typography>
             </View> */}
           </View>
+          <View style={styles.bannerIconWrapper}>
+              <Image
+                source={require('@/assets/images/history.png')}
+                style={styles.bannerIcon}
+                resizeMode="contain"
+              />
+     
+          </View>
         </View>
       </View>
 
-      {/* Filter Tabs */}
-      {/* <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterTab, selectedFilter === 'all' && styles.filterTabActive]}
-          onPress={() => setSelectedFilter('all')}
-          activeOpacity={0.7}>
-          <Typography
-            variant="smallMedium"
-            color={selectedFilter === 'all' ? 'white' : 'textSecondary'}
-            weight={selectedFilter === 'all' ? '700' : '600'}
-            style={styles.filterTabText}>
-            All Trips
-          </Typography>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, selectedFilter === 'completed' && styles.filterTabActive]}
-          onPress={() => setSelectedFilter('completed')}
-          activeOpacity={0.7}>
-          <Typography
-            variant="smallMedium"
-            color={selectedFilter === 'completed' ? 'white' : 'textSecondary'}
-            weight={selectedFilter === 'completed' ? '700' : '600'}
-            style={styles.filterTabText}>
-            Completed
-          </Typography>
-        </TouchableOpacity>
-      </View> */}
+    
     </View>
   );
 
@@ -324,7 +320,7 @@ export const HistoryScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <FlatList
-        data={filteredHistory}
+        data={history}
         renderItem={renderTripCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
@@ -368,17 +364,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     padding: spacing.xl,
     position: 'relative',
+    flexDirection:'row',
+    justifyContent:'space-between'
   },
   bannerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+
+  
 
   },
   bannerBadge: {
-    backgroundColor: colors.error,
+   
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+
     borderRadius: borderRadius.full,
   },
   bannerBadgeText: {
@@ -403,7 +400,7 @@ const styles = StyleSheet.create({
     tintColor: colors.primaryLight,
   },
   bannerContent: {
-    marginTop: spacing.xs,
+ width:'70%'
   },
   bannerTitle: {
     ...typography.h3,

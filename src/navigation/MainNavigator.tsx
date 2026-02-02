@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    gap: spacing.xs,
+    
   },
   iconWrapper: {
     width: 50,

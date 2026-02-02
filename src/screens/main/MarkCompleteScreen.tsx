@@ -34,73 +34,73 @@ export const MarkCompleteScreen: React.FC = () => {
   const [cameraAttempts, setCameraAttempts] = useState(0);
   const [galleryAttempts, setGalleryAttempts] = useState(0);
   const permissions = usePermissions();
- const [data, setData] = useState<any>(null);
-   const isFocused = useIsFocused();
- const { latitude, longitude, heading, error } = useLocation(isFocused);
+  const [data, setData] = useState<any>(null);
+  const isFocused = useIsFocused();
+  const { latitude, longitude, heading, error } = useLocation(isFocused);
   // Dummy trip data
 
-useEffect(() => {  
-    getActiveTrips() 
-   },[]); 
+  useEffect(() => {
+    getActiveTrips()
+  }, []);
 
 
   const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
-  
-  
-  
-    const getActiveTrips = async () => {
-      try {
-        const res = await tripApi.getActiveTrip();
-        if (res) {
-          console.log('Profile data:', res);
-          const data = res.data || res;
-          setData(data||[])
-          console.log('efefe',data);
-        } else {
-          const errorMsg = res?.message || 'Failed to load profile';
-          console.log('Profile data:', res);
-        }
-      } catch (error: any) {
-        console.log('Load profile error:', error);
-      } finally {
+
+
+
+  const getActiveTrips = async () => {
+    try {
+      const res = await tripApi.getActiveTrip();
+      if (res) {
+        console.log('Profile data:', res);
+        const data = res.data || res;
+        setData(data || [])
+        console.log('efefe', data);
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+        console.log('Profile data:', res);
       }
-    };  
-const tripData = {
-  orderId: trip?.order?.orderNumber ?? 'N/A',
-  tripNumber: trip?.tripNumber ?? 'N/A',
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+    } finally {
+    }
+  };
+  const tripData = {
+    orderId: trip?.order?.orderNumber ?? 'N/A',
+    tripNumber: trip?.tripNumber ?? 'N/A',
 
-  customerName: trip?.order?.unloadingContactName ?? 'N/A',
-  customerPhone: trip?.order?.unloadingContactNumber ?? 'N/A',
+    customerName: trip?.order?.unloadingContactName ?? 'N/A',
+    customerPhone: trip?.order?.unloadingContactNumber ?? 'N/A',
 
-  address: trip?.order?.unloadingAddress ?? 'N/A',
+    address: trip?.order?.unloadingAddress ?? 'N/A',
 
-  vehicleNumber: trip?.vehicle?.registrationNumber ?? 'N/A',
-  vehicleMake: trip?.vehicle?.make ?? 'N/A',
+    vehicleNumber: trip?.vehicle?.registrationNumber ?? 'N/A',
+    vehicleMake: trip?.vehicle?.make ?? 'N/A',
 
-  assignedWeight: trip?.assignedWeight ?? 'N/A',
-  materialType: trip?.order?.materialType ?? 'N/A',
+    assignedWeight: trip?.assignedWeight ?? 'N/A',
+    materialType: trip?.order?.materialType ?? 'N/A',
 
-  distance: trip?.distance ?? 'N/A',
-  totalAmount: trip?.order?.totalAmount ?? 'N/A',
+    distance: trip?.distance ?? 'N/A',
+    totalAmount: trip?.order?.totalAmount ?? 'N/A',
 
-  status: trip?.status ?? 'N/A',
-};
+    status: trip?.status ?? 'N/A',
+  };
 
 
   // UI handlers only
   const handleTakePhoto = async () => {
     console.log('[MarkCompleteScreen] handleTakePhoto called, attempt:', cameraAttempts + 1);
-    
+
     // Request camera permission first
     console.log('[MarkCompleteScreen] Requesting camera permission...');
     const cameraGranted = await permissions.requestCameraPermission();
     console.log('[MarkCompleteScreen] Camera permission granted:', cameraGranted);
-    
+
     if (!cameraGranted) {
       const newAttempts = cameraAttempts + 1;
       setCameraAttempts(newAttempts);
       console.warn('[MarkCompleteScreen] Camera permission denied, attempt:', newAttempts);
-      
+
       if (newAttempts >= 2) {
         // Automatically open settings after 2 attempts
         console.warn('[MarkCompleteScreen] Max attempts reached, opening settings automatically...');
@@ -114,7 +114,7 @@ const tripData = {
       }
       return;
     }
-    
+
     // Reset attempts on success
     setCameraAttempts(0);
 
@@ -129,7 +129,7 @@ const tripData = {
         mediaType: 'photo',
         includeExif: true,
       });
-      
+
       console.log('[MarkCompleteScreen] Photo captured:', image.path);
       setDeliveryPhotos([...deliveryPhotos, image]);
       showSuccess('Photo captured successfully');
@@ -145,22 +145,22 @@ const tripData = {
 
   const handlePickImage = async () => {
     console.log('[MarkCompleteScreen] handlePickImage called, attempt:', galleryAttempts + 1);
-    
+
     // Check current permission status first
     console.log('[MarkCompleteScreen] Checking gallery permission status...');
     const currentStatus = await permissions.checkGalleryPermission();
     console.log('[MarkCompleteScreen] Current gallery permission status:', currentStatus);
-    
+
     // Request gallery permission
     console.log('[MarkCompleteScreen] Requesting gallery permission...');
     const galleryGranted = await permissions.requestGalleryPermission();
     console.log('[MarkCompleteScreen] Gallery permission granted:', galleryGranted);
-    
+
     if (!galleryGranted) {
       const newAttempts = galleryAttempts + 1;
       setGalleryAttempts(newAttempts);
       console.warn('[MarkCompleteScreen] Gallery permission DENIED, attempt:', newAttempts);
-      
+
       if (newAttempts >= 2) {
         // Automatically open settings after 2 attempts
         console.warn('[MarkCompleteScreen] Max attempts reached, opening settings automatically...');
@@ -175,9 +175,10 @@ const tripData = {
       console.log('[MarkCompleteScreen] Returning early - permission not granted');
       return; // IMPORTANT: Exit the function here
     }
-    
+
     // Reset attempts on success
     setGalleryAttempts(0);
+
     try {
       console.log('[MarkCompleteScreen] Launching image picker...');
       const result = await ImageCropPicker.openPicker({
@@ -186,7 +187,7 @@ const tripData = {
         mediaType: 'photo',
         compressImageQuality: 0.8,
       });
-      
+
       const images = Array.isArray(result) ? result : [result];
       const newPhotos = images.map(img => img.path);
       console.log('[MarkCompleteScreen] Photos selected:', newPhotos);
@@ -210,45 +211,48 @@ const tripData = {
 
   // UI handler only
   const handleMarkComplete = async () => {
-  if (!tripId) return;
+    if (!tripId) return;
 
-  if (deliveryPhotos.length === 0) {
-    showError('Please upload delivery photo');
-    return;
-  }
-if (LoadedValue === null || LoadedValue === '') {
-      showError('Please enter loaded weight');
+    if (deliveryPhotos.length === 0) {
+      showError('Please upload delivery photo');
       return;
     }
-  try {
-    const formData = new FormData();
+    if (LoadedValue === null || LoadedValue === '') {
+      showError('Please enter loaded weight');
 
-    // 🔹 same keys as Postman
-    // TODO: Replace with actual GPS location in production
-    // For now using test coordinates (Chittagong, Bangladesh)
-    formData.append('latitude', Number(latitude));
-    formData.append('longitude', Number(longitude));
-    formData.append('deliveredWeight', LoadedValue.toString());
-
-    // 🔹 multiple files supported
-    deliveryPhotos.forEach((photo, index) => {
-      formData.append('unloadingDocuments', {
-        uri: photo.path,
-        type: photo.mime ||'image/jpeg',
-        name: photo.filename || `delivery_${index}.jpg`,
-      } as any);
-    });
-    const res = await tripApi.completeTrip(tripId, formData);
-    if (res?.success) {
-      showSuccess('Trip completed successfully');
-      setShowCongratulations(true);
-    } else {
-      showError(res?.message || 'Failed to complete trip');
+      return;
     }
-  } catch (error) {
-    console.log('Complete trip error:', error);
-  }
-};
+    try {
+      const formData = new FormData();
+
+      // 🔹 same keys as Postman
+      // TODO: Replace with actual GPS location in production
+      // For now using test coordinates (Chittagong, Bangladesh)
+      formData.append('latitude', Number(latitude));
+      formData.append('longitude', Number(longitude));
+      formData.append('deliveredWeight', LoadedValue.toString());
+
+      // 🔹 multiple files supported
+      deliveryPhotos.forEach((photo, index) => {
+        formData.append('unloadingDocuments', {
+          uri: photo.path,
+          type: photo.mime || 'image/jpeg',
+          name: photo.filename || `delivery_${index}.jpg`,
+        } as any);
+      });
+
+      const res = await tripApi.completeTrip(tripId, formData);
+
+      if (res?.success) {
+        showSuccess('Trip completed successfully');
+        setShowCongratulations(true);
+      } else {
+        showError(res?.message || 'Failed to complete trip');
+      }
+    } catch (error) {
+      console.log('Complete trip error:', error);
+    }
+  };
 
 
   return (
@@ -264,7 +268,7 @@ if (LoadedValue === null || LoadedValue === '') {
           <View style={styles.orderCardHeader}>
             <View style={styles.orderCardHeaderLeft}>
               <Typography variant="h4" color="textPrimary" weight="700" style={styles.orderCardTitle}>Order Details</Typography>
-              <Typography variant="caption" color="textSecondary" weight="500" style={styles.orderCardSubtitle}>{tripData.tripNumber}</Typography>
+              {/* <Typography variant="caption" color="textSecondary" weight="500" style={styles.orderCardSubtitle}>{tripData.tripNumber}</Typography> */}
             </View>
             <View style={styles.statusBadge}>
               <View style={styles.statusDot} />
@@ -273,6 +277,10 @@ if (LoadedValue === null || LoadedValue === '') {
           </View>
 
           <View style={styles.orderDetailsList}>
+            <View style={styles.orderDetailRow}>
+              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Trip ID</Typography>
+              <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.tripNumber}</Typography>
+            </View>
             <View style={styles.orderDetailRow}>
               <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Order ID</Typography>
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.orderId}</Typography>
@@ -328,15 +336,15 @@ if (LoadedValue === null || LoadedValue === '') {
             </View>
           </View>
         </Card>
-  <Input
-              label="Unloaded Weight (TON)"
-              containerStyle={{ marginTop: spacing.xl, marginHorizontal: spacing.sm, marginBottom: 0 }}
-              placeholder="Enter unloaded weight"
-              keyboardType="numeric"
-              editable={true}
-              value={LoadedValue}
-            onChangeText={setLoadedValue}
-            />
+        <Input
+          label="Unloaded Weight (TON)"
+          containerStyle={{ marginTop: spacing.xl, marginHorizontal: spacing.sm, marginBottom: 0 }}
+          placeholder="Enter unloaded weight"
+          keyboardType="numeric"
+          editable={true}
+          value={LoadedValue}
+          onChangeText={setLoadedValue}
+        />
         {/* Proof of Delivery Photo */}
         <ProofDocumentUpload
           documents={deliveryPhotos}
@@ -360,72 +368,72 @@ if (LoadedValue === null || LoadedValue === '') {
         </View>
       </ScrollView>
 
-     {/* Congratulations Modal */}
-{showCongratulations && (
-  <View style={styles.congratsOverlay}>
-    <Animated.View style={styles.congratsCard}>
+      {/* Congratulations Modal */}
+      {showCongratulations && (
+        <View style={styles.congratsOverlay}>
+          <Animated.View style={styles.congratsCard}>
 
-      {/* Success Icon */}
-      <View style={styles.congratsIconWrapper}>
-        <View style={styles.congratsIconCircle}>
-          <Typography variant="h2" color="white" weight="700">
-            ✓
-          </Typography>
+            {/* Success Icon */}
+            <View style={styles.congratsIconWrapper}>
+              <View style={styles.congratsIconCircle}>
+                <Typography variant="h2" color="white" weight="700">
+                  ✓
+                </Typography>
+              </View>
+            </View>
+
+            {/* Title */}
+            <Typography
+              variant="h3"
+              weight="700"
+              align="center"
+              style={styles.congratsTitle}
+            >
+              Trip Completed
+            </Typography>
+
+            {/* Subtitle */}
+            <Typography
+              variant="bodyMedium"
+              color="success"
+              weight="700"
+              align="center"
+              style={styles.congratsSubtitle}
+            >
+              Delivery Successful 🎉
+            </Typography>
+
+            {/* Message */}
+            <Typography
+              variant="body"
+              color="textSecondary"
+              align="center"
+              style={styles.congratsMessage}
+            >
+              {deliveryPhotos.length} photo(s) uploaded successfully.
+            </Typography>
+
+            {/* Action Button */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'TodoList' }],
+                  })
+                )
+              }
+              style={styles.congratsButton}
+            >
+              <Typography variant="bodyMedium" color="white" weight="700">
+                Completed
+              </Typography>
+            </TouchableOpacity>
+
+          </Animated.View>
         </View>
-      </View>
-
-      {/* Title */}
-      <Typography
-        variant="h3"
-        weight="700"
-        align="center"
-        style={styles.congratsTitle}
-      >
-        Trip Completed
-      </Typography>
-
-      {/* Subtitle */}
-      <Typography
-        variant="bodyMedium"
-        color="success"
-        weight="700"
-        align="center"
-        style={styles.congratsSubtitle}
-      >
-        Delivery Successful 🎉
-      </Typography>
-
-      {/* Message */}
-      <Typography
-        variant="body"
-        color="textSecondary"
-        align="center"
-        style={styles.congratsMessage}
-      >
-        {deliveryPhotos.length} photo(s) uploaded successfully.
-      </Typography>
-
-      {/* Action Button */}
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={() =>
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{name: 'TodoList'}],
-            })
-          )
-        }
-        style={styles.congratsButton}
-      >
-        <Typography variant="bodyMedium" color="white" weight="700">
-        Completed 
-        </Typography>
-      </TouchableOpacity>
-
-    </Animated.View>
-  </View>
-)}
+      )}
 
 
     </SafeAreaView>
@@ -562,7 +570,7 @@ const styles = StyleSheet.create({
   addressValue: {
     ...typography.body,
     color: colors.textPrimary,
-    
+
     fontSize: 15,
     marginBottom: spacing.xs,
   },
@@ -898,7 +906,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
-  
+
   congratsCard: {
     width: '85%',
     backgroundColor: '#fff',
@@ -908,11 +916,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 8,
   },
-  
+
   congratsIconWrapper: {
     marginBottom: 16,
   },
-  
+
   congratsIconCircle: {
     width: 72,
     height: 72,
@@ -921,20 +929,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   congratsTitle: {
     marginTop: 8,
     marginBottom: 4,
   },
-  
+
   congratsSubtitle: {
     marginBottom: 12,
   },
-  
+
   congratsMessage: {
     marginBottom: 24,
   },
-  
+
   congratsButton: {
     width: '100%',
     backgroundColor: '#22c55e',
@@ -942,6 +950,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  
+
 
 });

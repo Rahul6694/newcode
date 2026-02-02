@@ -1,23 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Dimensions, ActivityIndicator, View, Text, TouchableOpacity, Modal, Linking, PermissionsAndroid, Platform, Animated, PanResponder, ScrollView, Image } from 'react-native';
+import { StyleSheet, Dimensions, ActivityIndicator, View, Text, TouchableOpacity, Modal, Linking, Platform, Animated, PanResponder, ScrollView, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp, useIsFocused } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
-import { check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
 import { TodoStackParamList } from '@/types';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { Header } from '@/components/Header';
 import { Typography } from '@/components';
 import { tripApi } from '@/apiservice';
+import { fetchCurrentLocation } from '@/utils/dataFactory';
 import useLocation from '@/hooks/useLocation';
- 
 
-const { height } = Dimensions.get('window');
+
+const { height: FULL_HEIGHT, width: FULL_WIDTH } = Dimensions.get('window');
 
 type TripInProgressRouteProp = RouteProp<TodoStackParamList, 'TripInProgress'>;
 type TripInProgressNavigationProp = StackNavigationProp<TodoStackParamList, 'TripInProgress'>;
+type LatLng = { latitude: number; longitude: number };
+type RouteInput = LatLng & { latitudeDes: number; longitudeDes: number };
 
 // Sample trip data (same as TripDetailScreen) - in real app, this would come from API
 
@@ -26,40 +27,34 @@ export const TripInProgressScreen: React.FC = () => {
   const route = useRoute<TripInProgressRouteProp>();
   const navigation = useNavigation<TripInProgressNavigationProp>();
   const { tripId } = route.params;
+  const mapRef = useRef<MapView | null>(null);
 
-  // Location from GPS (null initially, will be set when GPS location is received)
-  const [location, setLocation] = useState<any>(null);
-  const [hasGpsLocation, setHasGpsLocation] = useState(false); // Track if we have actual GPS location
   const [loading, setLoading] = useState(true);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [isNearDestination, setIsNearDestination] = useState(false);
+
 
   // Actual route data from Google Maps
-  const [actualRouteDistance, setActualRouteDistance] = useState<number | null>(null);
   const [actualRouteDuration, setActualRouteDuration] = useState<number | null>(null);
-  const [showArrivedModal, setShowArrivedModal] = useState(false);
-  const mapRef = useRef<MapView>(null);
-const isFocused = useIsFocused();
- const { latitude, longitude, heading, error } = useLocation(isFocused);
-  // Bottom Sheet animation values
-  const screenHeight = Dimensions.get('window').height;
-  const bottomSheetMaxHeight = screenHeight * 0.45; // ya jitna chaaho (75%–85%)
-  const bottomSheetMinHeight = 220; // Minimum height when collapsed
-  // Start collapsed (down position) by default
-  // const bottomSheetTranslateY = useRef(new Animated.Value(bottomSheetMaxHeight - bottomSheetMinHeight)).current;
-  // Yeh line change karo:
-  const bottomSheetTranslateY = useRef(new Animated.Value(0)).current; // 0 = fully open/upar
-  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(true);
+  const [actualRouteDistanceKm, setActualRouteDistanceKm] = useState<number | null>(null);
+  const [routeCoordinates, setRouteCoordinates] = useState<Array<{ latitude: number; longitude: number }>>([]);
+  const [routeMeta, setRouteMeta] = useState<{ source: 'none' | 'steps' | 'overview' | 'fallback'; status?: string; points: number }>({
+    source: 'none',
+    status: undefined,
+    points: 0,
+  });
+
+
+
+  const isFocused = useIsFocused();
+  const [currentLoction, setCurrentLoction] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [destinationLocation, setDestinationLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const { latitude, longitude, heading } = useLocation(isFocused);
+  const latestCoordsRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const hasSentInitialLocationRef = useRef(false);
+  const hasFetchedTripRef = useRef(false);
+
   const [isDragging, setIsDragging] = useState(false);
 
-  // Animation values for card sections
-  const headerAnim = useRef(new Animated.Value(0)).current;
-  const destinationAnim = useRef(new Animated.Value(0)).current;
-  const detailsAnim = useRef(new Animated.Value(0)).current;
 
-  // Calculate distance to destination
-  const [distanceToDestination, setDistanceToDestination] = useState<number | null>(null);
-  const [estimatedTime, setEstimatedTime] = useState<string>('');
 
   // Slide button animation values
   const slideButtonWidth = Dimensions.get('window').width - (spacing.md * 2);
@@ -70,31 +65,153 @@ const isFocused = useIsFocused();
   const [isSliding, setIsSliding] = useState(false);
   const [data, setData] = useState<any[]>([]);
 
-  const [bearing, setBearing] = useState(0);
-  useEffect(() => {
-    getActiveTrips();
-  }, []);
+  const pushLocationToApi = async (coords: { latitude: number; longitude: number }) => {
+    if (!tripId) return;
+    try {
+      await tripApi.updateLocation(tripId, {
+        latitude: Number(coords.latitude),
+        longitude: Number(coords.longitude),
+      });
+    } catch (e) {
+      console.log('updateLocation API error:', e);
+    }
+  };
 
+  const Fetchlocation = async () => {
+    try {
+      setLoading(true);
+      const location = await fetchCurrentLocation();
+      const lat = Number((location as any)?.latitude);
+      const lng = Number((location as any)?.longitude);
 
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        console.log('Invalid current location:', location);
+        return;
+      }
 
-useEffect(() => {
-  if (location && destination) {
-    const angle = calculateBearing(location, destination); // your existing function
-    setBearing(angle);
+      const normalized = { latitude: lat, longitude: lng };
+      console.log(normalized, 'location==========>');
+      setCurrentLoction(normalized);
+      latestCoordsRef.current = normalized;
+
+      mapRef.current?.animateCamera(
+        {
+          center: normalized,
+          pitch: 0,
+          zoom: 18,
+        },
+        { duration: 500 }
+      );
+
+      if (
+  normalized.latitude !== 0 &&
+  normalized.longitude !== 0
+) {
+  await getActiveTrips(normalized);
+}
+    } finally {
+      setLoading(false);
+    }
   }
-}, [location, unloadingCoordinates]);
+
+  const GOOGLE_API_KEY = 'AIzaSyAqBEGD7SlCdvqKeL8rom-hyz46dCULdNs';
+
+  useEffect(() => {
+    if (isFocused) Fetchlocation();
+  }, [isFocused]);
+
+ useEffect(() => {
+  if (!isFocused) return;
+
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude === 0 ||
+    longitude === 0
+  ) {
+    console.log('⚠️ Waiting for valid GPS fix...');
+    return;
+  }
+
+  const coords = { latitude, longitude };
+  latestCoordsRef.current = coords;
+  setCurrentLoction(coords);
+
+  if (!hasFetchedTripRef.current) {
+    hasFetchedTripRef.current = true;
+    getActiveTrips(coords);
+  }
+}, [isFocused, latitude, longitude]);
+
+
+  useEffect(() => {
+    if (!isFocused) return;
+    const coords = latestCoordsRef.current;
+    if (!coords) return;
+    if (hasSentInitialLocationRef.current) return;
+    hasSentInitialLocationRef.current = true;
+    pushLocationToApi(coords);
+  }, [isFocused, currentLoction?.latitude, currentLoction?.longitude]);
+
+  useEffect(() => {
+    // Hit location API every 5 minutes while screen focused
+    if (!isFocused || !tripId) return;
+    const interval = setInterval(() => {
+      const coords = latestCoordsRef.current;
+      if (!coords) return;
+      pushLocationToApi(coords);
+    }, 300000); // 5 minutes
+    return () => clearInterval(interval);
+  }, [isFocused, tripId]);
+
   const trip = Array.isArray(data) && data.length > 0 ? data[0] : null;
 
 
+  const getLatLngFromAddress = async (address: string) => {
 
-  const getActiveTrips = async () => {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      address
+    )}&key=${GOOGLE_API_KEY}`;
+
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (result.status !== 'OK') {
+      throw new Error('Geocoding failed');
+    }
+
+    return {
+      latitude: result.results[0].geometry.location.lat,
+      longitude: result.results[0].geometry.location.lng,
+    };
+  };
+
+
+
+
+  const getActiveTrips = async (location: LatLng) => {
     try {
       const res: any = await tripApi.getActiveTrip();
       if (res) {
         console.log('Profile data:', res);
-        const data = res.data || res;
-        setData(data || [])
-        console.log(data, 'data==============>');
+        const payload = res.data || res;
+        const trips = Array.isArray(payload) ? payload : payload ? [payload] : [];
+        setData(trips as any);
+        const firstTrip = trips?.[0];
+        const unloadingAddressLocal = firstTrip?.order?.unloadingAddress ?? 'N/A';
+        console.log(trips, 'data==============>', location);
+        const destinationLatLng = await getLatLngFromAddress(unloadingAddressLocal);
+        setDestinationLocation(destinationLatLng);
+
+        const destination = {
+          latitude: location.latitude,          // current location
+          longitude: location.longitude,
+          latitudeDes: destinationLatLng.latitude,
+          longitudeDes: destinationLatLng.longitude,
+        };
+
+        console.log('Route destination:', destination);
+        fetchRoute(destination);
       } else {
         const errorMsg = res?.message || 'Failed to load profile';
         console.log('Profile data:', res);
@@ -105,73 +222,200 @@ useEffect(() => {
     }
   };
 
-  // Function to update location to API
-  const updateLocationToAPI = async () => {
-    if (!tripId || !location) return;
-
-    try {
-      const payload = {
-        latitude: Number(latitude),
-        longitude: Number(longitude),
-      };
-
-      console.log('Updating location to API:', payload);
-      const res = await tripApi.updateLocation(tripId, payload);
-
-      if (res?.success) {
-        console.log('Location updated successfully');
-      } else {
-        console.log('Location update failed:', res);
-      }
-    } catch (error: any) {
-      console.log('Location update error:', error);
-    }
+  const calculateBearing = (origin: LatLng, dest: LatLng) => {
+    const lat1 = (origin.latitude * Math.PI) / 180;
+    const lat2 = (dest.latitude * Math.PI) / 180;
+    const dLon = ((dest.longitude - origin.longitude) * Math.PI) / 180;
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x =
+      Math.cos(lat1) * Math.sin(lat2) -
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    const brng = Math.atan2(y, x);
+    return ((brng * 180) / Math.PI + 360) % 360;
   };
 
-  
+  function decodePolyline(encoded: string): Array<{ latitude: number; longitude: number }> {
+    const points: Array<{ latitude: number; longitude: number }> = [];
+    let index = 0, lat = 0, lng = 0;
+
+    while (index < encoded.length) {
+      let b, shift = 0, result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const deltaLat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lat += deltaLat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const deltaLng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lng += deltaLng;
+
+      points.push({
+        latitude: lat / 1e5,
+        longitude: lng / 1e5,
+      });
+    }
+
+    return points;
+  }
+
+
+
+  const fetchRoute = async (locationData: RouteInput) => {
+
+    
+    const origin = {
+      latitude: +locationData?.latitude,
+      longitude: +locationData?.longitude,
+    };
+    if (
+  origin.latitude === 0 ||
+  origin.longitude === 0
+) {
+  console.log('❌ Origin is 0,0 — skipping route fetch');
+  return;
+}
+
+    const destination = {
+      latitude: +locationData?.latitudeDes,
+      longitude: +locationData?.longitudeDes,
+    };
+
+
+
+    if (
+      Number.isFinite(origin.latitude) &&
+      Number.isFinite(origin.longitude) &&
+      Number.isFinite(destination.latitude) &&
+      Number.isFinite(destination.longitude)
+    ) {
+      let url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${GOOGLE_API_KEY}&mode=driving`;
+
+      console.log(url,"url=========>")
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+if (data.status !== 'OK') {
+  console.log('❌ Directions API failed:', data.status, data.error_message);
+  setRouteMeta({
+    source: 'none',
+    status: data.status,
+    points: 0,
+  });
+  return;
+}
+
+        if (data.routes?.length > 0) {
+          const decodedPoints = decodePolyline(data.routes[0].overview_polyline.points);
+          console.log(data.routes[0].legs[0], "data.routes[0].legs[0]==============>");
+
+          if (decodedPoints.length >= 2) {
+            setRouteCoordinates(decodedPoints);
+            setRouteMeta({ source: 'overview', status: data?.status, points: decodedPoints.length });
+
+            const leg = data.routes[0].legs[0];
+            const duration = leg?.duration;
+            const distance = leg?.distance;
+
+            // Store route ETA + distance
+            if (typeof duration?.value === 'number') {
+              setActualRouteDuration(duration.value / 60); // minutes
+            }
+            if (typeof distance?.value === 'number') {
+              setActualRouteDistanceKm(distance.value / 1000); // km
+            }
+
+            // Convert distance to meters
+            let distanceInMeters = 0;
+            if (distance?.text?.includes("km")) {
+              distanceInMeters = parseFloat(distance.text) * 1000;
+            } else if (distance?.text?.includes("m")) {
+              distanceInMeters = parseFloat(distance.text);
+            }
+
+            // if (distanceInMeters <= 100) {
+            //   !isOtp ? setIsArrivedDestination(true) : setIsNear(true);
+            // } else {
+            //   setIsNear(false);
+            // }
+
+            // Fit route into map view
+            mapRef.current?.fitToCoordinates(decodedPoints, {
+              edgePadding: {
+                right: FULL_WIDTH / 10,
+                bottom: FULL_HEIGHT / 1.5,
+                left: FULL_WIDTH / 10,
+                top: FULL_HEIGHT / 9,
+              },
+              animated: true,
+            });
+          } else {
+            console.warn("⚠️ Decoded route has fewer than 2 points.");
+          }
+        }
+      } catch (error) {
+        console.error("🚨 Failed to fetch or process route data:", error);
+      }
+    } else {
+      console.warn("❌ Invalid origin or destination, route not fetched");
+    }
+  }
+
+  const recenterMap = () => {
+    if (!currentLoction?.latitude || !currentLoction?.longitude) return;
+    mapRef.current?.animateCamera(
+      {
+        center: currentLoction,
+        pitch: 0,
+        zoom: 18,
+      },
+      { duration: 600 }
+    );
+  };
+
+  const handleNavigate = (
+    destination: string | { latitude: number; longitude: number } | null | undefined,
+    _label: string
+  ) => {
+    if (!destination) return;
+
+    // Prefer coordinates if available
+    if (typeof destination !== 'string') {
+      const coords = `${destination.latitude},${destination.longitude}`;
+      const url = Platform.select({
+        ios: `http://maps.apple.com/?daddr=${coords}`,
+        android: `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`,
+      });
+      if (!url) return;
+      Linking.openURL(url).catch(err => console.log('Failed to open maps:', err));
+      return;
+    }
+
+    if (destination === 'N/A') return;
+    const cleanAddress = destination.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+    const url = Platform.select({
+      ios: `http://maps.apple.com/?q=${encodeURIComponent(cleanAddress)}`,
+      android: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`,
+    });
+    if (!url) return;
+    Linking.openURL(url).catch(err => console.log('Failed to open maps:', err));
+  };
+
+
   const unloadingAddress = trip?.order?.unloadingAddress ?? 'N/A';
   const unloadingContactName = trip?.order?.unloadingContactName ?? 'N/A';
   const unloadingContactNumber = trip?.order?.unloadingContactNumber ?? 'N/A';
 
-  // Function to geocode address to coordinates
-  const geocodeAddress = async (address: string) => {
-    try {
-      if (!address || address === 'N/A') return null;
 
-      // Use Google Maps Geocoding API
-      const apiKey = 'AIzaSyDKbLlbS2U7upE8jxgpIkA-RGrhqFRR8eI'; // Same key used in the app
-      const encodedAddress = encodeURIComponent(address);
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
-
-      console.log('Geocoding address:', address);
-      console.log('Geocoding URL:', url);
-
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.status === 'OK' && data.results && data.results.length > 0) {
-        const location = data.results[0].geometry.location;
-        const coordinates = {
-          latitude: location.lat,
-          longitude: location.lng,
-        };
-
-        console.log('Geocoded coordinates:', coordinates);
-        return coordinates;
-      } else {
-        console.log('Geocoding failed:', data.status, data.error_message);
-        return null;
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      return null;
-    }
-  };
-
-  // Get coordinates from unloading address
-  const [unloadingCoordinates, setUnloadingCoordinates] = useState<{ latitude: number, longitude: number } | null>(null);
-
-  // Format duration from minutes to readable format
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return null;
 
@@ -188,23 +432,6 @@ useEffect(() => {
   const sampleTrip: any = {
 
     tripNumber: 'TRP-2024-001',
-    // orderNumber: 'ORD-12345',
-    // vehicleNumber: 'RJ-14-AB-1234',
-    // assignedWeight: '5000',
-    // deliveredWeight: null,
-    // status: 'In Progress',
-    // distance: '497',
-    // loadingLocation: {
-    //   address: 'Warehouse A, Industrial Area, Jaipur, Rajasthan 302013',
-    //   coordinates: {
-    //     latitude: 26.9124,
-    //     longitude: 75.7873,
-    //   },
-    //   contactPerson: {
-    //     name: 'Rajesh Kumar',
-    //     phoneNumber: '+91-9876543210',
-    //   },
-    // },
     unloadingLocation: {
       address: unloadingAddress,
       coordinates: {
@@ -217,421 +444,25 @@ useEffect(() => {
       },
     },
   };
-
-
-
-  const thumbLeft = slideProgress.interpolate({
-    inputRange: [0, maxSlideDistance],
-    outputRange: [thumbPadding, maxSlideDistance + thumbPadding],
-    extrapolate: 'clamp',
-  });
-
-  // Pan responder for slide button with improved smoothness and priority
-  const slidePanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true, // Capture touches first, before bottom sheet
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Prioritize horizontal movement for slide button
-        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        // Capture if horizontal movement is dominant
-        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 5;
-      },
-      onPanResponderTerminationRequest: () => false, // Don't allow other responders to take over
-      onPanResponderGrant: () => {
-        setIsSliding(true);
-        // Stop any ongoing animation
-        slideProgress.stopAnimation();
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        const maxWidth = slideButtonWidth - thumbSize - (thumbPadding * 2);
-        // Only allow horizontal movement, ignore vertical
-        const newValue = Math.max(0, Math.min(maxWidth, gestureState.dx));
-        slideProgress.setValue(newValue);
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        setIsSliding(false);
-        const maxWidth = slideButtonWidth - thumbSize - (thumbPadding * 2);
-        const currentValue = gestureState.dx;
-        const velocity = gestureState.vx;
-
-        // Lower threshold for completion (70% instead of 80%)
-        // Also check velocity for quick swipes
-        if (currentValue >= maxWidth * 0.7 || (currentValue >= maxWidth * 0.5 && velocity > 0.5)) {
-          // Complete the slide with smooth animation
-          Animated.spring(slideProgress, {
-            toValue: maxWidth,
-            useNativeDriver: false,
-            tension: 40,
-            friction: 7,
-            velocity: velocity || 0,
-          }).start(() => {
-            handleMarkAsArrived();
-            // Reset slide button after a short delay
-            setTimeout(() => {
-              Animated.spring(slideProgress, {
-                toValue: 0,
-                useNativeDriver: false,
-                tension: 50,
-                friction: 8,
-              }).start();
-            }, 500);
-          });
-        } else {
-          // Reset with smooth spring animation
-          Animated.spring(slideProgress, {
-            toValue: 0,
-            useNativeDriver: false,
-            tension: 50,
-            friction: 8,
-            velocity: velocity || 0,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  // const GOOGLE_API_KEY = 'AIzaSyDKbLlbS2U7upE8jxgpIkA-RGrhqFRR8eI';
-   const GOOGLE_API_KEY = 'AIzaSyAqBEGD7SlCdvqKeL8rom-hyz46dCULdNs';
-
-  // Destination from trip data (delivery location)
-  const destination = sampleTrip.unloadingLocation.coordinates || {
-    latitude: 28.6139,
-    longitude: 77.209,
-  };
-
-  // Type for Geolocation coordinates
-  type Coords = {
-    coords: {
-      accuracy?: number | null;
-      altitude?: number | null;
-      altitudeAccuracy?: number | null;
-      heading?: number | null;
-      latitude?: number | null;
-      longitude?: number | null;
-      speed?: number | null;
-    };
-    mocked?: boolean;
-    provider?: string;
-    timestamp?: number | null;
-  };
-useEffect(() => {
-  if (latitude && longitude) {
-    setLocation({ latitude, longitude });
-    setHasGpsLocation(true);
-    setLoading(false);
-  }
-}, [latitude, longitude]);
-  // Set Noida location as current location (hardcoded for testing)
-  const fetchLocationFromGoogle = async () => {
-    // Noida, Uttar Pradesh, India coordinates
-    const noidaLocation = {
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-    };
-
-    console.log('Current Location (Noida):');
-    console.log('Latitude:', noidaLocation.latitude);
-    console.log('Longitude:', noidaLocation.longitude);
-    console.log('Location: Noida, Uttar Pradesh, India');
-
-    setLocation(noidaLocation);
-    setHasGpsLocation(true);
-    setLoading(false);
-
-    // Center map on Noida location
-    setTimeout(() => {
-      recenterMap(noidaLocation);
-    }, 300);
-  };
-
-
-  useEffect(() => {
-  if (!latitude || !longitude) {
-    fetchLocationFromGoogle();
-  }
-}, [latitude, longitude]);
-
-
-  // Geocode unloading address to get coordinates
-  useEffect(() => {
-    const getUnloadingCoordinates = async () => {
-      if (unloadingAddress && unloadingAddress !== 'N/A') {
-        const coordinates = await geocodeAddress(unloadingAddress);
-        setUnloadingCoordinates(coordinates);
-      }
-    };
-
-    getUnloadingCoordinates();
-  }, [unloadingAddress]);
-
-  // Calculate distance to destination
-  useEffect(() => {
-    if (location && destination) {
-      const distance = calculateDistance(
-        location.latitude,
-        location.longitude,
-        destination.latitude,
-        destination.longitude
-      );
-      setDistanceToDestination(distance);
-
-      // Estimate time (assuming average speed of 40 km/h)
-      const timeInHours = distance / 1000 / 40; // Convert meters to km, divide by speed
-      const timeInMinutes = Math.round(timeInHours * 60);
-      if (timeInMinutes < 60) {
-        setEstimatedTime(`${timeInMinutes} min`);
-      } else {
-        const hours = Math.floor(timeInMinutes / 60);
-        const minutes = timeInMinutes % 60;
-        setEstimatedTime(`${hours}h ${minutes}m`);
-      }
-    }
-  }, [location, destination]);
-
-  // Animate sections when location is received (bottom sheet stays collapsed by default)
-  useEffect(() => {
-    if (hasGpsLocation && !loading) {
-      // Bottom sheet remains collapsed by default
-      // User can manually drag to expand
-      // Animate sections sequentially
-      Animated.sequence([
-        Animated.timing(headerAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(destinationAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(detailsAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [hasGpsLocation, loading]);
-
-  // Update location to API when location is first received
-  useEffect(() => {
-    if (location && tripId) {
-      updateLocationToAPI();
-    }
-  }, [location, tripId]);
-
-  // Set up periodic location updates every 5 minutes (300,000 ms)
-  useEffect(() => {
-    if (!location || !tripId) return;
-
-    const interval = setInterval(() => {
-      updateLocationToAPI();
-    }, 300000); // 5 minutes = 300,000 milliseconds
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [location, tripId]);
-
-  // Bottom Sheet Pan Responder - only responds to vertical gestures
-  const bottomSheetPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only respond to primarily vertical movements (not horizontal)
-        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderTerminationRequest: () => true, // Allow slide button to take over if needed
-      onPanResponderGrant: () => {
-        setIsDragging(true);
-        bottomSheetTranslateY.setOffset((bottomSheetTranslateY as any)._value);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        // Only move if vertical movement is dominant
-        if (Math.abs(gestureState.dy) > Math.abs(gestureState.dx)) {
-          const currentValue = (bottomSheetTranslateY as any)._value;
-          const newValue = currentValue + gestureState.dy;
-          // Clamp between 0 and bottomSheetMaxHeight
-          const clampedValue = Math.max(0, Math.min(bottomSheetMaxHeight, newValue));
-          bottomSheetTranslateY.setValue(clampedValue - currentValue);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        setIsDragging(false);
-        bottomSheetTranslateY.flattenOffset();
-        const currentValue = (bottomSheetTranslateY as any)._value;
-        const velocity = gestureState.vy;
-
-        // Only process if it was a vertical gesture
-        if (Math.abs(gestureState.dy) > Math.abs(gestureState.dx)) {
-          // Determine if should expand or collapse
-          if (velocity > 0.5 || (currentValue > bottomSheetMaxHeight * 0.5 && velocity > -0.5)) {
-            // Collapse
-            Animated.spring(bottomSheetTranslateY, {
-              toValue: bottomSheetMaxHeight - bottomSheetMinHeight,
-              useNativeDriver: true,
-              tension: 50,
-              friction: 8,
-            }).start(() => {
-              setIsBottomSheetExpanded(false);
-            });
-          } else {
-            // Expand
-            Animated.spring(bottomSheetTranslateY, {
-              toValue: 0,
-              useNativeDriver: true,
-              tension: 50,
-              friction: 8,
-            }).start(() => {
-              setIsBottomSheetExpanded(true);
-            });
-          }
-        }
-      },
-      onPanResponderTerminate: () => {
-        setIsDragging(false);
-      },
-    })
-  ).current;
-
-  // Calculate distance between two coordinates (in meters)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-  };
-
-  // Calculate bearing from origin to destination (for map rotation)
-  const calculateBearing = (origin: any, dest: any) => {
-    const lat1 = (origin.latitude * Math.PI) / 180;
-    const lat2 = (dest.latitude * Math.PI) / 180;
-    const dLon = ((dest.longitude - origin.longitude) * Math.PI) / 180;
-
-    const y = Math.sin(dLon) * Math.cos(lat2);
-    const x =
-      Math.cos(lat1) * Math.sin(lat2) -
-      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-
-    const bearing = Math.atan2(y, x);
-    return ((bearing * 180) / Math.PI + 360) % 360;
-  };
-
-  // Function to center map on current location (truck location) with navigation-style rotation
-  const recenterMap = (customLocation?: any) => {
-    const locToUse = customLocation || location;
-    if (locToUse && mapRef.current) {
-      // Calculate bearing from current location to destination
-      const bearing = calculateBearing(locToUse, destination);
-
-      // Use setTimeout to ensure map is ready
-      setTimeout(() => {
-        if (mapRef.current) {
-          // Center map exactly on truck location (navigation mode)
-          mapRef.current.animateCamera(
-            {
-              center: {
-                latitude: locToUse.latitude,
-                longitude: locToUse.longitude,
-              },
-              heading: bearing, // Rotate map to show direction of travel
-              pitch: 45, // Slight 3D tilt like Google Maps
-              altitude: 5000, // Zoom level for navigation view
-              zoom: 17, // Closer zoom for navigation mode
-            },
-            { duration: 1000 }
-          );
-        }
-      }, 300);
-    }
-  };
-
-
-  // Initial map setup with navigation-style direction (only when GPS location is received)
-  const hasSetInitialCamera = useRef(false);
-  useEffect(() => {
-    if (location && hasGpsLocation && mapRef.current && !hasSetInitialCamera.current) {
-      // Wait for map to be fully rendered before animating camera
-      const timer = setTimeout(() => {
-        if (mapRef.current && location) {
-          // Center on current GPS location to show direction
-          recenterMap(location);
-          hasSetInitialCamera.current = true;
-        }
-      }, 500);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-    return undefined;
-  }, [location, hasGpsLocation]);
-
-  // Function to open Google Maps app with destination coordinates
-
-  const handleNavigate = (address: string, label: string) => {
-    if (!address) return;
-
-    console.log('Navigation Address:', address);
-
-    // Clean the address - replace commas with spaces for better Google Maps handling
-    const cleanAddress = address.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
-
-    // Use geocoded coordinates from unloading address if available
-    const coords = unloadingCoordinates ?
-      `${unloadingCoordinates.latitude},${unloadingCoordinates.longitude}` : null;
-
-    console.log('Clean Address:', cleanAddress);
-    console.log('Geocoded Coordinates available:', !!coords);
-
-    // Use coordinates if available (more accurate), otherwise use address
-    const googleMapsUrl = coords
-      ? `https://maps.google.com/maps?q=${coords}(${encodeURIComponent(cleanAddress)})`
-      : `https://maps.google.com/maps?q=${encodeURIComponent(cleanAddress)}`;
-
-    console.log('Google Maps URL:', googleMapsUrl);
-
-    Linking.openURL(googleMapsUrl).catch(err => {
-      console.log('Failed to open Google Maps:', err);
-      // Fallback to general maps app
-      const fallbackUrl = Platform.select({
-        ios: coords ? `maps://app?daddr=${coords}` : `maps://app?daddr=${encodeURIComponent(cleanAddress)}`,
-        android: coords ? `geo:${coords}?q=${encodeURIComponent(cleanAddress)}` : `geo:0,0?q=${encodeURIComponent(cleanAddress)}`,
-      });
-      if (fallbackUrl) {
-        console.log('Fallback URL:', fallbackUrl);
-        Linking.openURL(fallbackUrl).catch(console.log);
-      }
-    });
-  };
-
   // Function to handle Mark as Arrived
   const handleMarkAsArrived = async () => {
-    if (!tripId) return;
+    const effectiveTripId = tripId ?? (trip as any)?.id ?? (Array.isArray(data) && data[0] ? (data[0] as any).id : undefined);
+    console.log('[Arrived] handleMarkAsArrived called', { tripId, effectiveTripId, currentLoction });
+    if (!effectiveTripId) return;
+    if (!currentLoction?.latitude || !currentLoction?.longitude) return;
 
     try {
       const payload = {
-        arrivedLatitude: Number(latitude),
-        arrivedLongitude: Number(longitude),
+        arrivedLatitude: Number(currentLoction.latitude),
+        arrivedLongitude: Number(currentLoction.longitude),
       };
 
-      const res = await tripApi.markArrived(tripId, payload);
+      const res = await tripApi.markArrived(effectiveTripId, payload);
 
       if (res?.success) {
         console.log('Trip marked as arrived', res.data);
         navigation.navigate('MarkComplete', {
-          tripId: tripId,
+          tripId: effectiveTripId,
         });
       }
     } catch (error) {
@@ -645,108 +476,108 @@ useEffect(() => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header title="Trip In Progress" onBackPress={() => navigation.goBack()} />
 
-      {/* Show loading until GPS location is received */}
-      {loading || !hasGpsLocation ? (
+      {/* Show loading while requesting GPS fix */}
+      {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
           <Text style={styles.loadingText}>Fetching current location...</Text>
         </View>
       ) : null}
 
-      {/* Map Container - Hidden until GPS location is received, but rendered to get GPS */}
       <View style={[
         styles.mapContainer,
-        (!hasGpsLocation || loading) && styles.mapContainerHidden
+        loading && styles.mapContainerHidden
       ]}>
-        <MapView
-          ref={mapRef}
-          provider={PROVIDER_GOOGLE}
-          style={styles.map}
-          mapType="standard"
-          initialRegion={{
-            latitude: location?.latitude, // Default to destination (will update when GPS location comes)
-            longitude: location?.longitude ,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-          showsUserLocation={false} // Hide blue dot
-          showsMyLocationButton={false} // Hide current location button
-          zoomEnabled={true}
-          scrollEnabled={true}
-          rotateEnabled={true}
-          // pitchEnabled={true}
-          loadingEnabled={false}>
 
-          {/* Directions Route - Only show when we have GPS location and unloading coordinates */}
-          {location && hasGpsLocation && unloadingCoordinates && (
-            <MapViewDirections
-              origin={location} // Start from current GPS location
-              destination={unloadingCoordinates} // End at geocoded unloading location
-              apikey={GOOGLE_API_KEY}
-              strokeWidth={5}
-              optimizeWaypoints={true}
-              strokeColor="#2563EB"
-              mode="DRIVING"
-              resetOnChange={true}
-              tappable={false}
-              precision="high"
-              onStart={(params) => {
-                console.log('Route calculation started from GPS location to unloading destination');
-                setRouteLoading(true);
+        {
+          currentLoction?.latitude && currentLoction?.longitude && (
+            <MapView
+              provider={PROVIDER_GOOGLE}
+              style={styles.map}
+              mapType="standard"
+              rotateEnabled={false}
+              moveOnMarkerPress={true}
+              showsCompass={false}
+              ref={mapRef}
+              initialRegion={{
+                latitude: +currentLoction?.latitude,
+                longitude: +currentLoction?.longitude,
+                latitudeDelta: 0.0052,
+                longitudeDelta: 0.00121,
               }}
-              onReady={(result) => {
-                console.log('Route ready:', {
-                  distance: result.distance,
-                  duration: result.duration,
-                  coordinates: result.coordinates?.length || 0,
-                });
+              zoomEnabled={true}>
 
-                // Store actual route data from Google Maps
-                setActualRouteDistance(result.distance);
-                setActualRouteDuration(result.duration);
-                setRouteLoading(false);
-              }}
-              onError={(errorMessage) => {
-                console.log('Route error:', errorMessage);
-                setRouteLoading(false);
-              }}
-            />
-          )}
+              {/* {routeCoordinates.length > 1 && ( */}
+                <Polyline
+                  coordinates={routeCoordinates}
+                  strokeWidth={5}
+                  strokeColor="#2563EB"
+                />
+              {/* )} */}
 
-          {/* Truck Marker - Only show when we have actual GPS current location */}
-          {location && hasGpsLocation && (
-           <Marker
-  coordinate={location}
-  title="Truck"
-  anchor={{ x: 0.5, y: 0.5 }}
-  flat={true} 
->
-  <View style={[styles.truckContainer, { transform: [{ rotate: `${bearing}deg` }] }]}>
-    <Text style={styles.truckEmoji}>🚛</Text>
-  </View>
-</Marker>
-          )}
+              {currentLoction?.latitude && currentLoction?.longitude && (
+                <Marker
+                  coordinate={currentLoction}
+                  title="Truck"
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  flat={true}>
+                  <View
+                    style={[
+                      styles.truckContainer,
+                      {
+                        transform: [
+                          {
+                            rotate: `${Number.isFinite(Number(heading))
+                              ? Number(heading)
+                              : destinationLocation
+                                ? calculateBearing(currentLoction, destinationLocation)
+                                : 0
+                              }deg`,
+                          },
+                        ],
+                      },
+                    ]}>
+                    <Text style={styles.truckEmoji}>🚛</Text>
+                  </View>
+                </Marker>
+              )}
 
-          {/* Delivery Location Marker */}
-          {unloadingCoordinates && (
-            <Marker
-              coordinate={unloadingCoordinates}
-              title="Delivery Location"
-              description={unloadingAddress}
-              anchor={{ x: 0.5, y: 0.5 }}
-              flat={true}>
-              <View style={[styles.truckContainer, styles.deliveryMarker]}>
-                <Text style={styles.deliveryEmoji}>📦</Text>
-              </View>
-            </Marker>
-          )}
-        </MapView>
+              {destinationLocation?.latitude && destinationLocation?.longitude && (
+                <Marker
+                  coordinate={destinationLocation}
+                  title="Destination"
+                  description={unloadingAddress}
+                />
+              )}
 
-        {/* Center Button - Center map on truck location (Top Right) */}
-        {location && hasGpsLocation && (
+            </MapView>
+          )
+        }
+
+
+
+        <View style={{
+          position: 'absolute',
+          left: 12,
+          bottom: 12,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 10,
+        }}>
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>
+            Route: {routeMeta.points || routeCoordinates.length} pts ({routeMeta.source})
+          </Text>
+          <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, opacity: 0.9 }}>
+            Status: {routeMeta.status ?? 'n/a'}
+          </Text>
+        </View>
+
+        {/* Center Button - Center map on current location (Top Right) */}
+        {currentLoction?.latitude && currentLoction?.longitude && (
           <TouchableOpacity
             style={styles.centerButton}
-            onPress={() => recenterMap(location)}
+            onPress={recenterMap}
             activeOpacity={0.7}>
             <Image
               source={require('@/assets/images/location.png')}
@@ -756,21 +587,23 @@ useEffect(() => {
           </TouchableOpacity>
         )}
         <TouchableOpacity
- style={ {position: 'absolute',
-    top: 80,
-    right: 20,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.lg,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    elevation: 5,
-    zIndex: 1000,}}
-          onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
+          style={{
+            position: 'absolute',
+            top: 80,
+            right: 20,
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: 'white',
+            justifyContent: 'center',
+            alignItems: 'center',
+            ...shadows.lg,
+            borderWidth: 1,
+            borderColor: colors.borderLight,
+            elevation: 5,
+            zIndex: 1000,
+          }}
+          onPress={() => handleNavigate(destinationLocation ?? unloadingAddress, 'Delivery Location')}
           activeOpacity={0.7}>
           <Image
             source={require('@/assets/images/m.png')}
@@ -785,190 +618,139 @@ useEffect(() => {
       </View>
 
       {/* Bottom Sheet */}
-      {hasGpsLocation && !loading && (
 
-        // <Animated.View 
-        //   style={[
-        //     styles.bottomSheet,
-        //     {
-        //         height: bottomSheetMaxHeight,
-        //       transform: [{translateY: bottomSheetTranslateY}],
-        //     }
-        //   ]}
-        //   {...bottomSheetPanResponder.panHandlers}>
-        <View style={styles.bottomSheet}>
-          <View style={styles.bottomSheetHandle}>
-            <View style={styles.handleBar} />
-          </View>
-          <ScrollView
-            style={styles.cardContent}
-            contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.lg, }}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            scrollEnabled={!isDragging}
-          >
-            {/* Arrival Time Section */}
-            <View style={styles.arrivalTimeCard}>
-              <View style={styles.arrivalTimeContent}>
-                <View style={styles.arrivalTimeLeft}>
-                  <View style={styles.arrivalTimeIconContainer}>
-                    <Text style={styles.arrivalTimeIcon}>⏱️</Text>
-                  </View>
-                  <View style={styles.arrivalTimeTextContainer}>
-                    <Typography variant="bodyMedium" weight="600" style={{ color: colors.textSecondary }}>
-                      Estimated Arrival
-                    </Typography>
-                    {actualRouteDuration && (
-                      <Typography variant="h3" weight="700" style={{ color: colors.primary }}>
-                        {formatDuration(actualRouteDuration)}
-                      </Typography>
-                    )}
-                  </View>
+      <View style={styles.bottomSheet}>
+        <View style={styles.bottomSheetHandle}>
+          <View style={styles.handleBar} />
+        </View>
+        <ScrollView
+          style={styles.cardContent}
+          contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.lg, }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          scrollEnabled={!isDragging}
+        >
+          {/* Arrival Time Section */}
+          <View style={styles.arrivalTimeCard}>
+            <View style={styles.arrivalTimeContent}>
+              <View style={styles.arrivalTimeLeft}>
+                <View style={styles.arrivalTimeIconContainer}>
+                  <Text style={styles.arrivalTimeIcon}>⏱️</Text>
                 </View>
-                {actualRouteDistance && (
-                  <View style={styles.distanceContainer}>
-                    <Typography variant="bodyMedium" weight="700" style={{ color: colors.textPrimary }}>
-                      {actualRouteDistance.toFixed(1)} km
+                <View style={styles.arrivalTimeTextContainer}>
+                  <Typography variant="bodyMedium" weight="600" style={{ color: colors.textSecondary }}>
+                    Estimated Arrival
+                  </Typography>
+                  {actualRouteDuration && (
+                    <Typography variant="h3" weight="700" style={{ color: colors.primary }}>
+                      {formatDuration(actualRouteDuration)}
                     </Typography>
-                    <Typography variant="caption" weight="500" style={{ color: colors.textSecondary }}>
-                      Distance
-                    </Typography>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {/* Delivery Location */}
-            <View style={styles.deliverySection}>
-              <View style={styles.deliveryHeader}>
-                <View style={styles.deliveryHeaderLeft}>
-                  <View style={styles.deliveryIconWrapper}>
-                    <Image
-                      source={require('@/assets/images/location.png')}
-                      style={styles.deliveryIcon}
-                      resizeMode="contain"
-                    />
-                  </View>
-                  <View style={styles.deliveryHeaderText}>
-                    <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
-                      Delivery Location
-                    </Typography>
-                    <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
-                      {sampleTrip.unloadingLocation.address}
-                    </Typography>
-                  </View>
+                  )}
                 </View>
               </View>
-
-              {sampleTrip.unloadingLocation.contactPerson && (
-                <>
-                  <View style={styles.deliveryDivider} />
-                  <View style={styles.deliveryContactSection}>
-                    <View style={styles.deliveryContactRow}>
-                      <View style={styles.deliveryContactInfo}>
-                        <View style={styles.deliveryContactIconWrapper}>
-                          <Image
-                            source={require('@/assets/images/phone-call.png')}
-                            style={styles.deliveryContactIcon}
-                            resizeMode="contain"
-                          />
-                        </View>
-                        <View style={styles.deliveryContactDetails}>
-                          <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
-                            Contact Person
-                          </Typography>
-                          <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
-                            {sampleTrip.unloadingLocation.contactPerson.name}
-                          </Typography>
-                        </View>
-                      </View>
-
-                      <View style={styles.deliveryActionButtonsRow}>
-                        <TouchableOpacity
-                          style={styles.deliveryCallButton}
-                          onPress={() => {
-                            if (sampleTrip.unloadingLocation.contactPerson?.phoneNumber) {
-                              Linking.openURL(`tel:${sampleTrip.unloadingLocation.contactPerson.phoneNumber}`);
-                            }
-                          }}
-                          activeOpacity={0.7}>
-                          <Image
-                            source={require('@/assets/images/phone-call.png')}
-                            style={styles.deliveryCallButtonIcon}
-                            resizeMode="contain"
-                          />
-
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.deliveryNavigateButton}
-                          onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
-                          activeOpacity={0.7}>
-                          <Image
-                            source={require('@/assets/images/location.png')}
-                            style={styles.deliveryNavigateButtonIcon}
-                            resizeMode="contain"
-                          />
-
-                        </TouchableOpacity>
-
-
-                      </View>
-                    </View>
-                  </View>
-                </>
+              {typeof actualRouteDistanceKm === 'number' && (
+                <View style={styles.distanceContainer}>
+                  <Typography variant="bodyMedium" weight="700" style={{ color: colors.textPrimary }}>
+                    {actualRouteDistanceKm.toFixed(1)} km
+                  </Typography>
+                  <Typography variant="caption" weight="500" style={{ color: colors.textSecondary }}>
+                    Distance
+                  </Typography>
+                </View>
               )}
             </View>
+          </View>
 
-            {/* Slide to Mark as Arrived Button */}
-            <View style={styles.slideContainer}>
-              <Animated.View
-                style={[
-                  styles.slideButton,
-                  {
-                    opacity: slideProgress.interpolate({
-                      inputRange: [0, maxSlideDistance * 0.6],
-                      outputRange: [1, 0.4],
-                      extrapolate: 'clamp',
-                    }),
-                  }
-                ]}
-                {...slidePanResponder.panHandlers}
-                pointerEvents="box-none">
-                <Animated.View
-                  style={[
-                    styles.slideThumb,
-                    {
-                      left: thumbLeft,
-                    }
-                  ]}>
+          {/* Delivery Location */}
+          <View style={styles.deliverySection}>
+            <View style={styles.deliveryHeader}>
+              <View style={styles.deliveryHeaderLeft}>
+                <View style={styles.deliveryIconWrapper}>
                   <Image
-                    source={require('@/assets/images/next.png')}
-                    style={styles.slideThumbIcon}
+                    source={require('@/assets/images/location.png')}
+                    style={styles.deliveryIcon}
                     resizeMode="contain"
                   />
-                </Animated.View>
-                <Animated.Text
-                  style={[
-                    styles.slideButtonText,
-                    {
-                      opacity: slideProgress.interpolate({
-                        inputRange: [0, maxSlideDistance * 0.5, maxSlideDistance],
-                        outputRange: [1, 0.5, 0],
-                        extrapolate: 'clamp',
-                      }),
-                    }
-                  ]}>
-                  {isSliding ? 'Sliding...' : 'Mark as Arrived'}
-                </Animated.Text>
-              </Animated.View>
+                </View>
+                <View style={styles.deliveryHeaderText}>
+                  <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
+                    Delivery Location
+                  </Typography>
+                  <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
+                    {sampleTrip.unloadingLocation.address}
+                  </Typography>
+                </View>
+              </View>
             </View>
-          </ScrollView>
-        </View>
-        // </Animated.View>
-      )}
+
+            {sampleTrip.unloadingLocation.contactPerson && (
+              <>
+                <View style={styles.deliveryDivider} />
+                <View style={styles.deliveryContactSection}>
+                  <View style={styles.deliveryContactRow}>
+                    <View style={styles.deliveryContactInfo}>
+                      <View style={styles.deliveryContactIconWrapper}>
+                        <Image
+                          source={require('@/assets/images/phone-call.png')}
+                          style={styles.deliveryContactIcon}
+                          resizeMode="contain"
+                        />
+                      </View>
+                      <View style={styles.deliveryContactDetails}>
+                        <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
+                          Contact Person
+                        </Typography>
+                        <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
+                          {sampleTrip.unloadingLocation.contactPerson.name}
+                        </Typography>
+                      </View>
+                    </View>
+                    <View style={styles.deliveryActionButtonsRow}>
+                      <TouchableOpacity
+                        style={styles.deliveryCallButton}
+                        onPress={() => {
+                          if (sampleTrip.unloadingLocation.contactPerson?.phoneNumber) {
+                            Linking.openURL(`tel:${sampleTrip.unloadingLocation.contactPerson.phoneNumber}`);
+                          }
+                        }}
+                        activeOpacity={0.7}>
+                        <Image
+                          source={require('@/assets/images/phone-call.png')}
+                          style={styles.deliveryCallButtonIcon}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deliveryNavigateButton}
+                        onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
+                        activeOpacity={0.7}>
+                        <Image
+                          source={require('@/assets/images/location.png')}
+                          style={styles.deliveryNavigateButtonIcon}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Slide to Mark as Arrived Button */}
+          <View style={styles.slideContainer}>
+           <TouchableOpacity onPress={()=>{handleMarkAsArrived()}} style={{justifyContent:"center",alignContent:"center",padding:15, backgroundColor:colors.primary,borderRadius:10}}>
+            <Typography variant="bodySemibold" weight="600" style={{textAlign:"center",color:"#fff"}}>
+              Mark as Arrived
+            </Typography>
+           </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
 
 
-    </SafeAreaView>
+
+    </SafeAreaView >
   );
 };
 
@@ -1463,7 +1245,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   deliveryCallButton: {
-backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primaryLight,
     paddingVertical: spacing.sm,
 
     borderRadius: borderRadius.md,
@@ -1656,7 +1438,7 @@ backgroundColor: colors.primaryLight,
     width: '100%',
     height: 56,
     bottom: 10,
-   backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',

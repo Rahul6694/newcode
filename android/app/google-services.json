@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "148926189006",
+    "project_id": "atcedriver",
+    "storage_bucket": "atcedriver.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:148926189006:android:ca6eafb123e012959fef9f",
+        "android_client_info": {
+          "package_name": "com.atcedriver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAf6cmVIeyARbUDzSZY1wAhSCoFbh41aWg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

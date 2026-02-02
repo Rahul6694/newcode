@@ -1,5 +1,8 @@
 import fc from 'fast-check';
 import {Trip, TripStatus, Document, DocumentFile, DocumentStage, LocationPoint, User, LocationCoordinates} from '@/types';
+import { PERMISSIONS, request } from 'react-native-permissions';
+import { Alert, Platform } from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 
 /**
  * Data factory for generating mock data for development and testing
@@ -409,3 +412,88 @@ export class DataFactory {
     this.documentIdCounter = 1;
   }
 }
+
+export const requestPermissionsHere = async () => {
+  try {
+    const granted = await request(
+      Platform.OS === 'ios'
+        ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE
+        : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+      {
+        title: 'Geolocation Permission',
+        message: 'Can we access your location?',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+
+    // console.log(granted, 'granted========>');
+
+    // Handling permission results
+    if (granted === 'granted') {
+      // console.log('Location permission granted');
+      return true;
+    } else if (granted === 'blocked') {
+      console.log('Location permission blocked');
+    } else if (granted === 'denied') {
+      console.log('Location permission denied');
+    } else {
+      console.log('Permission status unknown');
+    }
+  } catch (err) {
+    console.error('Error requesting location permission', err);
+    return false;
+  }
+};
+
+
+let watchId = null;
+let lastCoords = { latitude: null, longitude: null };
+let lastUpdateTime = 0; // Track last update timestamp
+
+const getDistance = (start, end) => {
+  const toRad = x => (x * Math.PI) / 180;
+  const ZAR = 6378137; // Earth’s radius in meters
+  const dLat = toRad(end.latitude - start.latitude);
+  const dLong = toRad(end.longitude - start.longitude);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(start.latitude)) *
+    Math.cos(toRad(end.latitude)) *
+    Math.sin(dLong / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return ZAR * c; // distance in meters
+};
+
+
+export const fetchCurrentLocation = async () => {
+  try {
+    const hasPermission = await requestPermissionsHere();
+    if (!hasPermission) return null;
+
+    return new Promise((resolve, reject) => {
+      Geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude, heading } = position.coords;
+          resolve({ latitude, longitude, heading });
+        },
+        error => {
+          console.error('❌ Location error:', error);
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+        }
+      );
+    });
+  } catch (error) {
+    console.error('⚠️ Error:', error);
+    return null;
+  }
+};
+

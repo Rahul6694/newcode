@@ -7,6 +7,7 @@ import {TripDetailScreen} from '@/screens/main/TripDetailScreen';
 import {LocationMarkScreen} from '@/screens/main/LocationMarkScreen';
 import {TripInProgressScreen} from '@/screens/main/TripInProgressScreen';
 import {MarkCompleteScreen} from '@/screens/main/MarkCompleteScreen';
+import {NotificationScreen} from '@/screens/main/NotificationScreen';
 import {TodoStackParamList} from '@/types';
 import {colors, typography} from '@/theme/colors';
 
@@ -58,6 +59,11 @@ export const TodoNavigator: React.FC = () => {
       <Stack.Screen
         name="MarkComplete"
         component={MarkCompleteScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
