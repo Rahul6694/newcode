@@ -89,7 +89,7 @@ type HistoryTripDetailNavigationProp = StackNavigationProp<HistoryStackParamList
 export const HistoryTripDetailScreen: React.FC = () => {
   const route = useRoute<HistoryTripDetailRouteProp>();
   const navigation = useNavigation<HistoryTripDetailNavigationProp>();
-  const { tripId } = route.params;
+  const { tripId,back } = route.params;
   const { showError } = useToast();
 
   const [trip, setTrip] = useState<ExtendedTrip | null>(null);
@@ -152,6 +152,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
             ...convertedTrip,
             distance: apiTrip.distance,
             driver: apiTrip.driver,
+            loadedWeight: apiTrip.loadedWeight,
             payment: apiTrip.tripAmount ? {
               tripAmount: apiTrip.tripAmount,
             } : undefined,
@@ -224,13 +225,18 @@ export const HistoryTripDetailScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header
-        title="Trip History Details"
-        onBackPress={() => {
-          // Navigate back within History stack
-          navigation.goBack();
-        }}
-      />
+     <Header
+  title="Trip History Details"
+  onBackPress={() => {
+    if (back === 'notification') {
+      navigation.navigate('TODO', {
+        screen: 'Notifications',
+      });
+    } else {
+      navigation.navigate('HistoryList');
+    }
+  }}
+/>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -271,7 +277,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
             {trip.assignedWeight && (
               <View style={styles.orderDetailRow}>
                 <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.assignedWeight} TON</Typography>
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.deliveredWeight} TON</Typography>
               </View>
             )}
           </View>
@@ -412,6 +418,11 @@ export const HistoryTripDetailScreen: React.FC = () => {
                     resizeMode="contain"
                   /> */}
                   <View style={styles.weightDetails}>
+                  
+                     <View style={styles.infoRow}>
+                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Loaded Weight</Typography>
+                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.loadedWeight} TON</Typography>
+                    </View>
                      <View style={styles.infoRow}>
                       <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Delivered Weight</Typography>
                       <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.deliveredWeight} TON</Typography>

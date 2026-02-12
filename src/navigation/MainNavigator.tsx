@@ -79,6 +79,15 @@ export const MainNavigator: React.FC = () => {
       <Tab.Screen
         name="History"
         component={HistoryNavigator}
+          listeners={({ navigation }) => ({
+    tabPress: e => {
+      e.preventDefault(); // default behavior stop
+      navigation.navigate('History', {
+        screen: 'HistoryList',
+      });
+    },
+  })}
+
         options={({route}) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? 'HistoryList';
           const hideTabBarScreens = ['HistoryTripDetail'];

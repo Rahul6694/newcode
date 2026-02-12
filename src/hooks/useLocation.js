@@ -45,19 +45,32 @@ const useLocation = (isFocused = true) => {
       }
 
       // Grab an initial fix ASAP (watchPosition can be slow on first load)
+      // Try a quick low-accuracy attempt first (faster on many devices/emulators)
       Geolocation.getCurrentPosition(
         position => {
           const { latitude, longitude, heading } = position.coords;
           setLocation({ latitude, longitude, heading });
           setError(null);
         },
-        err => {
-          console.log('Initial location error:', err);
-          setError(err);
+        async err => {
+          console.log('Initial low-accuracy attempt failed:', err);
+          // Try a higher-accuracy attempt before giving up
+          Geolocation.getCurrentPosition(
+            position => {
+              const { latitude, longitude, heading } = position.coords;
+              setLocation({ latitude, longitude, heading });
+              setError(null);
+            },
+            err2 => {
+              console.log('High-accuracy initial attempt failed:', err2);
+              setError(err2);
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+          );
         },
         {
-          enableHighAccuracy: true,
-          timeout: 15000,
+          enableHighAccuracy: false,
+          timeout: 8000,
           maximumAge: 0,
         }
       );
@@ -73,7 +86,7 @@ const useLocation = (isFocused = true) => {
           setError(err);
         },
         {
-          enableHighAccuracy: true,
+          enableHighAccuracy: false,
           distanceFilter: 1,
           interval: 5000,
           fastestInterval: 2000,

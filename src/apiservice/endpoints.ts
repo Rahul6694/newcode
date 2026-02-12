@@ -19,6 +19,13 @@ export const authApi = {
     ApiClient.post('/auth/verify-otp', { email, otp }),
   getProfile: (params?: any): Promise<ApiResponse> =>
     ApiClient.get('/auth/profile', { params }),
+
+   fcm: (
+    fcmToken: string
+  ): Promise<ApiResponse> =>
+    ApiClient.put('/auth/fcm-token', {
+      fcmToken,
+    }),
 };
 
 // Trip endpoints
@@ -69,6 +76,9 @@ export const tripApi = {
     payload: { latitude: number; longitude: number },
   ): Promise<ApiResponse> =>
     ApiClient.put(`/trips/${tripId}/location`, payload),
+
+
+   
 };
 
 // Location endpoints
@@ -81,50 +91,61 @@ export const locationApi = {
     ApiClient.post(`/location/mark/${tripId}`, { name, coordinates }),
 };
 
-// Notification endpoints
+
 export const notificationApi = {
   getNotifications: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/notifications', { params }),
+    ApiClient.get('/notifications', {params}),
+
+  getUnreadCount: (): Promise<ApiResponse> =>
+    ApiClient.get('/notifications/unread-count'),
 
   markAsRead: (notificationId: string): Promise<ApiResponse> =>
-    ApiClient.post(`/notifications/${notificationId}/read`),
+    ApiClient.patch(`/notifications/${notificationId}/read`),
+
+  markBulkRead: (notificationIds: string[]): Promise<ApiResponse> =>
+    ApiClient.patch('/notifications/bulk/read', {
+      notificationIds,
+    }),
+
+  markAllRead: (): Promise<ApiResponse> =>
+    ApiClient.patch('/notifications/all/read'),
 
   deleteNotification: (notificationId: string): Promise<ApiResponse> =>
     ApiClient.delete(`/notifications/${notificationId}`),
 
-  updateNotificationSettings: (settings: any): Promise<ApiResponse> =>
-    ApiClient.put('/notifications/settings', settings),
+  deleteAllNotifications: (): Promise<ApiResponse> =>
+    ApiClient.delete('/notifications/all/clear'),
 };
 
 // Support endpoints
-export const supportApi = {
-  submitTicket: (data: any): Promise<ApiResponse> =>
-    ApiClient.post('/support/tickets', data),
+// export const supportApi = {
+//   submitTicket: (data: any): Promise<ApiResponse> =>
+//     ApiClient.post('/support/tickets', data),
 
-  getTickets: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/support/tickets', { params }),
+//   getTickets: (params?: any): Promise<ApiResponse> =>
+//     ApiClient.get('/support/tickets', { params }),
 
-  getTicketById: (ticketId: string): Promise<ApiResponse> =>
-    ApiClient.get(`/support/tickets/${ticketId}`),
+//   getTicketById: (ticketId: string): Promise<ApiResponse> =>
+//     ApiClient.get(`/support/tickets/${ticketId}`),
 
-  addComment: (ticketId: string, comment: string): Promise<ApiResponse> =>
-    ApiClient.post(`/support/tickets/${ticketId}/comments`, { comment }),
+//   addComment: (ticketId: string, comment: string): Promise<ApiResponse> =>
+//     ApiClient.post(`/support/tickets/${ticketId}/comments`, { comment }),
 
-  uploadTicketAttachment: (
-    ticketId: string,
-    formData: FormData,
-  ): Promise<ApiResponse> =>
-    ApiClient.uploadFile(`/support/tickets/${ticketId}/attachments`, formData),
-};
+//   uploadTicketAttachment: (
+//     ticketId: string,
+//     formData: FormData,
+//   ): Promise<ApiResponse> =>
+//     ApiClient.uploadFile(`/support/tickets/${ticketId}/attachments`, formData),
+// };
 
 // Dashboard endpoints
-export const dashboardApi = {
-  getDashboardStats: (): Promise<ApiResponse> =>
-    ApiClient.get('/dashboard/stats'),
+// export const dashboardApi = {
+//   getDashboardStats: (): Promise<ApiResponse> =>
+//     ApiClient.get('/dashboard/stats'),
 
-  getEarnings: (params?: any): Promise<ApiResponse> =>
-    ApiClient.get('/dashboard/earnings', { params }),
+//   getEarnings: (params?: any): Promise<ApiResponse> =>
+//     ApiClient.get('/dashboard/earnings', { params }),
 
-  getPerformanceMetrics: (): Promise<ApiResponse> =>
-    ApiClient.get('/dashboard/performance'),
-};
+//   getPerformanceMetrics: (): Promise<ApiResponse> =>
+//     ApiClient.get('/dashboard/performance'),
+// };

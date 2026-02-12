@@ -666,8 +666,8 @@ export const TripDetailScreen: React.FC = ({ }) => {
 
           {/* NAVIGATE */}
           {
-            trips.status !== "IN_PROGRESS" &&
-            trips.status == "LOADED" &&
+            trips?.status !== "IN_PROGRESS" &&
+            trips?.status == "LOADED" &&
             trips.status !== "ASSIGNED" && (
               <Button
                 title="Navigate"

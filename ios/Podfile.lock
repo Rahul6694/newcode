@@ -3028,6 +3028,7 @@ DEPENDENCIES:
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
+  - Firebase/Messaging
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - Google-Maps-iOS-Utils
@@ -3340,7 +3341,7 @@ SPEC CHECKSUMS:
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleMaps: 0608099d4870cac8754bdba9b6953db543432438
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
-  hermes-engine: 7a61b7a896fe6bd6f2b6b553ed296bc601c59a63
+  hermes-engine: da925a60ec96de8aff049ac72e6591ab4c197f81
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
@@ -3420,8 +3421,8 @@ SPEC CHECKSUMS:
   ReactCommon: 15e1e727fa34f760beb7dd52928687fda8edf8dc
   RNCAsyncStorage: 87d51a3aa982dd38d07ecb588aa67821a4a14eee
   RNCPushNotificationIOS: 85957a0534fd1309b4c028ccbe5b1baf9ab5cf57
-  RNFBApp: d26ef99dc9f9530f56ceee011b05175a16af42bc
-  RNFBMessaging: 702aa5f2921f1e8411b8e066b2f8f40184146937
+  RNFBApp: eec5655ba2bc50639dacfd01a2e9ef197165eb92
+  RNFBMessaging: 860308c11cbf08d6a46fcc5ae7dd6f748f8d05a4
   RNGestureHandler: c6327cf6e2bd384dc90351ccfff0da8142d62f54
   RNImageCropPicker: 5432d75a3bc7209dc8b6ab189fcfe19bd6339fb9
   RNPermissions: 439c829ab5b5cad346ecea6eec1fe2a5b918d63b
@@ -3430,6 +3431,6 @@ SPEC CHECKSUMS:
   TOCropViewController: 797deaf39c90e6e9ddd848d88817f6b9a8a09888
   Yoga: 33b53536a0500d039f2cd78caf1d5d68712d3af7
 
-PODFILE CHECKSUM: 5af3cc86ee933ed41c9b349b2db855e36e60eb4b
+PODFILE CHECKSUM: 281d462e1b9cda990604f42c9277268d341e561b
 
 COCOAPODS: 1.16.2

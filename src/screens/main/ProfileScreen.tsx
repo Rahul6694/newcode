@@ -40,7 +40,7 @@ export const ProfileScreen: React.FC = () => {
     isEmailVerified: profileData?.isEmailVerified !== undefined ? profileData.isEmailVerified : false,
     designation: profileData?.designation || '',
     organizationName: profileData?.organizationName || null,
-    organizationRegNumber: profileData?.organizationRegNumber || null,
+    organizationRegNumber: profileData?.assignedVehicle?.registrationNumber|| null,
     userType: profileData?.userType || 'DRIVER',
     createdAt: profileData?.createdAt || '',
     updatedAt: profileData?.updatedAt || '',
@@ -295,8 +295,8 @@ const handleLogout = async () => {
                 <View style={styles.cardBody}>
                   <InfoField iconImage={require('@/assets/images/user.png')} label="User Type" value={dummyUser.userType} />
                   <InfoField iconImage={require('@/assets/images/briefcase.png')} label="Company Name" value={profileData?.company?.legalName || 'N/A'} />
-                  {/* <InfoField iconImage={require('@/assets/images/organization.png')} label="Organization Name" value={dummyUser.organizationName || 'N/A'} />
-                  <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast /> */}
+                  <InfoField iconImage={require('@/assets/images/organization.png')} label="Vehicle Registered Number" value={dummyUser.organizationRegNumber || 'N/A'} />
+                  {/* <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast /> */}
                 </View>
               </Card>
             </Animated.View>

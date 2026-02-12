@@ -104,11 +104,11 @@ export const TripInProgressScreen: React.FC = () => {
       );
 
       if (
-  normalized.latitude !== 0 &&
-  normalized.longitude !== 0
-) {
-  await getActiveTrips(normalized);
-}
+        normalized.latitude !== 0 &&
+        normalized.longitude !== 0
+      ) {
+        await getActiveTrips(normalized);
+      }
     } finally {
       setLoading(false);
     }
@@ -120,28 +120,28 @@ export const TripInProgressScreen: React.FC = () => {
     if (isFocused) Fetchlocation();
   }, [isFocused]);
 
- useEffect(() => {
-  if (!isFocused) return;
+  useEffect(() => {
+    if (!isFocused) return;
 
-  if (
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    latitude === 0 ||
-    longitude === 0
-  ) {
-    console.log('⚠️ Waiting for valid GPS fix...');
-    return;
-  }
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude === 0 ||
+      longitude === 0
+    ) {
+      console.log('⚠️ Waiting for valid GPS fix...');
+      return;
+    }
 
-  const coords = { latitude, longitude };
-  latestCoordsRef.current = coords;
-  setCurrentLoction(coords);
+    const coords = { latitude, longitude };
+    latestCoordsRef.current = coords;
+    setCurrentLoction(coords);
 
-  if (!hasFetchedTripRef.current) {
-    hasFetchedTripRef.current = true;
-    getActiveTrips(coords);
-  }
-}, [isFocused, latitude, longitude]);
+    if (!hasFetchedTripRef.current) {
+      hasFetchedTripRef.current = true;
+      getActiveTrips(coords);
+    }
+  }, [isFocused, latitude, longitude]);
 
 
   useEffect(() => {
@@ -271,18 +271,18 @@ export const TripInProgressScreen: React.FC = () => {
 
   const fetchRoute = async (locationData: RouteInput) => {
 
-    
+
     const origin = {
       latitude: +locationData?.latitude,
       longitude: +locationData?.longitude,
     };
     if (
-  origin.latitude === 0 ||
-  origin.longitude === 0
-) {
-  console.log('❌ Origin is 0,0 — skipping route fetch');
-  return;
-}
+      origin.latitude === 0 ||
+      origin.longitude === 0
+    ) {
+      console.log('❌ Origin is 0,0 — skipping route fetch');
+      return;
+    }
 
     const destination = {
       latitude: +locationData?.latitudeDes,
@@ -299,20 +299,46 @@ export const TripInProgressScreen: React.FC = () => {
     ) {
       let url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${GOOGLE_API_KEY}&mode=driving`;
 
-      console.log(url,"url=========>")
+      console.log(url, "url=========>")
 
       try {
         const res = await fetch(url);
         const data = await res.json();
-if (data.status !== 'OK') {
-  console.log('❌ Directions API failed:', data.status, data.error_message);
-  setRouteMeta({
-    source: 'none',
-    status: data.status,
-    points: 0,
-  });
-  return;
-}
+        // Debug: log full response when not OK
+        if (data.status !== 'OK') {
+          console.warn('❌ Directions API failed:', data.status, data.error_message, data);
+
+          // If ZERO_RESULTS, try alternate modes as a fallback
+          if (data.status === 'ZERO_RESULTS') {
+            const fallbackModes = ['walking', 'bicycling', 'transit'];
+            for (const mode of fallbackModes) {
+              try {
+                const furl = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${GOOGLE_API_KEY}&mode=${mode}`;
+                console.log('Trying fallback mode:', mode, furl);
+                const fres = await fetch(furl);
+                const fdata = await fres.json();
+                if (fdata.status === 'OK' && fdata.routes?.length > 0) {
+                  console.log('Fallback mode succeeded:', mode);
+                  // reuse processing path below using fdata
+                  Object.assign(data, fdata);
+                  break;
+                }
+                console.log('Fallback mode', mode, 'result:', fdata.status);
+              } catch (err) {
+                console.warn('Fallback fetch error for mode', mode, err);
+              }
+            }
+          }
+
+          if (data.status !== 'OK') {
+            setRouteMeta({
+              source: 'none',
+              status: data.status,
+              points: 0,
+            });
+            return;
+          }
+        }
 
         if (data.routes?.length > 0) {
           const decodedPoints = decodePolyline(data.routes[0].overview_polyline.points);
@@ -508,11 +534,11 @@ if (data.status !== 'OK') {
               zoomEnabled={true}>
 
               {/* {routeCoordinates.length > 1 && ( */}
-                <Polyline
-                  coordinates={routeCoordinates}
-                  strokeWidth={5}
-                  strokeColor="#2563EB"
-                />
+              <Polyline
+                coordinates={routeCoordinates}
+                strokeWidth={5}
+                strokeColor="#2563EB"
+              />
               {/* )} */}
 
               {currentLoction?.latitude && currentLoction?.longitude && (
@@ -720,7 +746,7 @@ if (data.status !== 'OK') {
                           resizeMode="contain"
                         />
                       </TouchableOpacity>
-                      <TouchableOpacity
+                      {/* <TouchableOpacity
                         style={styles.deliveryNavigateButton}
                         onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
                         activeOpacity={0.7}>
@@ -729,7 +755,7 @@ if (data.status !== 'OK') {
                           style={styles.deliveryNavigateButtonIcon}
                           resizeMode="contain"
                         />
-                      </TouchableOpacity>
+                      </TouchableOpacity> */}
                     </View>
                   </View>
                 </View>
@@ -739,11 +765,11 @@ if (data.status !== 'OK') {
 
           {/* Slide to Mark as Arrived Button */}
           <View style={styles.slideContainer}>
-           <TouchableOpacity onPress={()=>{handleMarkAsArrived()}} style={{justifyContent:"center",alignContent:"center",padding:15, backgroundColor:colors.primary,borderRadius:10}}>
-            <Typography variant="bodySemibold" weight="600" style={{textAlign:"center",color:"#fff"}}>
-              Mark as Arrived
-            </Typography>
-           </TouchableOpacity>
+            <TouchableOpacity onPress={() => { handleMarkAsArrived() }} style={{ justifyContent: "center", alignContent: "center", padding: 15, backgroundColor: colors.primary, borderRadius: 10 }}>
+              <Typography variant="bodySemibold" weight="600" style={{ textAlign: "center", color: "#fff" }}>
+                Mark as Arrived
+              </Typography>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </View>

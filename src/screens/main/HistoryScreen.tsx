@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Trip, TripStatus, HistoryStackParamList } from '@/types';
 import { Card, StatusBadge, Typography, useToast } from '@/components';
@@ -103,12 +103,14 @@ export const HistoryScreen: React.FC = () => {
   const handleTripPress = (trip: Trip) => {
     navigation.navigate('HistoryTripDetail', { tripId: trip.id });
   };
-
-
+const isFocused = useIsFocused()
   
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  
+    useEffect(() => {
+      if (isFocused) {
+ loadHistory();
+      }
+    }, [isFocused]);
 
   const loadHistory = async (page: number = 1) => {
     try {

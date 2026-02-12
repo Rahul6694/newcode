@@ -1,4 +1,4 @@
-import React, { useActionState, useEffect, useState } from 'react';
+import React, { useActionState, useEffect, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -27,10 +27,13 @@ import {
   shadows,
 } from '@/theme/colors';
 import { useSelector } from 'react-redux';
-import { tripApi } from '@/apiservice';
+import { authApi, notificationApi, tripApi } from '@/apiservice';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
 import type { RootState } from '@/redux/store';
+import { fcmService } from '@/pushNotifacation/FMCService';
+import messaging from '@react-native-firebase/messaging';
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
 
 type TodoScreenNavigationProp = StackNavigationProp<
   TodoStackParamList,
@@ -45,10 +48,122 @@ export const TodoScreen: React.FC = () => {
   const [loading, setloading] = useState();
   const [data, setData] = useState([]);
   const [datalenght, setDatalenght] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [fcm, setfcm] = useState<any>()
+const [profile, setprofile] = useState()
+
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await notificationApi.getNotifications();
+      console.log('Notifications fetched:', res);
+      const data = res.data?.notifications || [];
+
+
+      setNotifications(data);
+    } catch (e: any) {
+      console.error('Failed to fetch:', e?.response?.data || e.message);
+    } finally {
+
+    }
+  };
+
+
+  const loadProfile = async () => {
+  try {
+  
+    
+    const res = await authApi.getProfile();
+    if (res) {
+      console.log('Profile data:dheudh', res);
+      const profile = res.data || res; 
+setprofile(profile)
+
+    } else {
+      const errorMsg = res?.message || 'Failed to load profile';
+    }
+  } catch (error: any) {
+    console.log('Load profile error:', error);
+  
+  } }
+
+  console.log(user, 'user===============>');
+
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchNotifications();
+      loadProfile()
+    }
+  }, [isFocused]);
+
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter(n => n.isRead === false),
+    [notifications]
+  );
+
+  const unreadCount = unreadNotifications.length;
+
+
+  useEffect(() => {
+    const initFCM = async () => {
+      try {
+        // console.log('🔔 FCM init start');
+
+        // const authStatus = await messaging().requestPermission();
+        // const enabled =
+        //   authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        //   authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+        // console.log('🔐 FCM permission enabled:', enabled);
+
+        // if (!enabled) {
+        //   console.log('❌ Permission denied');
+        //   return;
+        // }
+
+        fcmService.register();
+        const token = await fcmService.getFcmToken();
+        if (!token) {
+          console.log('Token not received');
+          return;
+        }
+        console.log(' FCM TOKEN =>', token);
+        const res = await authApi.fcm(token);
+        console.log('FCM API SUCCESS =>', res);
+
+      } catch (error) {
+        console.log('FCM ERROR =>', error);
+      }
+    };
+
+    initFCM();
+
+    return () => {
+      fcmService.unRegister();
+    };
+  }, []);
+
+
+
+
+  //   const updateFcm = async () => {
+  //   try {
+
+  //   await authApi.fcm(fcm);
+
+
+  //   } catch (error) {
+  //     console.log('FCM error:', error);
+  //   }
+  // };
 
   // Use dummy data if active trips are empty - show only first trip
   const allTrips = Array.isArray(data) ? data : [];
   const displayTrips = allTrips.slice(0, 1); // Show only first trip
+
 
   const getActiveTrips = async () => {
     try {
@@ -86,13 +201,22 @@ export const TodoScreen: React.FC = () => {
       ;
     }
   };
+
+
+useEffect(() => {
+  if (!isFocused) return;
+
+  if (Platform.OS === 'ios') {
+    PushNotificationIOS.setApplicationIconBadgeNumber(0);
+  }
+}, [isFocused]);
   useEffect(() => {
     getActiveTrips();
     loadHistory();
   }, [useIsFocused()]);
 
   const handleTripPress = (trip: Trip) => {
-        navigation.navigate('TripDetail', { tripId: trip.id, })
+    navigation.navigate('TripDetail', { tripId: trip.id, })
   };
   const renderTripCard = ({ item }: { item: Trip }) => {
     // `Trip` typing in this project doesn't currently include `order` in TS,
@@ -126,9 +250,9 @@ export const TodoScreen: React.FC = () => {
         {/* Route Section */}
         <View style={styles.routeContainer}>
           <View style={styles.timelineContainer}>
-            <View style={[styles.dot, { backgroundColor: colors.success, marginTop:10 }]} />
+            <View style={[styles.dot, { backgroundColor: colors.success, marginTop: 10 }]} />
             <View style={styles.line} />
-            <View style={[styles.dot, { backgroundColor: colors.error ,marginBottom:10}]} />
+            <View style={[styles.dot, { backgroundColor: colors.error, marginBottom: 10 }]} />
           </View>
 
           <View style={styles.locations}>
@@ -137,7 +261,7 @@ export const TodoScreen: React.FC = () => {
                 variant="bodyMedium"
                 color="textPrimary"
                 weight="700"
-               
+
                 style={styles.cityText}
               >
                 {loadingCity}
@@ -145,9 +269,9 @@ export const TodoScreen: React.FC = () => {
               <Typography
                 variant="small"
                 color="textSecondary"
-                  numberOfLines={2}
+                numberOfLines={2}
                 style={styles.addressText}
-               
+
               >
                 {loadingAddress}
               </Typography>
@@ -157,7 +281,7 @@ export const TodoScreen: React.FC = () => {
                 variant="bodyMedium"
                 color="textPrimary"
                 weight="700"
-                
+
                 style={styles.cityText}
               >
                 {unloadingCity}
@@ -166,7 +290,7 @@ export const TodoScreen: React.FC = () => {
                 variant="small"
                 color="textSecondary"
                 style={styles.addressText}
-          numberOfLines={2}
+                numberOfLines={2}
               >
                 {unloadingAddress}
               </Typography>
@@ -298,12 +422,24 @@ export const TodoScreen: React.FC = () => {
             <View>
               <Typography style={styles.greeting}>{greeting} 👋</Typography>
               <Typography style={styles.userName}>{(user as any)?.fullName ?? (user as any)?.name ?? ''}</Typography>
+<View style={{backgroundColor:'rgba(255,255,255,0.2)', paddingHorizontal:8, paddingVertical:4, borderRadius:12, marginTop:6, alignSelf:'flex-start'}}>
+
+
+              <Typography style={{color:'white', fontSize:12}}>{profile?.assignedVehicle?.registrationNumber|| null}</Typography>
+
+              </View>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications')} activeOpacity={0.8} style={{ position: 'relative' }}>
               <Image
                 source={require('@/assets/images/notification.png')}
                 style={styles.avatar}
               />
+              {unreadCount > 0 ?
+                <Typography style={{ position: 'absolute', top: 2, right: -2, backgroundColor: colors.error, color: 'white', borderRadius: 10, paddingHorizontal: 5, fontSize: 10, fontWeight: '700' }}>
+                  {unreadCount > 0 ? `${unreadCount}` : null}
+                </Typography>
+                : null
+              }
             </TouchableOpacity>
           </View>
 
@@ -343,7 +479,7 @@ export const TodoScreen: React.FC = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await    getActiveTrips();
+      await getActiveTrips();
     } finally {
       setRefreshing(false);
     }
@@ -364,7 +500,7 @@ export const TodoScreen: React.FC = () => {
 
         <FlatList
           data={displayTrips}
-         
+
           renderItem={renderTripCard}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
@@ -375,13 +511,13 @@ export const TodoScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           refreshControl={
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={handleRefresh}
-      tintColor={colors.primaryLight}
-      colors={[colors.primaryLight]}
-    />
-  }
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primaryLight}
+              colors={[colors.primaryLight]}
+            />
+          }
         />
 
       </SafeAreaView>
@@ -402,7 +538,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
-  
+
   },
   heroSection: {
     borderRadius: borderRadius.xl,

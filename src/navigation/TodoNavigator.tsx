@@ -7,7 +7,7 @@ import {TripDetailScreen} from '@/screens/main/TripDetailScreen';
 import {LocationMarkScreen} from '@/screens/main/LocationMarkScreen';
 import {TripInProgressScreen} from '@/screens/main/TripInProgressScreen';
 import {MarkCompleteScreen} from '@/screens/main/MarkCompleteScreen';
-import {NotificationScreen} from '@/screens/main/NotificationScreen';
+import NotificationScreen from '@/screens/main/NotificationScreen';
 import {TodoStackParamList} from '@/types';
 import {colors, typography} from '@/theme/colors';
 

@@ -300,13 +300,13 @@ export const LocationMarkScreen: React.FC = () => {
   };
 
   const markTripAsLoaded = async () => {
-    // setMarking(true);
-    //  if (LoadedValue === null || LoadedValue === '') {
-    //   showError('Please enter loaded weight');
 
-    //   return;
-    // }
+     if (LoadedValue === null || LoadedValue === '') {
+      showError('Please enter loaded weight');
 
+      return;
+    }
+    setMarking(true);
     try {
       await tripApi.markLoaded(tripId, 'All items loaded properly');
 
@@ -487,6 +487,7 @@ export const LocationMarkScreen: React.FC = () => {
               placeholder="Enter loaded weight"
               keyboardType="numeric"
               editable={true}
+              
               value={LoadedValue}
             onChangeText={setLoadedValue}
             />

@@ -469,31 +469,122 @@ const getDistance = (start, end) => {
 };
 
 
-export const fetchCurrentLocation = async () => {
+export const fetchCurrentLocation = async (opts?: { attempts?: number; baseTimeout?: number }) => {
+  const attempts = opts?.attempts ?? 2;
+  const baseTimeout = opts?.baseTimeout ?? 8000; // start with a quicker attempt
+
   try {
     const hasPermission = await requestPermissionsHere();
     if (!hasPermission) return null;
 
-    return new Promise((resolve, reject) => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const { latitude, longitude, heading } = position.coords;
-          resolve({ latitude, longitude, heading });
-        },
-        error => {
-          console.error('❌ Location error:', error);
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000,
+    const getPos = (options: { enableHighAccuracy: boolean; timeout: number }) =>
+      new Promise((resolve, reject) => {
+        let called = false;
+        const tm = setTimeout(() => {
+          if (called) return;
+          called = true;
+          const err = { code: 3, message: 'Location request timed out' } as any;
+          console.error('❌ getPos manual timeout:', err);
+          reject(err);
+        }, options.timeout + 500);
+
+        Geolocation.getCurrentPosition(
+          position => {
+            if (called) return;
+            called = true;
+            clearTimeout(tm);
+            const { latitude, longitude, heading } = position.coords;
+            lastCoords = { latitude, longitude };
+            lastUpdateTime = Date.now();
+            resolve({ latitude, longitude, heading });
+          },
+          error => {
+            if (called) return;
+            called = true;
+            clearTimeout(tm);
+            console.error('❌ Location error from native API:', error);
+            reject(error);
+          },
+          {
+            enableHighAccuracy: options.enableHighAccuracy,
+            timeout: options.timeout,
+            maximumAge: 0,
+          }
+        );
+      });
+
+    let lastError: any = null;
+
+    // Try a quick low-accuracy attempt first, then higher-accuracy attempts
+    for (let i = 0; i < attempts; i++) {
+      const isHighAccuracy = i > 0; // first attempt low-accuracy
+      const timeout = baseTimeout * (isHighAccuracy ? 2 : 1) * (i + 1);
+      try {
+        const res = await getPos({ enableHighAccuracy: isHighAccuracy, timeout });
+        return res as any;
+      } catch (err: any) {
+        lastError = err;
+        if (err?.code === 3) {
+          console.warn(`⏱️ attempt ${i + 1} timed out, retrying...`);
+          continue;
+        } else {
+          // non-timeout error (permission denied, position unavailable) — stop retrying
+          break;
         }
-      );
-    });
+      }
+    }
+
+    // Fallback: return recently cached coords if available
+    const STALE_MS = 10 * 60 * 1000; // 10 minutes
+    if (lastCoords?.latitude && lastCoords?.longitude && Date.now() - lastUpdateTime < STALE_MS) {
+      console.warn('⚠️ Using cached lastCoords as fallback', lastCoords);
+      return { latitude: lastCoords.latitude, longitude: lastCoords.longitude, heading: 0 };
+    }
+
+    // No location available
+    console.error('❌ Location fetch failed after retries:', lastError);
+    throw lastError;
   } catch (error) {
     console.error('⚠️ Error:', error);
     return null;
+  }
+};
+
+// Helpers to keep a background watch filling `lastCoords` to reduce timeouts
+export const startLocationWatch = async () => {
+  try {
+    const hasPermission = await requestPermissionsHere();
+    if (!hasPermission) return null;
+
+    if (watchId != null) return watchId;
+
+    watchId = Geolocation.watchPosition(
+      position => {
+        const { latitude, longitude } = position.coords;
+        lastCoords = { latitude, longitude };
+        lastUpdateTime = Date.now();
+      },
+      error => {
+        console.error('❌ Location watch error:', error);
+      },
+      { enableHighAccuracy: false, distanceFilter: 5, interval: 5000, fastestInterval: 2000 }
+    );
+
+    return watchId;
+  } catch (err) {
+    console.error('⚠️ startLocationWatch error:', err);
+    return null;
+  }
+};
+
+export const stopLocationWatch = () => {
+  try {
+    if (watchId != null) {
+      Geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+  } catch (err) {
+    console.error('⚠️ stopLocationWatch error:', err);
   }
 };
 
