@@ -248,6 +248,12 @@ export const LocationMarkScreen: React.FC = () => {
 
   // UI handlers only
   const uploadDocuments = async () => {
+
+     if (LoadedValue === null || LoadedValue === '') {
+      showError('Please enter loaded weight');
+
+      return;
+    }
     if (documents.length === 0) {
       showError('Please add documents before uploading');
       return;
@@ -259,6 +265,7 @@ export const LocationMarkScreen: React.FC = () => {
     // }
 
     setUploadingDocs(true);
+    
 
     try {
       const formData = new FormData();
@@ -292,8 +299,8 @@ export const LocationMarkScreen: React.FC = () => {
       }
     } catch (error: any) {
       console.log('Upload error:', error);
-      const errorMsg = error?.message || 'Failed to upload documents. Please try again.';
-      showError(errorMsg);
+      // const errorMsg = error?.message || 'Failed to upload documents. Please try again.';
+      // showError(errorMsg);
     } finally {
       setUploadingDocs(false);
     }
@@ -314,7 +321,7 @@ export const LocationMarkScreen: React.FC = () => {
       navigation.replace('TripInProgress', { tripId });
     } catch (error: any) {
       console.log(error);
-      showError(error.message || 'Failed to mark trip as loaded');
+
     } finally {
       setMarking(false);
     }
@@ -327,7 +334,7 @@ export const LocationMarkScreen: React.FC = () => {
     }
   };
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Header title="Mark as Loaded" onBackPress={() => navigation.goBack()} />
 
       <ScrollView

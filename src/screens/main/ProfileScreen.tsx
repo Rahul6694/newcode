@@ -183,7 +183,7 @@ const handleLogout = async () => {
         hidden={false}
         animated={true}
       />
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <View style={styles.backgroundGradient} />
         <KeyboardAvoidingView
           style={styles.keyboardView}

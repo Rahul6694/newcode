@@ -224,7 +224,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
      <Header
   title="Trip History Details"
   onBackPress={() => {

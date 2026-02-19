@@ -256,7 +256,7 @@ export const MarkCompleteScreen: React.FC = () => {
 
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Header title="Mark as Complete" onBackPress={() => navigation.goBack()} />
 
       <ScrollView

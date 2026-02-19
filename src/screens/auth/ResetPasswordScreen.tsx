@@ -183,7 +183,7 @@ const handleResetPassword = async () => {
         backgroundColor={Platform.OS === 'android' ? colors.primaryLight : undefined}
         translucent={Platform.OS === 'android' ? false : undefined}
       />
-      <SafeAreaView style={styles.container} edges={['bottom', 'top']}>
+      <SafeAreaView style={styles.container} edges={['bottom', ]}>
         <View style={styles.backgroundGradient} />
         <KeyboardAvoidingView
           style={styles.keyboardView}

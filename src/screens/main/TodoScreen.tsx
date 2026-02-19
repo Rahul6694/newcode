@@ -494,7 +494,7 @@ useEffect(() => {
         hidden={false}
         animated={true}
       />
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         {/* Full Screen Linear Gradient Background */}
 
 

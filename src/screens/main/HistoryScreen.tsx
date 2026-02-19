@@ -320,7 +320,7 @@ const isFocused = useIsFocused()
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <FlatList
         data={history}
         renderItem={renderTripCard}

@@ -304,40 +304,14 @@ export const TripInProgressScreen: React.FC = () => {
       try {
         const res = await fetch(url);
         const data = await res.json();
-        // Debug: log full response when not OK
         if (data.status !== 'OK') {
-          console.warn('❌ Directions API failed:', data.status, data.error_message, data);
-
-          // If ZERO_RESULTS, try alternate modes as a fallback
-          if (data.status === 'ZERO_RESULTS') {
-            const fallbackModes = ['walking', 'bicycling', 'transit'];
-            for (const mode of fallbackModes) {
-              try {
-                const furl = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${GOOGLE_API_KEY}&mode=${mode}`;
-                console.log('Trying fallback mode:', mode, furl);
-                const fres = await fetch(furl);
-                const fdata = await fres.json();
-                if (fdata.status === 'OK' && fdata.routes?.length > 0) {
-                  console.log('Fallback mode succeeded:', mode);
-                  // reuse processing path below using fdata
-                  Object.assign(data, fdata);
-                  break;
-                }
-                console.log('Fallback mode', mode, 'result:', fdata.status);
-              } catch (err) {
-                console.warn('Fallback fetch error for mode', mode, err);
-              }
-            }
-          }
-
-          if (data.status !== 'OK') {
-            setRouteMeta({
-              source: 'none',
-              status: data.status,
-              points: 0,
-            });
-            return;
-          }
+          console.log('❌ Directions API failed:', data.status, data.error_message);
+          setRouteMeta({
+            source: 'none',
+            status: data.status,
+            points: 0,
+          });
+          return;
         }
 
         if (data.routes?.length > 0) {
@@ -499,7 +473,7 @@ export const TripInProgressScreen: React.FC = () => {
 
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Header title="Trip In Progress" onBackPress={() => navigation.goBack()} />
 
       {/* Show loading while requesting GPS fix */}
@@ -746,7 +720,7 @@ export const TripInProgressScreen: React.FC = () => {
                           resizeMode="contain"
                         />
                       </TouchableOpacity>
-                      {/* <TouchableOpacity
+                      <TouchableOpacity
                         style={styles.deliveryNavigateButton}
                         onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
                         activeOpacity={0.7}>
@@ -755,7 +729,7 @@ export const TripInProgressScreen: React.FC = () => {
                           style={styles.deliveryNavigateButtonIcon}
                           resizeMode="contain"
                         />
-                      </TouchableOpacity> */}
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </View>

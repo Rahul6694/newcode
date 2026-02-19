@@ -344,7 +344,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
 
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']} >
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']} >
       <Header title="Trip Details" onBackPress={() => navigation.goBack()} />
 
       <ScrollView
