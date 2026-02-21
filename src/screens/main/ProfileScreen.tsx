@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Easing, Dimensions, StatusBar, Platform, KeyboardAvoidingView, Image, ImageSourcePropType } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Easing, Dimensions, StatusBar, Platform, KeyboardAvoidingView, Image, ImageSourcePropType, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -8,12 +8,14 @@ import { Button, Card, Modal, useToast, Typography } from '@/components';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearToken } from '@/redux/authSlice';
-import { AppDispatch } from '@/redux/store';
+import { AppDispatch, RootState } from '@/redux/store';
 import { authApi } from '@/apiservice';
+import { useStrings } from '@/localization/useStrings';
+import { setLang } from '@/redux/authSlice';
 
-const dispatch: AppDispatch = useDispatch();
+
 
 
 const { height, width } = Dimensions.get('window');
@@ -22,13 +24,16 @@ type ProfileNavigationProp = StackNavigationProp<ProfileStackParamList, 'Profile
 
 export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileNavigationProp>();
-
+  const strings = useStrings();
   const { showSuccess, showError } = useToast();
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
+  const dispatch: AppDispatch = useDispatch();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
+  const currentLang = useSelector((state: RootState) => state.auth.lang);
   // Get user data from API or use stored data as fallback
   const dummyUser = {
     id: profileData?.id || '',
@@ -40,7 +45,7 @@ export const ProfileScreen: React.FC = () => {
     isEmailVerified: profileData?.isEmailVerified !== undefined ? profileData.isEmailVerified : false,
     designation: profileData?.designation || '',
     organizationName: profileData?.organizationName || null,
-    organizationRegNumber: profileData?.assignedVehicle?.registrationNumber|| null,
+    organizationRegNumber: profileData?.assignedVehicle?.registrationNumber || null,
     userType: profileData?.userType || 'DRIVER',
     createdAt: profileData?.createdAt || '',
     updatedAt: profileData?.updatedAt || '',
@@ -80,55 +85,55 @@ export const ProfileScreen: React.FC = () => {
   }, []);
 
   const loadProfile = async () => {
-  try {
-    setLoading(true);
-    
-    const res = await authApi.getProfile();
-    if (res) {
-      console.log('Profile data:', res);
-      const profile = res.data || res; 
-      setProfileData(profile);
-
-    } else {
-      const errorMsg = res?.message || 'Failed to load profile';
-      showError(errorMsg);
-      console.log('Profile data:', res);
-    }
-  } catch (error: any) {
-    console.log('Load profile error:', error);
-    showError(error?.message || 'Unable to load profile. Try again.');
     try {
-      const storedUser = await AsyncStorage.getItem('user_data');
-      if (storedUser) setProfileData(JSON.parse(storedUser));
-    } catch (e) {
-      console.log('Error loading stored profile:', e);
+      setLoading(true);
+
+      const res = await authApi.getProfile();
+      if (res) {
+        console.log('Profile data:', res);
+        const profile = res.data || res;
+        setProfileData(profile);
+
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+        showError(errorMsg);
+        console.log('Profile data:', res);
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+      showError(error?.message || 'Unable to load profile. Try again.');
+      try {
+        const storedUser = await AsyncStorage.getItem('user_data');
+        if (storedUser) setProfileData(JSON.parse(storedUser));
+      } catch (e) {
+        console.log('Error loading stored profile:', e);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
-const handleLogout = async () => {
-  setLoading(true);
+  const handleLogout = async () => {
+    setLoading(true);
 
-  try {
-    await AsyncStorage.removeItem('auth_token');
+    try {
+      await AsyncStorage.removeItem('auth_token');
 
-    // Clear token in Redux
-    dispatch(clearToken());
+      // Clear token in Redux
+      dispatch(clearToken());
 
-    showSuccess('Logged out successfully');
+      showSuccess('Logged out successfully');
 
-    // Reset navigation to Auth stack
-   
-  } catch (error: any) {
-    console.log('Logout error:', error);
-   
-  } finally {
-    setLoading(false);
-  }
-};
+      // Reset navigation to Auth stack
+
+    } catch (error: any) {
+      console.log('Logout error:', error);
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'D';
@@ -204,7 +209,7 @@ const handleLogout = async () => {
               <View style={styles.avatarContainer}>
                 <View style={styles.avatarWrapper}>
                   <View style={styles.avatarCircle}>
-                    <Typography  style={styles.avatarText}>
+                    <Typography style={styles.avatarText}>
                       {getInitials(dummyUser?.fullName)}
                     </Typography>
                   </View>
@@ -263,14 +268,13 @@ const handleLogout = async () => {
               <Card style={styles.mainCard} padding="none">
                 <View style={styles.cardHeader}>
                   <Typography variant="h3" color="textPrimary" weight="700" style={styles.cardTitle}>
-                    Personal Information
+                    {strings.profile.personalInformation}
                   </Typography>
                 </View>
                 <View style={styles.cardBody}>
-                  <InfoField iconImage={require('@/assets/images/user.png')} label="Full Name" value={dummyUser.fullName} />
-                  <InfoField iconImage={require('@/assets/images/email.png')} label="Email" value={dummyUser.email} />
-                  {/* <InfoField iconImage={require('@/assets/images/verifie.png')} label="Email Verified" value={dummyUser.isEmailVerified ? 'Verified' : 'Not Verified'} /> */}
-                  <InfoField iconImage={require('@/assets/images/phone-call.png')} label="Phone Number" value={dummyUser.phoneNumber} />
+                  <InfoField iconImage={require('@/assets/images/user.png')} label={strings.profile.fullName} value={dummyUser.fullName} />
+                  <InfoField iconImage={require('@/assets/images/email.png')} label={strings.profile.email} value={dummyUser.email} />
+                  <InfoField iconImage={require('@/assets/images/phone-call.png')} label={strings.profile.phoneNumber} value={dummyUser.phoneNumber} />
                   {/* <InfoField iconImage={require('@/assets/images/location.png')} label="Address" value={dummyUser.address} isLast /> */}
                 </View>
               </Card>
@@ -288,19 +292,53 @@ const handleLogout = async () => {
               <Card style={styles.mainCard} padding="none">
                 <View style={styles.cardHeader}>
                   <Typography variant="h3" color="textPrimary" weight="700" style={styles.cardTitle}>
-                    Account & Organization
+                    {strings.profile.accountOrganization}
                   </Typography>
                 </View>
-               
+
                 <View style={styles.cardBody}>
-                  <InfoField iconImage={require('@/assets/images/user.png')} label="User Type" value={dummyUser.userType} />
-                  <InfoField iconImage={require('@/assets/images/briefcase.png')} label="Company Name" value={profileData?.company?.legalName || 'N/A'} />
-                  <InfoField iconImage={require('@/assets/images/organization.png')} label="Vehicle Registered Number" value={dummyUser.organizationRegNumber || 'N/A'} />
+                  <InfoField iconImage={require('@/assets/images/user.png')} label={strings.profile.userType} value={dummyUser.userType} />
+                  <InfoField iconImage={require('@/assets/images/briefcase.png')} label={strings.profile.companyName} value={profileData?.company?.legalName || 'N/A'} />
+                  <InfoField iconImage={require('@/assets/images/organization.png')} label={strings.profile.vehicleRegNumber} value={dummyUser.organizationRegNumber || 'N/A'} />
                   {/* <InfoField iconImage={require('@/assets/images/contact-form.png')} label="Registration Number" value={dummyUser.organizationRegNumber || 'N/A'} isLast /> */}
                 </View>
               </Card>
             </Animated.View>
+            <Animated.View
+              style={[
+                styles.cardWrapper,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+                
+              ]}
+            >
+              <Card style={styles.mainCard} padding="none">
+                <View style={styles.cardHeader}>
+                  <Typography variant="h3" weight="700">
+                    {strings.language.chooseLanguage}
+                  </Typography>
+                </View>
 
+                <TouchableOpacity
+                  style={styles.languageRow}
+                  onPress={() => setShowLanguageModal(true)}
+                >
+                  <Typography variant="bodyMedium">
+                    {currentLang === 'en' && 'English'}
+                    {currentLang === 'hi' && 'हिंदी'}
+                    {currentLang === 'ur' && 'اردو'}
+                    {currentLang === 'ar' && 'العربية'}
+                  </Typography>
+
+                  <Typography style={{height:13, fontWeight:900}}>
+                    ﹀
+                  </Typography>
+                </TouchableOpacity>
+
+              </Card>
+            </Animated.View>
             {/* Documents Section */}
             {dummyUser.documents && dummyUser.documents.length > 0 && (
               <Animated.View
@@ -314,7 +352,7 @@ const handleLogout = async () => {
                 <Card style={styles.documentsCard} padding="none">
                   <View style={styles.cardHeader}>
                     <Typography variant="h3" color="textPrimary" weight="700" style={styles.cardTitle}>
-                      Documents
+                      {strings.profile.documents}
                     </Typography>
                     <Typography variant="caption" color="textSecondary" style={styles.cardSubtitle}>
                       {dummyUser.documents.length} document{dummyUser.documents.length > 1 ? 's' : ''}
@@ -361,7 +399,9 @@ const handleLogout = async () => {
                   </View>
                 </Card>
               </Animated.View>
+
             )}
+
 
             {/* Logout Button */}
             {/* <Animated.View
@@ -384,7 +424,7 @@ const handleLogout = async () => {
             <View style={styles.buttonContainer}>
               <Button
 
-                title="Sign Out"
+                title={strings.profile.signOut}
                 onPress={() => setShowLogoutConfirm(true)}
                 fullWidth
                 size="lg"
@@ -400,26 +440,70 @@ const handleLogout = async () => {
         <Modal
           visible={showLogoutConfirm}
           onClose={() => setShowLogoutConfirm(false)}
-          title="Sign Out"
+          title={strings.profile.logoutConfirmTitle}
           size="sm">
           <View style={styles.modalContent}>
             <Typography color="textSecondary" style={styles.modalText}>
-              Are you sure you want to sign out? You'll need to sign in again to access your trips.
+              {strings.profile.logoutConfirmMessage}
             </Typography>
             <View style={styles.modalButtons}>
               <Button
-                title="Cancel"
+                title={strings.profile.cancel}
                 onPress={() => setShowLogoutConfirm(false)}
                 variant="outline"
                 style={styles.modalButton}
               />
               <Button
-                title="Sign Out"
+                title={strings.profile.signOut}
                 onPress={handleLogout}
                 variant="danger"
                 style={styles.modalButton}
               />
             </View>
+          </View>
+        </Modal>
+
+        <Modal
+          visible={showLanguageModal}
+          onClose={() => setShowLanguageModal(false)}
+          title={strings.language.chooseLanguage}
+          size="sm"
+        >
+          <View style={styles.languageModalContainer}>
+
+            {[
+              { code: 'en', label: 'English' },
+              { code: 'hi', label: 'हिंदी' },
+              { code: 'ur', label: 'اردو' },
+              { code: 'ar', label: 'العربية' },
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.code}
+                style={[
+                  styles.languageOption,
+                  currentLang === item.code && styles.languageOptionActive,
+                ]}
+                onPress={() => {
+                  dispatch(setLang(item.code));
+                  setShowLanguageModal(false);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.languageText,
+                    currentLang === item.code && styles.languageTextActive,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+
+                {currentLang === item.code && (
+                  <Text style={styles.checkMark}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+
           </View>
         </Modal>
       </SafeAreaView>
@@ -431,8 +515,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    
+
   },
+  languageRow: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    flexDirection: 'row',
+    justifyContent:'space-between',
+    alignItems:'center',
+  },
+
   backgroundGradient: {
     position: 'absolute',
     top: 0,
@@ -452,7 +544,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   header: {
- 
+
 
     alignItems: 'center',
   },
@@ -465,10 +557,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
     ...shadows.md,
-    
+
   },
   avatarContainer: {
-  
+
   },
   avatarWrapper: {
     position: 'relative',
@@ -490,7 +582,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: '700',
     color: colors.primaryLight,
-  // paddingTop: Platform.OS === 'ios' ? spacing.xl : 0,
+    // paddingTop: Platform.OS === 'ios' ? spacing.xl : 0,
   },
   statusIndicator: {
     position: 'absolute',
@@ -630,7 +722,7 @@ const styles = StyleSheet.create({
   },
   fieldValue: {
     fontSize: 15,
-    
+
   },
   fieldDivider: {
     height: 1,
@@ -678,6 +770,43 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     ...shadows.sm,
   },
+  languageModalContainer: {
+    width: '100%',
+    marginBottom: 50,
+
+
+  },
+
+  languageOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.borderLight,
+    marginBottom: spacing.md,
+  },
+
+  languageOptionActive: {
+    backgroundColor: colors.primaryLight,
+  },
+
+  languageText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+
+  languageTextActive: {
+    color: colors.white,
+  },
+
+  checkMark: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.white,
+  },
   documentStatusVerified: {
     backgroundColor: colors.success,
   },
@@ -718,7 +847,7 @@ const styles = StyleSheet.create({
   modalText: {
     textAlign: 'center',
     marginBottom: spacing.xxl,
-    
+
     fontSize: 15,
     paddingHorizontal: spacing.sm,
   },
@@ -731,5 +860,6 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     minWidth: 0,
+
   },
 });

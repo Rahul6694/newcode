@@ -18,6 +18,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {AuthStackParamList} from '@/types';
 import {Button, Input, useToast, Typography, Header} from '@/components';
 import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
+import { useStrings } from '@/localization/useStrings';
 import { authApi } from '@/apiservice';
 
 
@@ -30,6 +31,7 @@ export const ResetPasswordScreen: React.FC = () => {
   const navigation = useNavigation<ResetPasswordNavigationProp>();
   const route = useRoute<ResetPasswordRouteProp>();
   const {email} = route.params;
+  const strings = useStrings();
 
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -88,24 +90,24 @@ export const ResetPasswordScreen: React.FC = () => {
     setConfirmError('');
 
     if (!otp.trim()) {
-      setOtpError('OTP is required');
+      setOtpError(strings.auth.otpRequired);
       valid = false;
     } else if (otp.trim().length !== 6) {
-      setOtpError('OTP must be 6 digits');
+      setOtpError(strings.auth.otpInvalid);
       valid = false;
     }
     if (!newPassword.trim()) {
-      setPasswordError('Password is required');
+      setPasswordError(strings.auth.passwordRequired);
       valid = false;
     } else if (newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters');
+      setPasswordError(strings.auth.passwordMin8);
       valid = false;
     }
     if (!confirmPassword.trim()) {
-      setConfirmError('Please confirm your password');
+      setConfirmError(strings.auth.confirmRequired);
       valid = false;
     } else if (newPassword !== confirmPassword) {
-      setConfirmError('Passwords do not match');
+      setConfirmError(strings.auth.passwordMismatch);
       valid = false;
     }
     return valid;
@@ -126,11 +128,11 @@ const handleResetPassword = async () => {
     
     if ( res.message !== 'Password reset successfully') {
       console.log('Reset password failed:', res);
-      setOtpError(res.message || 'Invalid OTP');
+      setOtpError(res.message || strings.auth.invalidOtp);
       return;
     }
 
-    showSuccess(res.message || 'Password reset successfully');
+    showSuccess(res.message || strings.auth.resetSuccess);
 
     // Navigate to Login screen
     navigation.reset({
@@ -140,7 +142,7 @@ const handleResetPassword = async () => {
 
   } catch (error: any) {
     console.log('Reset password error:', error);
-    setOtpError(error?.message || 'Unable to reset password. Please try again.');
+    setOtpError(error?.message || strings.auth.resetFailed);
   } finally {
     setLoading(false);
   }
@@ -163,7 +165,7 @@ const handleResetPassword = async () => {
       return;
     }
 
-    showSuccess(res.message || 'OTP resent to your email');
+    showSuccess(res.message || strings.auth.otpResent);
 
     
 
@@ -177,10 +179,10 @@ const handleResetPassword = async () => {
 
 
   return (
-    <> m
+    <>
       <StatusBar
         barStyle={Platform.OS === 'ios' ? 'dark-content' : 'dark-content'}
-        backgroundColor={Platform.OS === 'android' ? colors.primaryLight : undefined}
+        backgroundColor={Platform.OS === 'android' ? colors.primarySoft : undefined}
         translucent={Platform.OS === 'android' ? false : undefined}
       />
       <SafeAreaView style={styles.container} edges={['bottom', ]}>
@@ -189,7 +191,7 @@ const handleResetPassword = async () => {
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Header
-            title="Reset Password"
+            title={strings.auth.resetTitle}
             onBackPress={() => navigation.goBack()}
           />
           <ScrollView
@@ -208,10 +210,10 @@ const handleResetPassword = async () => {
               ]}>
               <View style={styles.titleContainer}>
                 <Typography variant="h1" style={styles.title}>
-                  Reset Password
+                  {strings.auth.resetTitle}
                 </Typography>
                 <Typography variant="body" style={styles.subtitle}>
-                  Enter the OTP sent to {email} and create your new password
+                  {strings.auth.resetSubtitle}
                 </Typography>
               </View>
             </Animated.View>
@@ -227,8 +229,8 @@ const handleResetPassword = async () => {
               ]}>
               <View style={styles.form}>
                 <Input
-                  label="OTP Code"
-                  placeholder="Enter 6-digit OTP"
+                  label={strings.auth.otpLabel}
+                  placeholder={strings.auth.otpPlaceholder}
                   value={otp}
                   onChangeText={text => {
                     // Only allow numeric input and limit to 6 digits
@@ -246,8 +248,8 @@ const handleResetPassword = async () => {
                 />
 
                 <Input
-                  label="New Password"
-                  placeholder="Enter new password"
+                  label={strings.auth.newPasswordLabel}
+                  placeholder={strings.auth.newPasswordPlaceholder}
                   value={newPassword}
                   onChangeText={text => {
                     setNewPassword(text);
@@ -259,12 +261,12 @@ const handleResetPassword = async () => {
                   leftIconImage={require('@/assets/images/padlock.png')}
                   passwordVisibleIcon={require('@/assets/images/eye.png')}
                   passwordHiddenIcon={require('@/assets/images/hidden.png')}
-                  hint="Minimum 8 characters"
+                  hint={strings.auth.passwordMin8}
                 />
 
                 <Input
-                  label="Confirm Password"
-                  placeholder="Confirm new password"
+                  label={strings.auth.confirmPasswordLabel}
+                  placeholder={strings.auth.confirmPasswordPlaceholder}
                   value={confirmPassword}
                   onChangeText={text => {
                     setConfirmPassword(text);
@@ -279,7 +281,7 @@ const handleResetPassword = async () => {
                 />
 
                 <Button
-                  title="Reset Password"
+                  title={strings.auth.resetTitle}
                   onPress={handleResetPassword}
                   loading={loading}
                   disabled={loading}
@@ -291,7 +293,7 @@ const handleResetPassword = async () => {
                 <View style={styles.resendContainer}>
                   <View style={styles.resendRow}>
                     <Typography variant="small" color="textSecondary" weight="400" style={styles.resendText}>
-                      Didn't receive code?
+                      {strings.auth.didntReceive}
                     </Typography>
                     {canResend ? (
                       <TouchableOpacity
@@ -300,12 +302,12 @@ const handleResetPassword = async () => {
                         activeOpacity={0.7}
                         style={styles.resendLink}>
                         <Typography variant="small" color="primary" weight="600" style={styles.resendText}>
-                          Resend OTP
+                          {strings.auth.resendOtp}
                         </Typography>
                       </TouchableOpacity>
                     ) : (
                       <Typography variant="small" color="textSecondary" weight="600" style={styles.resendText}>
-                        Resend OTP in {resendTimer}s
+                        {strings.auth.resendIn} {resendTimer}s
                       </Typography>
                     )}
                   </View>

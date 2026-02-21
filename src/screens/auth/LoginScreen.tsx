@@ -32,8 +32,8 @@ import { authApi } from '@/apiservice';
 import { useDispatch } from 'react-redux';
 import { setToken, setUser } from '@/redux/authSlice';
 import { AppDispatch } from '@/redux/store';
-
-const dispatch: AppDispatch = useDispatch();
+import strings from '@/localization/strings';
+import { useStrings } from '@/localization/useStrings';
 
 const { width, height } = Dimensions.get('window');
 
@@ -41,6 +41,7 @@ type LoginNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginNavigationProp>();
+  const dispatch = useDispatch();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +52,7 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const { showSuccess, showError } = useToast();
-
+ const strings = useStrings();
   // Load saved email if remember me was checked previously
   useEffect(() => {
     const loadRememberedEmail = async () => {
@@ -190,7 +191,7 @@ const handleLogin = async () => {
         <StatusBar
           barStyle="dark-content"
           backgroundColor={
-            Platform.OS === 'android' ? colors.primaryLight : undefined
+            Platform.OS === 'android' ? colors.primarySoft : undefined
           }
         />
         <View style={styles.backgroundGradient} />
@@ -240,10 +241,10 @@ const handleLogin = async () => {
                   </Animated.View>
                   <View style={styles.titleContainer}>
                     <Typography variant="h1" style={styles.title}>
-                      Welcome Back
+              {strings.auth.welcome}
                     </Typography>
                     <Typography variant="body" style={styles.subtitle}>
-                      Sign in to manage your trips and deliveries
+                      {strings.auth.loginSubtitle}
                     </Typography>
                   </View>
                 </Animated.View>
@@ -260,8 +261,8 @@ const handleLogin = async () => {
                 >
                   <View style={styles.form}>
                     <Input
-                      label="Email Address"
-                      placeholder="Enter your email"
+                      label={strings.auth.emailLabel}
+                      placeholder={strings.auth.emailPlaceholder}
                       value={email}
                       onChangeText={text => {
                         setEmail(text);
@@ -278,8 +279,8 @@ const handleLogin = async () => {
                     />
 
                     <Input
-                      label="Password"
-                      placeholder="Enter your password"
+                      label={strings.auth.passwordLabel}
+                      placeholder={strings.auth.passwordPlaceholder}
                       value={password}
                       onChangeText={text => {
                         setPassword(text);
@@ -325,14 +326,14 @@ const handleLogin = async () => {
                           color="primary"
                           style={styles.forgotPasswordText}
                         >
-                          Forgot Password?
+                          {strings.auth.forgotPassword}
                         </Typography>
                       </TouchableOpacity>
                     </View>
 
                     {/* Login Button */}
                     <Button
-                      title="Sign In"
+                      title={strings.auth.signIn}
                       onPress={handleLogin}
                       loading={loading}
                       fullWidth

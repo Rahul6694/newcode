@@ -19,7 +19,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {AuthStackParamList} from '@/types';
 import {Button, Input, useToast, Typography, Header} from '@/components';
 import {colors, spacing, typography, borderRadius, shadows} from '@/theme/colors';
-
+import { useStrings } from '@/localization/useStrings';
 import { authApi } from '@/apiservice';
 
 const {width, height} = Dimensions.get('window');
@@ -28,15 +28,14 @@ type ForgotPasswordNavigationProp = StackNavigationProp<AuthStackParamList, 'For
 
 export const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<ForgotPasswordNavigationProp>();
+  const strings = useStrings();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const {showSuccess, showError} = useToast();
-
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
-
+  
   useEffect(() => {
     // Form fade and slide animation
     Animated.parallel([
@@ -56,55 +55,45 @@ export const ForgotPasswordScreen: React.FC = () => {
       }),
     ]).start();
   }, []);
-
   const validateEmail = (): boolean => {
     if (!email.trim()) {
-      setEmailError('Email is required');
+      setEmailError(strings.auth.emailRequired);
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      setEmailError('Please enter a valid email address');
+      setEmailError(strings.auth.invalidEmail);
       return false;
     }
     setEmailError('');
     return true;
   };
-
  const handleSendOTP = async () => {
   if (!validateEmail()) return;
-
   setLoading(true);
-
   try {
     const res = await authApi.forgotPassword(email.trim());
-
     if (res.message !== 'OTP sent successfully') {
       console.log('Forgot password failed:', res);
-      setEmailError(res.message || 'Failed to send OTP');
+      setEmailError(res.message || strings.auth.otpFailed);
       return;
     }
-
-    showSuccess(res.message || 'OTP sent to your email');
-
+    showSuccess(res.message || strings.auth.otpSent);
     navigation.navigate('ResetPassword', {
       email: email.trim(),
     });
-
   } catch (error: any) {
     console.log('Forgot password error:', error);
-    setEmailError('Unable to send OTP. Please try again.');
+    setEmailError(strings.auth.otpError);
   } finally {
     setLoading(false);
   }
 };
-
-
   return (
     <>
       <StatusBar
         barStyle={Platform.OS === 'ios' ? 'dark-content' : 'dark-content'}
-        backgroundColor={Platform.OS === 'android' ? colors.primaryLight : undefined}
+        backgroundColor={Platform.OS === 'android' ? colors.primarySoft : undefined}
         translucent={Platform.OS === 'android' ? false : undefined}
       />
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -113,7 +102,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Header
-            title="Forgot Password"
+            title={strings.auth.forgotTitle}
             onBackPress={() => navigation.goBack()}
           />
           <ScrollView
@@ -133,10 +122,10 @@ export const ForgotPasswordScreen: React.FC = () => {
               <Typography variant="h1" style={{  
     fontSize: 26,
     textAlign: 'left',}}>
-                  Forgot Password
+                  {strings.auth.forgotTitle}
                 </Typography>
                 <Typography variant="body" style={styles.subtitle}>
-                  Enter your email address and we'll send you an OTP to reset your password
+                  {strings.auth.forgotSubtitle}
                 </Typography>
               </View>
             </Animated.View>
@@ -152,8 +141,8 @@ export const ForgotPasswordScreen: React.FC = () => {
               ]}>
               <View style={styles.form}>
                 <Input
-                  label="Email Address"
-                  placeholder="Enter your email"
+                  label={strings.auth.emailLabel}
+                  placeholder={strings.auth.emailPlaceholder}
                   value={email}
                   onChangeText={text => {
                     setEmail(text);
@@ -168,7 +157,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                 />
 
                 <Button
-                  title="Send OTP"
+                  title={strings.auth.sendOtp}
                   onPress={handleSendOTP}
                   loading={loading}
                   disabled={loading || !email.trim()}
@@ -183,7 +172,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                   activeOpacity={0.7}
                   style={styles.backButton}>
                   <Typography variant="smallMedium" color="primary" weight="600">
-                    Back to Login
+                    {strings.auth.backToLogin}
                   </Typography>
                 </TouchableOpacity>
               </View>

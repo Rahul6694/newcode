@@ -7,6 +7,7 @@ import {ProfileNavigator} from './ProfileNavigator';
 import {HistoryNavigator} from './HistoryNavigator';
 import {MainTabParamList} from '@/types';
 import {colors, spacing, borderRadius, shadows} from '@/theme/colors';
+import { useStrings } from '@/localization/useStrings';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -51,6 +52,7 @@ const TabIcon: React.FC<{
 };
 
 export const MainNavigator: React.FC = () => {
+  const strings = useStrings();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -71,7 +73,7 @@ export const MainNavigator: React.FC = () => {
           return {
             tabBarStyle: hideTabBarScreens.includes(routeName) ? {display: 'none'} : styles.tabBar,
             tabBarIcon: ({focused}) => (
-              <TabIcon iconSource={iconMap.trips} focused={focused} label="To-Do" />
+              <TabIcon iconSource={iconMap.trips} focused={focused} label={strings.todo.activeTrip} />
             ),
           };
         }}
@@ -94,7 +96,7 @@ export const MainNavigator: React.FC = () => {
           return {
             tabBarStyle: hideTabBarScreens.includes(routeName) ? {display: 'none'} : styles.tabBar,
             tabBarIcon: ({focused}) => (
-              <TabIcon iconSource={iconMap.history} focused={focused} label="History" />
+              <TabIcon iconSource={iconMap.history} focused={focused} label={strings.history.viewDetails} />
             ),
           };
         }}
@@ -104,7 +106,7 @@ export const MainNavigator: React.FC = () => {
         component={ProfileNavigator}
         options={{
           tabBarIcon: ({focused}) => (
-            <TabIcon iconSource={iconMap.profile} focused={focused} label="Profile" />
+            <TabIcon iconSource={iconMap.profile} focused={focused} label={strings.profile.personalInformation} />
           ),
         }}
       />

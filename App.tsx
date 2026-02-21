@@ -8,28 +8,34 @@ import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { AppNavigator } from '@/navigation/AppNavigator';
 import { ToastProvider } from '@/components';
 import SplashScreen from 'react-native-splash-screen';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 
 import { PersistGate } from 'redux-persist/integration/react';
-import { persistor, store } from '@/redux/store';
+import { persistor, RootState, store } from '@/redux/store';
 import { fcmService } from '@/pushNotifacation/FMCService';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import { localNotificationService } from '@/pushNotifacation/LocalNotificationService';
+import strings from '@/localization/strings';
 
 
 const AppContent: React.FC = () => {
-useEffect(() => {
-  const timer = setTimeout(() => {
-    SplashScreen.hide();
-  }, 3000);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      SplashScreen.hide();
+    }, 3000);
 
-  return () => clearTimeout(timer);
-}, []);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const lang = useSelector((state: RootState) => state.auth.lang);
+
+  useEffect(() => {
+    strings.setLanguage(lang); // Apply saved language on app start
+  }, [lang]);
 
 
 
-
- const requestNotificationPermissions = async () => {
+  const requestNotificationPermissions = async () => {
     if (Platform.OS === 'ios') {
       PushNotificationIOS.requestPermissions();
     } else {
@@ -42,7 +48,7 @@ useEffect(() => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     requestNotificationPermissions()
     fcmService.registerAppWithFCM();
     fcmService.register(onRegister, onNotification, onOpenNotification);
@@ -74,11 +80,9 @@ useEffect(() => {
       />
       <ToastProvider>
         <NavigationContainer>
-          <Provider store={store}>
-              <PersistGate loading={null} persistor={persistor}>
-            <AppNavigator />
-            </PersistGate>
-          </Provider>
+
+          <AppNavigator />
+
         </NavigationContainer>
       </ToastProvider>
     </>
@@ -88,8 +92,11 @@ useEffect(() => {
 
 const App: React.FC = () => {
   return (
-
-    <AppContent />
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <AppContent />
+      </PersistGate>
+    </Provider>
 
   );
 };

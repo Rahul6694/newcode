@@ -243,6 +243,7 @@
 
 import { notificationApi } from '@/apiservice';
 import { Header, Typography } from '@/components';
+import strings from '@/localization/strings';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
@@ -413,7 +414,7 @@ const NotificationScreen = ({ navigation }: any) => {
               style={styles.deleteButton}
               onPress={() => deleteNotification(item.id)}
               disabled={actionLoading}>
-              <Typography style={styles.deleteText}>Delete</Typography>
+              <Typography style={styles.deleteText}>{strings.notifications.delete}</Typography>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -423,24 +424,24 @@ const NotificationScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Notifications" onBackPress={() => navigation.goBack()} />
+      <Header title={strings.notifications.title} onBackPress={() => navigation.goBack()} />
 
       <View style={styles.content}>
         <View style={styles.actionsRow}>
           <Typography style={styles.unreadCount}>
-            {unreadCount} unread
+            {unreadCount} {strings.notifications.unread}
           </Typography>
 
           <View style={styles.actionButtons}>
             {unreadCount > 0 && (
               <TouchableOpacity onPress={markAllRead} disabled={actionLoading}>
-                <Typography style={styles.markAllText}>Mark all read</Typography>
+                <Typography style={styles.markAllText}>{strings.notifications.markAllRead}</Typography>
               </TouchableOpacity>
             )}
 
             {notifications.length > 0 && (
               <TouchableOpacity onPress={deleteAll} disabled={actionLoading}>
-                <Typography style={styles.deleteAllText}>Delete all</Typography>
+                <Typography style={styles.deleteAllText}>{strings.notifications.deleteAll}</Typography>
               </TouchableOpacity>
             )}
           </View>
@@ -450,7 +451,7 @@ const NotificationScreen = ({ navigation }: any) => {
           <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 60 }} />
         ) : notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Typography style={styles.emptyText}>No notifications yet</Typography>
+            <Typography style={styles.emptyText}>{strings.notifications.noNotifications}</Typography>
           </View>
         ) : (
           <FlatList

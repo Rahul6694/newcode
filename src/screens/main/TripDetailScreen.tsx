@@ -13,6 +13,7 @@ import { Header } from '@/components/Header';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { tripApi } from '@/apiservice';
 import useLocation from '@/hooks/useLocation';
+import { useStrings } from '@/localization/useStrings';
 
 
 
@@ -22,6 +23,7 @@ type TripDetailNavigationProp = StackNavigationProp<TodoStackParamList, 'TripDet
 export const TripDetailScreen: React.FC = ({ }) => {
   const route = useRoute<TripDetailRouteProp>();
   const navigation = useNavigation<TripDetailNavigationProp>();
+  const strings = useStrings();
   const { tripId } = route.params;
   const { showSuccess, showError } = useToast();
 
@@ -256,16 +258,16 @@ export const TripDetailScreen: React.FC = ({ }) => {
 
     switch (status) {
       case 'ASSIGNED':
-        return 'Slide to Start Trip';
+        return strings.tripDetail.startTrip;
 
       case 'IN_PROGRESS':
-        return 'Slide to Mark Loaded';
-
+        return strings.tripDetail.slideMarkLoaded;
+      
       case 'LOADED':
-        return 'Slide to Mark Arrived';
-
+        return strings.tripDetail.slideMarkArrived;
+``
       case 'ARRIVED':
-        return 'Slide to Complete Trip';
+        return strings.tripDetail.slideCompleteTrip;
 
       default:
         return 'Slide';
@@ -326,7 +328,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
     return (
       <SafeAreaView style={styles.center}>
         <Typography variant="bodyMedium" color="textPrimary">
-          Loading trip details...
+          {strings.history.loading}
         </Typography>
       </SafeAreaView>
     );
@@ -336,7 +338,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
     return (
       <SafeAreaView style={styles.center}>
         <Typography variant="bodyMedium" color="textPrimary">
-          No trip data available
+          {strings.history.tripNotFound }
         </Typography>
       </SafeAreaView>
     );
@@ -345,7 +347,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']} >
-      <Header title="Trip Details" onBackPress={() => navigation.goBack()} />
+      <Header title={strings.tripDetail.title} onBackPress={() => navigation.goBack()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -363,7 +365,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
         <Card style={styles.headerCard}>
           <View style={styles.headerCardHeader}>
             <View style={styles.headerCardHeaderLeft}>
-              <Typography variant="h4" color="textPrimary" weight="700" style={styles.headerCardTitle}>Order Details</Typography>
+              <Typography variant="h4" color="textPrimary" weight="700" style={styles.headerCardTitle}>{strings.tripDetail.orderDetails}</Typography>
               {/* <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.headerCardSubtitle}>{trip?.tripNumber}</Typography> */}
             </View>
             <View style={styles.statusBadge}>
@@ -375,26 +377,26 @@ export const TripDetailScreen: React.FC = ({ }) => {
           <View style={styles.orderDetailsList}>
             {trip?.tripNumber && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Trip ID</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.tripDetail.tripId}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.tripNumber}</Typography>
               </View>
             )}
             {trip?.order.orderNumber && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Order ID</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.tripDetail.orderId}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.order.orderNumber}</Typography>
               </View>
             )}
             {trip?.vehicle && trip.vehicle.registrationNumber && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Vehicle</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.tripDetail.vehicle}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.vehicle.registrationNumber}</Typography>
               </View>
             )}
             {trip?.assignedWeight && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.assignedWeight} TON</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.tripDetail.weight}</Typography>
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip?.assignedWeight} {strings.tripDetail.ton}</Typography>
               </View>
             )}
           </View>
@@ -408,7 +410,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             color="textPrimary"
             weight="600"
             style={styles.sectionTitle}>
-            Active Log
+          {  strings.tripDetail.activeLog}
           </Typography>
 
           {/* ---------- ROUTE ---------- */}
@@ -465,7 +467,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   color="textSecondary"
                   weight="600"
                   style={styles.timelineLabel}>
-                  Assigned
+                  {strings.tripDetail.assigned}
                 </Typography>
                 <Typography
                   variant="bodyMedium"
@@ -484,7 +486,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   color="textSecondary"
                   weight="600"
                   style={styles.timelineLabel}>
-                  Started
+                  {strings.tripDetail.started}
                 </Typography>
                 <Typography
                   variant="bodyMedium"
@@ -503,7 +505,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   color="textSecondary"
                   weight="600"
                   style={styles.timelineLabel}>
-                  Completed
+                  {strings.tripDetail.completed}
                 </Typography>
                 <Typography
                   variant="bodyMedium"
@@ -532,7 +534,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
               color="textPrimary"
               weight="600"
               style={styles.sectionTitle}>
-              Pickup Location
+              {strings.tripDetail.pickupLocation}
             </Typography>
           </View>
 
@@ -544,7 +546,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             color="textPrimary"
             weight="500"
             style={styles.address}>
-            {trips?.order?.loadingAddress || trip?.order?.loadingAddress || 'Location not specified'}
+            {trips?.order?.loadingAddress || trip?.order?.loadingAddress || strings.tripDetail.locationNotSpecified}
           </Typography>
 
           {/* DRIVER CONTACT */}
@@ -568,13 +570,13 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   resizeMode="contain"
                 />
                 <Typography variant="smallMedium" color="primary" style={styles.callText}>
-                  Call
+                  {strings.tripDetail.call}
                 </Typography>
               </TouchableOpacity>
             </View>
           ) : (
             <Typography variant="small" color="textTertiary" style={styles.noContact}>
-              No contact information available
+              {strings.tripDetail.noContactInfo}
             </Typography>
           )}
 
@@ -586,7 +588,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             (trips?.status === "IN_PROGRESS" ||
               trips?.status === "ASSIGNED") && (
               <Button
-                title="Navigate"
+                title={strings.tripDetail.navigate}
                 variant="outline"
                 style={styles.navBtn}
                 onPress={() =>
@@ -617,7 +619,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
               color="textPrimary"
               weight="600"
               style={styles.sectionTitle}>
-              Delivery Location
+              {strings.tripDetail.deliveryLocation}
             </Typography>
           </View>
 
@@ -627,7 +629,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             color="textPrimary"
             weight="500"
             style={styles.address}>
-            {trips?.order?.unloadingAddress || trip?.order?.unloadingAddress || 'Location not specified'}
+            {trips?.order?.unloadingAddress || trip?.order?.unloadingAddress || strings.tripDetail.locationNotSpecified}
           </Typography>
 
 
@@ -652,13 +654,13 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   resizeMode="contain"
                 />
                 <Typography variant="smallMedium" color="primary" style={styles.callText}>
-                  Call
+             {   strings.tripDetail.call}
                 </Typography>
               </TouchableOpacity>
             </View>
           ) : (
             <Typography variant="small" color="textTertiary" style={styles.noContact}>
-              No contact information available
+             {strings.tripDetail.noContactInfo}
             </Typography>
           )}
 
@@ -670,7 +672,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             trips?.status == "LOADED" &&
             trips.status !== "ASSIGNED" && (
               <Button
-                title="Navigate"
+                title={strings.tripDetail.navigate}
                 variant="outline"
                 style={styles.navBtn}
                 onPress={() =>
@@ -697,7 +699,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
               color="textPrimary"
               weight="600"
               style={styles.sectionTitle}>
-              Weight & Load Information
+              {strings.tripDetail.weightLoadInfo}
             </Typography>
 
             <View style={styles.weightInfo}>
@@ -724,7 +726,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                       color="textSecondary"
                       weight="600"
                       style={styles.weightLabel}>
-                      Delivered Weight
+                     {  strings.tripDetail.deliveredWeight}
                     </Typography>
 
                     {trip?.assignedWeight && (
@@ -732,7 +734,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                         variant="small"
                         color="warning"
                         style={styles.assignedWeight}>
-                        Assigned: {trip.assignedWeight} TON
+                        {strings.tripDetail.assigned}: {trip.assignedWeight} {strings.tripDetail.ton}
                       </Typography>
                     )}
                   </View>
@@ -745,7 +747,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   variant="smallMedium"
                   color="textSecondary"
                   style={styles.vehicleInfoText}>
-                  Load : {trip?.assignedWeight || "NA"} TON
+                 {strings.tripDetail.weight}: {trip?.assignedWeight || "NA"} {strings.tripDetail.ton}
                 </Typography>
 
 
@@ -753,7 +755,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                   variant="smallMedium"
                   color="textSecondary"
                   style={styles.vehicleInfoText}>
-                  Material: {trip.material?.materialType || "NA"}
+                  {strings.tripDetail.material}: {trip.material?.materialType || "NA"}
                 </Typography>
 
               </View>
@@ -769,7 +771,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             color="textPrimary"
             weight="600"
             style={styles.sectionTitle}>
-            Payment Details
+            {strings.tripDetail.paymentDetails}
           </Typography>
 
           <View style={styles.paymentInfo}>
@@ -779,7 +781,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
                 color="textSecondary"
                 weight="600"
                 style={[styles.paymentLabel, { fontSize: 14 }]}>
-                Total Amount
+                {strings.tripDetail.totalAmount}
               </Typography>
               <Typography
                 variant="h3"
@@ -798,7 +800,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
             color="textSecondary"
             weight="500"
             style={[styles.paymentDetail, { textAlign: 'left', fontSize: 13 }]}>
-            Distance: {trip?.order?.distance || 'NA'} km
+           {strings.tripDetail.distance}: {trip?.order?.distance || 'NA'} km
           </Typography>
         </Card>
 
@@ -834,7 +836,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
               style={styles.slideButtonText}
             >
               {isSliding
-                ? 'Sliding...'
+                ?strings.tripDetail.sliding 
                 : getSlideTextByStatus(trip?.status)
               }
             </Typography>

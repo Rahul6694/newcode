@@ -8,6 +8,7 @@ import { Card, StatusBadge, Typography, useToast } from '@/components';
 import { Header } from '@/components/Header';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { tripApi } from '@/apiservice/endpoints';
+import strings from '@/localization/strings';
 
 
 
@@ -210,7 +211,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primaryLight} />
-        <Typography variant="body" color="textSecondary" style={styles.loadingText}>Loading...</Typography>
+        <Typography variant="body" color="textSecondary" style={styles.loadingText}>{strings.history.loading}...</Typography>
       </View>
     );
   }
@@ -218,7 +219,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
   if (!trip) {
     return (
       <View style={styles.center}>
-        <Typography variant="body" color="error" style={styles.errorText}>Trip not found</Typography>
+        <Typography variant="body" color="error" style={styles.errorText}>{strings.history.tripNotFound}</Typography>
       </View>
     );
   }
@@ -226,7 +227,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
      <Header
-  title="Trip History Details"
+  title={strings.history.tripHistoryDetails}
   onBackPress={() => {
     if (back === 'notification') {
       navigation.navigate('TODO', {
@@ -246,7 +247,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
         <Card style={styles.headerCard}>
           <View style={styles.headerCardHeader}>
             <View style={styles.headerCardHeaderLeft}>
-              <Typography variant="h4" color="textPrimary" weight="700" style={styles.headerCardTitle}>Order Details</Typography>
+              <Typography variant="h4" color="textPrimary" weight="700" style={styles.headerCardTitle}>{strings.history.orderDetails}</Typography>
               {/* <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.headerCardSubtitle}>{trip.tripNumber || `#${trip.id.slice(-6).toUpperCase()}`}</Typography> */}
             </View>
             <View style={styles.statusBadge}>
@@ -258,26 +259,26 @@ export const HistoryTripDetailScreen: React.FC = () => {
           <View style={styles.orderDetailsList}>
             {trip.tripNumber && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Trip ID</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.history.tripId}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.tripNumber}</Typography>
               </View>
             )}
             {trip.orderNumber && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Order ID</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.history.orderId}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.orderNumber}</Typography>
               </View>
             )}
             {trip.vehicleNumber && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Vehicle</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.history.vehicle}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.vehicleNumber}</Typography>
               </View>
             )}
             {trip.assignedWeight && (
               <View style={styles.orderDetailRow}>
-                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
-                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.deliveredWeight} TON</Typography>
+                <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.history.weight}</Typography>
+                <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{trip.deliveredWeight} {strings.history.ton}</Typography>
               </View>
             )}
           </View>
@@ -285,7 +286,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
 
         {/* Route & Timeline */}
         <Card style={styles.section}>
-          <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Route & Timeline</Typography>
+          <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>{strings.history.routeTimeline}</Typography>
           {trip.distance && (
             <View style={styles.routeInfo}>
               <View style={styles.routeTextContainer}>
@@ -314,25 +315,25 @@ export const HistoryTripDetailScreen: React.FC = () => {
           <View style={styles.timeline}>
             {trip.timeline.assigned && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Assigned</Typography>
+                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>{strings.history.assigned}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.assigned)}</Typography>
               </View>
             )}
             {trip.timeline.started && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Started</Typography>
+                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>{strings.history.started}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.started)}</Typography>
               </View>
             )}
             {trip.timeline.completed && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Completed</Typography>
+                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>{strings.history.completed}</Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>{formatDate(trip.timeline.completed)}</Typography>
               </View>
             )}
             {trip.timeline.started && trip.timeline.completed && (
               <View style={styles.timelineItem}>
-                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>Duration</Typography>
+                <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.timelineLabel}>{strings.history.duration} </Typography>
                 <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.timelineDate}>
                   {calculateDuration(trip.timeline.started, trip.timeline.completed)}
                 </Typography>
@@ -349,10 +350,10 @@ export const HistoryTripDetailScreen: React.FC = () => {
               style={styles.sectionTitleIcon}
               resizeMode="contain"
             />
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Pickup Location</Typography>
+            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>{strings.history.pickupLocation}</Typography>
           </View>
           <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.address}>
-            {trip.loadingLocation.address || 'Location not specified'}
+            {trip.loadingLocation.address || strings.history.locationNotSpecified}
           </Typography>
           {/* {trip.loadingLocation.contactPerson.phoneNumber ? (
             <View style={styles.contactRow}>
@@ -381,10 +382,10 @@ export const HistoryTripDetailScreen: React.FC = () => {
               style={styles.sectionTitleIcon}
               resizeMode="contain"
             />
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Delivery Location</Typography>
+            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>{strings.history.deliveryLocation}</Typography>
           </View>
           <Typography variant="bodyMedium" color="textPrimary" weight="500" style={styles.address}>
-            {trip.unloadingLocation.address || 'Location not specified'}
+            {trip.unloadingLocation.address || strings.history.locationNotSpecified}
           </Typography>
           {/* {trip.unloadingLocation.contactPerson.phoneNumber ? (
             <View style={styles.contactRow}>
@@ -408,7 +409,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
         {/* Weight & Load Information */}
         {(trip.assignedWeight || trip.deliveredWeight) && (
           <Card style={styles.section}>
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Weight & Load Information</Typography>
+            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>{strings.history.weightLoadInfo}</Typography>
             <View style={styles.weightInfo}>
               {trip.deliveredWeight && (
                 <View style={styles.weightRow}>
@@ -420,15 +421,15 @@ export const HistoryTripDetailScreen: React.FC = () => {
                   <View style={styles.weightDetails}>
                   
                      <View style={styles.infoRow}>
-                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Loaded Weight</Typography>
-                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.loadedWeight} TON</Typography>
+                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>{strings.history.loadedWeight}</Typography>
+                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.loadedWeight} {strings.history.ton}</Typography>
                     </View>
                      <View style={styles.infoRow}>
-                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Delivered Weight</Typography>
-                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.deliveredWeight} TON</Typography>
+                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>{strings.history.deliveredWeight} </Typography>
+                      <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.deliveredWeight} {strings.history.ton}</Typography>
                     </View>
                     <View style={styles.infoRow}>
-                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>Material Type</Typography>
+                      <Typography variant="bodyMedium" color="textSecondary" weight="500" style={styles.infoLabel}>{strings.history.materialType}</Typography>
                       <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.infoValue}>{trip.material.materialType}</Typography>
                     </View>
                     {/* {trip.assignedWeight && (
@@ -439,9 +440,9 @@ export const HistoryTripDetailScreen: React.FC = () => {
               )}
               {trip.vehicleMake && (
                 <View style={styles.vehicleInfoRow}>
-                  <Typography variant="smallMedium" color="textSecondary" style={styles.vehicleInfoText}>Vehicle Make: {trip.vehicleMake}</Typography>
+                  <Typography variant="smallMedium" color="textSecondary" style={styles.vehicleInfoText}>{strings.history.vehicleMake}: {trip.vehicleMake}</Typography>
                   {trip.vehicleNumber && (
-                    <Typography variant="smallMedium" color="textSecondary" style={styles.vehicleInfoText}>Vehicle Number: {trip.vehicleNumber}</Typography>
+                    <Typography variant="smallMedium" color="textSecondary" style={styles.vehicleInfoText}>{strings.history.vehicleNumber}: {trip.vehicleNumber}</Typography>
                   )}
                 </View>
               )}
@@ -493,7 +494,7 @@ export const HistoryTripDetailScreen: React.FC = () => {
         {/* Payment Summary */}
         {trip.payment && (
           <Card style={styles.section}>
-            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>Payment Summary</Typography>
+            <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.sectionTitle}>{strings.history.paymentSummary}</Typography>
             <View style={styles.paymentInfo}>
               <View style={styles.paymentLeft}>
                 <Typography variant="h3" color="primary" weight="700" style={styles.paymentAmount}>SAR {parseFloat(trip.payment.tripAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Typography>

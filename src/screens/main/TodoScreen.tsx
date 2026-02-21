@@ -28,6 +28,7 @@ import {
 } from '@/theme/colors';
 import { useSelector } from 'react-redux';
 import { authApi, notificationApi, tripApi } from '@/apiservice';
+import { useStrings } from '@/localization/useStrings';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import Geolocation from '@react-native-community/geolocation';
 import type { RootState } from '@/redux/store';
@@ -42,6 +43,7 @@ type TodoScreenNavigationProp = StackNavigationProp<
 
 export const TodoScreen: React.FC = () => {
   const navigation = useNavigation<TodoScreenNavigationProp>();
+  const strings = useStrings();
   const user = useSelector((state: RootState) => state.auth.user);
   const [refreshing, setRefreshing] = useState(false);
   const { showError } = useToast();
@@ -50,7 +52,7 @@ export const TodoScreen: React.FC = () => {
   const [datalenght, setDatalenght] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [fcm, setfcm] = useState<any>()
-const [profile, setprofile] = useState()
+  const [profile, setprofile] = useState()
 
 
   const fetchNotifications = async () => {
@@ -70,22 +72,23 @@ const [profile, setprofile] = useState()
 
 
   const loadProfile = async () => {
-  try {
-  
-    
-    const res = await authApi.getProfile();
-    if (res) {
-      console.log('Profile data:dheudh', res);
-      const profile = res.data || res; 
-setprofile(profile)
+    try {
 
-    } else {
-      const errorMsg = res?.message || 'Failed to load profile';
+
+      const res = await authApi.getProfile();
+      if (res) {
+        console.log('Profile data:dheudh', res);
+        const profile = res.data || res;
+        setprofile(profile)
+
+      } else {
+        const errorMsg = res?.message || 'Failed to load profile';
+      }
+    } catch (error: any) {
+      console.log('Load profile error:', error);
+
     }
-  } catch (error: any) {
-    console.log('Load profile error:', error);
-  
-  } }
+  }
 
   console.log(user, 'user===============>');
 
@@ -203,13 +206,13 @@ setprofile(profile)
   };
 
 
-useEffect(() => {
-  if (!isFocused) return;
+  useEffect(() => {
+    if (!isFocused) return;
 
-  if (Platform.OS === 'ios') {
-    PushNotificationIOS.setApplicationIconBadgeNumber(0);
-  }
-}, [isFocused]);
+    if (Platform.OS === 'ios') {
+      PushNotificationIOS.setApplicationIconBadgeNumber(0);
+    }
+  }, [isFocused]);
   useEffect(() => {
     getActiveTrips();
     loadHistory();
@@ -314,7 +317,7 @@ useEffect(() => {
               weight="500"
               style={styles.infoText}
             >
-              {item?.assignedWeight || 'N/A'} TON
+              {item?.assignedWeight || 'N/A'} {strings.history.ton}
             </Typography>
           </View>
           <View style={styles.gridItem}>
@@ -365,7 +368,7 @@ useEffect(() => {
             weight="700"
             style={styles.buttonText}
           >
-            VIEW TRIP DETAILS
+            {strings.todo.viewTripDetails}
           </Typography>
           <Image
             source={require('@/assets/images/next.png')}
@@ -392,7 +395,7 @@ useEffect(() => {
         weight="700"
         style={styles.emptyTitle}
       >
-        No Active Trips
+        {strings.todo.noActiveTrips}
       </Typography>
       <Typography
         variant="body"
@@ -400,7 +403,7 @@ useEffect(() => {
         align="center"
         style={styles.emptySubtitle}
       >
-        You don't have any trips assigned yet. Pull down to refresh.
+        {strings.todo.noActiveTripsSubtitle}
       </Typography>
     </View>
   );
@@ -409,10 +412,10 @@ useEffect(() => {
     const hour = new Date().getHours();
     const greeting =
       hour < 12
-        ? 'Good Morning'
+        ? strings.todo.goodMorning
         : hour < 18
-          ? 'Good Afternoon'
-          : 'Good Evening';
+          ? strings.todo.goodAfternoon
+          : strings.todo.goodEvening;
 
     return (
       <View style={styles.headerWrapper}>
@@ -422,12 +425,16 @@ useEffect(() => {
             <View>
               <Typography style={styles.greeting}>{greeting} 👋</Typography>
               <Typography style={styles.userName}>{(user as any)?.fullName ?? (user as any)?.name ?? ''}</Typography>
-<View style={{backgroundColor:'rgba(255,255,255,0.2)', paddingHorizontal:8, paddingVertical:4, borderRadius:12, marginTop:6, alignSelf:'flex-start'}}>
+
+              {
+                profile?.assignedVehicle?.registrationNumber &&     <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, marginTop: 6, alignSelf: 'flex-start' }}>
 
 
-              <Typography style={{color:'white', fontSize:12}}>{profile?.assignedVehicle?.registrationNumber|| null}</Typography>
+                <Typography style={{ color: 'white', fontSize: 12 }}>{profile?.assignedVehicle?.registrationNumber || null}</Typography>
 
               </View>
+              }
+         
             </View>
             <TouchableOpacity onPress={() => navigation.navigate('Notifications')} activeOpacity={0.8} style={{ position: 'relative' }}>
               <Image
@@ -447,14 +454,14 @@ useEffect(() => {
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Typography style={styles.statValue}>{displayTrips.length ? displayTrips.length : 'NA'}</Typography>
-              <Typography style={styles.statLabel}>Active Trip</Typography>
+              <Typography style={styles.statLabel}>{strings.todo.activeTrip}</Typography>
             </View>
 
             <View style={styles.statDivider} />
 
             <View style={styles.statBox}>
               <Typography style={styles.statValue}>{datalenght ? datalenght : 'NA'}</Typography>
-              <Typography style={styles.statLabel}>Total Trips</Typography>
+              <Typography style={styles.statLabel}>{strings.todo.totalTrips}</Typography>
             </View>
           </View>
 

@@ -15,6 +15,7 @@ import { Card, StatusBadge, Typography, useToast } from '@/components';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
 import { apiService } from '@/api';
 import { tripApi } from '@/apiservice';
+import { useStrings } from '@/localization/useStrings';
 import { TripMapPreview } from '@/components/TripMapPreview';
 
 type HistoryScreenNavigationProp = StackNavigationProp<HistoryStackParamList>;
@@ -94,6 +95,7 @@ const convertApiResponseToTrip = (apiTrip: any): Trip => {
 
 export const HistoryScreen: React.FC = () => {
   const navigation = useNavigation<HistoryScreenNavigationProp>();
+  const strings = useStrings();
   const [history, setHistory] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -239,7 +241,7 @@ const isFocused = useIsFocused()
               style={styles.gridIcon}
               resizeMode="contain"
             />
-            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.deliveredWeight || 'N/A'} TON</Typography>
+            <Typography variant="smallMedium" color="textSecondary" weight="500" style={styles.infoText}>{item.deliveredWeight || 'N/A'} {strings.history.ton}</Typography>
           </View>
           <View style={styles.gridItem}>
             <Image
@@ -263,7 +265,7 @@ const isFocused = useIsFocused()
           style={styles.button}
           onPress={() => handleTripPress(item)}
           activeOpacity={0.8}>
-          <Typography variant="smallMedium" color="white" weight="700" style={styles.buttonText}>VIEW DETAILS</Typography>
+          <Typography variant="smallMedium" color="white" weight="700" style={styles.buttonText}>{strings.history.viewDetails}</Typography>
           <Image
             source={require('@/assets/images/next.png')}
             style={styles.buttonArrow}
@@ -280,9 +282,9 @@ const isFocused = useIsFocused()
       <View style={styles.banner}>
         <View style={styles.bannerInner}>
           <View style={styles.bannerContent}>
-            <Typography variant="h3" color="white" weight="700" style={styles.bannerTitle}>Your Success Journey</Typography>
+            <Typography variant="h3" color="white" weight="700" style={styles.bannerTitle}>{strings.history.yourSuccessJourney}</Typography>
             <Typography style={styles.bannerSubtitle}>
-              {filteredHistory.length} successful deliveries completed with excellence
+              {filteredHistory.length} {strings.history.successfulDeliveries}
             </Typography>
             {/* <View style={styles.bannerHighlight}>
               <Typography variant="smallMedium" color="primary" weight="700" style={styles.bannerHighlightText}>100% On-Time Delivery Rate</Typography>
@@ -312,9 +314,9 @@ const isFocused = useIsFocused()
           resizeMode="contain"
         />
       </View>
-      <Typography variant="h4" color="textPrimary" weight="700" style={styles.emptyTitle}>No Trip History</Typography>
+      <Typography variant="h4" color="textPrimary" weight="700" style={styles.emptyTitle}>{strings.history.noTripHistory}</Typography>
       <Typography variant="body" color="textSecondary" align="center" style={styles.emptySubtitle}>
-        Your completed trips will appear here.
+        {strings.history.tripHistoryEmptySubtitle}
       </Typography>
     </View>
   );

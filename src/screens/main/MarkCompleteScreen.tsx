@@ -18,6 +18,7 @@ import ImageCropPicker from 'react-native-image-crop-picker';
 import { usePermissions } from '@/hooks/usePermissions';
 import { tripApi } from '@/apiservice';
 import useLocation from '@/hooks/useLocation';
+import { useStrings } from '@/localization/useStrings';
 
 type MarkCompleteRouteProp = RouteProp<TodoStackParamList, 'MarkComplete'>;
 type MarkCompleteNavigationProp = StackNavigationProp<TodoStackParamList, 'MarkComplete'>;
@@ -25,6 +26,7 @@ type MarkCompleteNavigationProp = StackNavigationProp<TodoStackParamList, 'MarkC
 export const MarkCompleteScreen: React.FC = () => {
   const route = useRoute<MarkCompleteRouteProp>();
   const navigation = useNavigation<MarkCompleteNavigationProp>();
+  const strings = useStrings();
   const { tripId } = route.params;
   const { showSuccess, showError } = useToast();
   const [LoadedValue, setLoadedValue] = useState<any>(null)
@@ -132,7 +134,7 @@ export const MarkCompleteScreen: React.FC = () => {
 
       console.log('[MarkCompleteScreen] Photo captured:', image.path);
       setDeliveryPhotos([...deliveryPhotos, image]);
-      showSuccess('Photo captured successfully');
+      
     } catch (error: any) {
       console.log('[MarkCompleteScreen] Camera error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
@@ -192,7 +194,7 @@ export const MarkCompleteScreen: React.FC = () => {
       const newPhotos = images.map(img => img.path);
       console.log('[MarkCompleteScreen] Photos selected:', newPhotos);
       setDeliveryPhotos([...deliveryPhotos, ...images]);
-      showSuccess(`${newPhotos.length} photo(s) added`);
+      showSuccess(`${newPhotos.length} ${strings.markComplete.uploaded}`);
     } catch (error: any) {
       console.log('[MarkCompleteScreen] Gallery error:', error);
       if (error.code === 'E_PICKER_CANCELLED') {
@@ -206,7 +208,7 @@ export const MarkCompleteScreen: React.FC = () => {
   const handleRemovePhoto = (index: number) => {
     const newPhotos = deliveryPhotos.filter((_, i) => i !== index);
     setDeliveryPhotos(newPhotos);
-    showSuccess('Photo removed');
+
   };
 
   // UI handler only
@@ -214,11 +216,11 @@ export const MarkCompleteScreen: React.FC = () => {
     if (!tripId) return;
 
     if (deliveryPhotos.length === 0) {
-      showError('Please upload delivery photo');
+      showError(strings.markComplete.uploadPhoto);
       return;
     }
     if (LoadedValue === null || LoadedValue === '') {
-      showError('Please enter loaded weight');
+      showError(strings.markComplete.enterWeight);
 
       return;
     }
@@ -244,7 +246,7 @@ export const MarkCompleteScreen: React.FC = () => {
       const res = await tripApi.completeTrip(tripId, formData);
 
       if (res?.success) {
-        showSuccess('Trip completed successfully');
+        showSuccess(strings.markComplete.tripCompleted);
         setShowCongratulations(true);
       } else {
         showError(res?.message || 'Failed to complete trip');
@@ -257,7 +259,7 @@ export const MarkCompleteScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <Header title="Mark as Complete" onBackPress={() => navigation.goBack()} />
+      <Header title={strings.markComplete.header} onBackPress={() => navigation.goBack()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -267,7 +269,7 @@ export const MarkCompleteScreen: React.FC = () => {
         <Card style={styles.orderHeaderCard}>
           <View style={styles.orderCardHeader}>
             <View style={styles.orderCardHeaderLeft}>
-              <Typography variant="h4" color="textPrimary" weight="700" style={styles.orderCardTitle}>Order Details</Typography>
+              <Typography variant="h4" color="textPrimary" weight="700" style={styles.orderCardTitle}>{strings.markComplete.orderDetails}</Typography>
               {/* <Typography variant="caption" color="textSecondary" weight="500" style={styles.orderCardSubtitle}>{tripData.tripNumber}</Typography> */}
             </View>
             <View style={styles.statusBadge}>
@@ -278,37 +280,37 @@ export const MarkCompleteScreen: React.FC = () => {
 
           <View style={styles.orderDetailsList}>
             <View style={styles.orderDetailRow}>
-              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Trip ID</Typography>
+              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.markComplete.tripId}</Typography>
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.tripNumber}</Typography>
             </View>
             <View style={styles.orderDetailRow}>
-              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Order ID</Typography>
+              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.markComplete.orderId}</Typography>
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.orderId}</Typography>
             </View>
             <View style={styles.orderDetailRow}>
-              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Customer</Typography>
+              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.markComplete.customer}</Typography>
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.customerName}</Typography>
             </View>
             <View style={styles.orderDetailRow}>
-              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Vehicle</Typography>
+              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.markComplete.vehicle}</Typography>
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.vehicleNumber}</Typography>
             </View>
             <View style={styles.orderDetailRow}>
-              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>Weight</Typography>
+              <Typography variant="body" color="textSecondary" weight="500" style={styles.orderDetailLabel}>{strings.markComplete.weight}</Typography>
               <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.orderDetailValue}>{tripData.assignedWeight} TON</Typography>
             </View>
           </View>
 
           <View style={styles.addressSection}>
-            <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.addressLabel}>Delivery Address</Typography>
+            <Typography variant="bodyMedium" color="textSecondary" weight="600" style={styles.addressLabel}>{strings.markComplete.deliveryAddress}</Typography>
             <Typography variant="body" color="textPrimary" style={styles.addressValue}>{tripData.address}</Typography>
-            <Typography variant="body" color="textSecondary" style={styles.contactLabel}>Contact: {tripData.customerPhone}</Typography>
+            <Typography variant="body" color="textSecondary" style={styles.contactLabel}>{strings.markComplete.contact}: {tripData.customerPhone}</Typography>
           </View>
 
           {/* Progress Indicator */}
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.progressLabel}>Delivery Progress</Typography>
+              <Typography variant="bodyMedium" color="textPrimary" weight="600" style={styles.progressLabel}>{strings.markComplete.deliveryProgress}</Typography>
               <Typography variant="bodyMedium" color="primary" weight="700" style={styles.progressPercentage}>80%</Typography>
             </View>
             <View style={styles.progressBarContainer}>
@@ -319,27 +321,27 @@ export const MarkCompleteScreen: React.FC = () => {
             <View style={styles.progressSteps}>
               <View style={[styles.progressStep, styles.progressStepCompleted]}>
                 <View style={styles.progressStepDot} />
-                <Typography variant="body" color="textSecondary" weight="600" style={styles.progressStepText}>Pickup</Typography>
+                <Typography variant="body" color="textSecondary" weight="600" style={styles.progressStepText}>{strings.markComplete.pickup}</Typography>
               </View>
               <View style={[styles.progressStep, styles.progressStepCompleted]}>
                 <View style={styles.progressStepDot} />
-                <Typography variant="body" color="textSecondary" weight="600" style={styles.progressStepText}>Loaded</Typography>
+                <Typography variant="body" color="textSecondary" weight="600" style={styles.progressStepText}>{strings.markComplete.loaded}</Typography>
               </View>
               <View style={[styles.progressStep, styles.progressStepCompleted]}>
                 <View style={styles.progressStepDot} />
-                <Typography variant="body" color="textSecondary" weight="600" style={styles.progressStepText}>Arrived</Typography>
+                <Typography variant="body" color="textSecondary" weight="600" style={styles.progressStepText}>{strings.markComplete.arrived}</Typography>
               </View>
               <View style={[styles.progressStep, deliveryPhotos.length > 0 ? styles.progressStepCompleted : styles.progressStepPending]}>
                 <View style={[styles.progressStepDot, deliveryPhotos.length > 0 ? styles.progressStepDotCompleted : styles.progressStepDotPending]} />
-                <Typography variant="body" color={deliveryPhotos.length > 0 ? 'success' : 'textSecondary'} weight="600" style={[styles.progressStepText, deliveryPhotos.length > 0 && styles.progressStepTextCompleted]}>Complete</Typography>
+                <Typography variant="body" color={deliveryPhotos.length > 0 ? 'success' : 'textSecondary'} weight="600" style={[styles.progressStepText, deliveryPhotos.length > 0 && styles.progressStepTextCompleted]}>{strings.markComplete.completed}</Typography>
               </View>
             </View>
           </View>
         </Card>
         <Input
-          label="Unloaded Weight (TON)"
+          label={strings.markComplete.unloadedWeightLabel}
           containerStyle={{ marginTop: spacing.xl, marginHorizontal: spacing.sm, marginBottom: 0 }}
-          placeholder="Enter unloaded weight"
+          placeholder={strings.markComplete.unloadedWeightPlaceholder}
           keyboardType="numeric"
           editable={true}
           value={LoadedValue}
@@ -351,14 +353,14 @@ export const MarkCompleteScreen: React.FC = () => {
           onTakePhoto={handleTakePhoto}
           onPickImage={handlePickImage}
           onRemoveDocument={handleRemovePhoto}
-          title="Proof of Delivery"
-          subtitle="Capture photo of delivered parcel"
+          title={strings.markComplete.proofTitle}
+          subtitle={strings.markComplete.proofSubtitle}
         />
 
         {/* Complete Button */}
         <View style={styles.buttonContainer}>
           <Button
-            title="Mark as Complete"
+            title={strings.markComplete.header}
             onPress={handleMarkComplete}
             fullWidth
             size="lg"
@@ -389,7 +391,7 @@ export const MarkCompleteScreen: React.FC = () => {
               align="center"
               style={styles.congratsTitle}
             >
-              Trip Completed
+              {strings.markComplete.tripCompleted}
             </Typography>
 
             {/* Subtitle */}
@@ -400,7 +402,7 @@ export const MarkCompleteScreen: React.FC = () => {
               align="center"
               style={styles.congratsSubtitle}
             >
-              Delivery Successful 🎉
+              {strings.markComplete.deliverySuccess}
             </Typography>
 
             {/* Message */}
@@ -410,7 +412,7 @@ export const MarkCompleteScreen: React.FC = () => {
               align="center"
               style={styles.congratsMessage}
             >
-              {deliveryPhotos.length} photo(s) uploaded successfully.
+              {deliveryPhotos.length} {strings.markComplete.uploaded}
             </Typography>
 
             {/* Action Button */}
@@ -427,7 +429,7 @@ export const MarkCompleteScreen: React.FC = () => {
               style={styles.congratsButton}
             >
               <Typography variant="bodyMedium" color="white" weight="700">
-                Completed
+                {strings.markComplete.done}
               </Typography>
             </TouchableOpacity>
 

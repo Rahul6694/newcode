@@ -5,6 +5,7 @@ import {ForgotPasswordScreen} from '@/screens/auth/ForgotPasswordScreen';
 import {ResetPasswordScreen} from '@/screens/auth/ResetPasswordScreen';
 import {AuthStackParamList} from '@/types';
 import {colors, typography} from '@/theme/colors';
+import LanguageScreen from '@/localization/LanguageScreen';
 
 const Stack = createStackNavigator<AuthStackParamList>();
 
@@ -17,6 +18,8 @@ export const AuthNavigator: React.FC = () => {
         headerTintColor: colors.primary,
         headerBackTitleVisible: false,
       }}>
+        
+      <Stack.Screen name="Languges" component={LanguageScreen} options={{headerShown: false}} />
       <Stack.Screen name="Login" component={LoginScreen} options={{headerShown: false}} />
       <Stack.Screen
         name="ForgotPassword"

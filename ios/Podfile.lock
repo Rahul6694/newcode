@@ -2752,6 +2752,8 @@ PODS:
     - React-perflogger (= 0.83.1)
     - React-utils (= 0.83.1)
     - SocketRocket
+  - ReactNativeLocalization (2.3.2):
+    - React-Core
   - RNCAsyncStorage (1.24.0):
     - boost
     - DoubleConversion
@@ -3111,6 +3113,7 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios/ReactAppDependencyProvider`)
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - ReactNativeLocalization (from `../node_modules/react-native-localization`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
@@ -3305,6 +3308,8 @@ EXTERNAL SOURCES:
     :path: build/generated/ios/ReactCodegen
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  ReactNativeLocalization:
+    :path: "../node_modules/react-native-localization"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCPushNotificationIOS:
@@ -3419,6 +3424,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 0eb286cc274abb059ee601b862ebddac2e681d01
   ReactCodegen: d663254bf59e57e5ed7c65638bd45f358a373bba
   ReactCommon: 15e1e727fa34f760beb7dd52928687fda8edf8dc
+  ReactNativeLocalization: 79b100588f6d7a68852b982ccbe57e329e8bb5a7
   RNCAsyncStorage: 87d51a3aa982dd38d07ecb588aa67821a4a14eee
   RNCPushNotificationIOS: 85957a0534fd1309b4c028ccbe5b1baf9ab5cf57
   RNFBApp: eec5655ba2bc50639dacfd01a2e9ef197165eb92

@@ -10,11 +10,13 @@ interface User {
 interface AuthState {
   token: string | null;
   user: User | null;
+   lang: string;
 }
 
 const initialState: AuthState = {
   token: null,
   user: null,
+    lang: 'en',
 };
 
 const authSlice = createSlice({
@@ -33,6 +35,9 @@ const authSlice = createSlice({
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
     },
+     setLang: (state, action: PayloadAction<string>) => {
+      state.lang = action.payload; 
+    },
 
     clearUser: (state) => {
       state.user = null;
@@ -45,6 +50,7 @@ export const {
   clearToken,
   setUser,
   clearUser,
+    setLang,
 } = authSlice.actions;
 
 export default authSlice.reducer;

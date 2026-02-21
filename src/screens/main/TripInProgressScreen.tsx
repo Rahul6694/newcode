@@ -11,6 +11,7 @@ import { Typography } from '@/components';
 import { tripApi } from '@/apiservice';
 import { fetchCurrentLocation } from '@/utils/dataFactory';
 import useLocation from '@/hooks/useLocation';
+import { useStrings } from '@/localization/useStrings';
 
 
 const { height: FULL_HEIGHT, width: FULL_WIDTH } = Dimensions.get('window');
@@ -26,6 +27,7 @@ type RouteInput = LatLng & { latitudeDes: number; longitudeDes: number };
 export const TripInProgressScreen: React.FC = () => {
   const route = useRoute<TripInProgressRouteProp>();
   const navigation = useNavigation<TripInProgressNavigationProp>();
+  const strings = useStrings();
   const { tripId } = route.params;
   const mapRef = useRef<MapView | null>(null);
 
@@ -474,13 +476,13 @@ export const TripInProgressScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <Header title="Trip In Progress" onBackPress={() => navigation.goBack()} />
+      <Header title={strings.tripInProgress.title} onBackPress={() => navigation.goBack()} />
 
       {/* Show loading while requesting GPS fix */}
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loadingText}>Fetching current location...</Text>
+          <Text style={styles.loadingText}>{strings.tripInProgress.fetchingLocation}</Text>
         </View>
       ) : null}
 
@@ -518,7 +520,7 @@ export const TripInProgressScreen: React.FC = () => {
               {currentLoction?.latitude && currentLoction?.longitude && (
                 <Marker
                   coordinate={currentLoction}
-                  title="Truck"
+                  title={strings.tripInProgress.truck}
                   anchor={{ x: 0.5, y: 0.5 }}
                   flat={true}>
                   <View
@@ -545,7 +547,7 @@ export const TripInProgressScreen: React.FC = () => {
               {destinationLocation?.latitude && destinationLocation?.longitude && (
                 <Marker
                   coordinate={destinationLocation}
-                  title="Destination"
+                  title={strings.tripInProgress.destination}
                   description={unloadingAddress}
                 />
               )}
@@ -566,10 +568,10 @@ export const TripInProgressScreen: React.FC = () => {
           borderRadius: 10,
         }}>
           <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>
-            Route: {routeMeta.points || routeCoordinates.length} pts ({routeMeta.source})
+           {strings.tripInProgress.route}: {routeMeta.points || routeCoordinates.length} pts ({routeMeta.source})
           </Text>
           <Text style={{ color: '#fff', fontSize: 11, marginTop: 2, opacity: 0.9 }}>
-            Status: {routeMeta.status ?? 'n/a'}
+            {strings.tripInProgress.status}: {routeMeta.status ?? 'n/a'}
           </Text>
         </View>
 
@@ -639,7 +641,7 @@ export const TripInProgressScreen: React.FC = () => {
                 </View>
                 <View style={styles.arrivalTimeTextContainer}>
                   <Typography variant="bodyMedium" weight="600" style={{ color: colors.textSecondary }}>
-                    Estimated Arrival
+                    {strings.tripInProgress.estimatedArrival}
                   </Typography>
                   {actualRouteDuration && (
                     <Typography variant="h3" weight="700" style={{ color: colors.primary }}>
@@ -654,7 +656,7 @@ export const TripInProgressScreen: React.FC = () => {
                     {actualRouteDistanceKm.toFixed(1)} km
                   </Typography>
                   <Typography variant="caption" weight="500" style={{ color: colors.textSecondary }}>
-                    Distance
+                    {strings.tripInProgress.distance}
                   </Typography>
                 </View>
               )}
@@ -674,7 +676,7 @@ export const TripInProgressScreen: React.FC = () => {
                 </View>
                 <View style={styles.deliveryHeaderText}>
                   <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
-                    Delivery Location
+                    {strings.tripInProgress.deliveryLocation}
                   </Typography>
                   <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
                     {sampleTrip.unloadingLocation.address}
@@ -698,7 +700,7 @@ export const TripInProgressScreen: React.FC = () => {
                       </View>
                       <View style={styles.deliveryContactDetails}>
                         <Typography variant="h4" weight="700" style={{ color: colors.textPrimary }}>
-                          Contact Person
+                         {strings.tripInProgress.contactPerson}
                         </Typography>
                         <Typography variant="smallMedium" weight="500" style={{ color: colors.textPrimary, marginTop: spacing.xs / 2 }} numberOfLines={2}>
                           {sampleTrip.unloadingLocation.contactPerson.name}
@@ -741,7 +743,7 @@ export const TripInProgressScreen: React.FC = () => {
           <View style={styles.slideContainer}>
             <TouchableOpacity onPress={() => { handleMarkAsArrived() }} style={{ justifyContent: "center", alignContent: "center", padding: 15, backgroundColor: colors.primary, borderRadius: 10 }}>
               <Typography variant="bodySemibold" weight="600" style={{ textAlign: "center", color: "#fff" }}>
-                Mark as Arrived
+               {strings.tripInProgress.markArrived}
               </Typography>
             </TouchableOpacity>
           </View>

@@ -32,6 +32,7 @@ import { Animated } from 'react-native';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import { usePermissions } from '@/hooks/usePermissions';
 import { tripApi } from '@/apiservice';
+import { useStrings } from '@/localization/useStrings';
 
 type LocationMarkRouteProp = RouteProp<TodoStackParamList, 'LocationMark'>;
 type LocationMarkNavigationProp = StackNavigationProp<
@@ -42,16 +43,15 @@ type LocationMarkNavigationProp = StackNavigationProp<
 export const LocationMarkScreen: React.FC = () => {
   const route = useRoute<LocationMarkRouteProp>();
   const navigation = useNavigation<LocationMarkNavigationProp>();
+  const strings = useStrings();
   const { tripId, stage } = route.params;
   const { showSuccess, showError } = useToast();
   const permissions = usePermissions();
-
-
   console.log(stage, 'stage===============>');
 
-  // UI state only
+
   const [loading] = useState(false);
-  const [location] = useState(true); // Always show location for UI
+  const [location] = useState(true);
   const [marking, setMarking] = useState(false);
   const [pulseAnim] = useState(new Animated.Value(1));
   const [documents, setDocuments] = useState<any[]>([]);
@@ -243,19 +243,19 @@ export const LocationMarkScreen: React.FC = () => {
   const handleRemoveDocument = (index: number) => {
     const newDocs = documents.filter((_, i) => i !== index);
     setDocuments(newDocs);
-    showSuccess('Document removed');
+    showSuccess(strings.markLoad.documentRemoved);
   };
 
   // UI handlers only
   const uploadDocuments = async () => {
 
-     if (LoadedValue === null || LoadedValue === '') {
-      showError('Please enter loaded weight');
+    if (LoadedValue === null || LoadedValue === '') {
+      showError(strings.markLoad.pleaseEnterWeight);
 
       return;
     }
     if (documents.length === 0) {
-      showError('Please add documents before uploading');
+      showError(strings.markLoad.pleaseAddDocs);
       return;
     }
     // if (LoadedValue === null || LoadedValue === '') {
@@ -265,7 +265,7 @@ export const LocationMarkScreen: React.FC = () => {
     // }
 
     setUploadingDocs(true);
-    
+
 
     try {
       const formData = new FormData();
@@ -283,7 +283,7 @@ export const LocationMarkScreen: React.FC = () => {
       //     type: selectedPhoto?.mime || 'image/jpeg',
 
       formData.append('remarks', 'Loading completed');
-     formData.append('loadedWeight', LoadedValue.toString());
+      formData.append('loadedWeight', LoadedValue.toString());
       console.log(formData, documents, 'formData=======>');
 
       const response = await tripApi.uploadDocument(tripId, formData);
@@ -291,7 +291,7 @@ export const LocationMarkScreen: React.FC = () => {
       console.log(response, 'upload response===============>');
 
       if (response.success) {
-        showSuccess('Documents uploaded successfully');
+        showSuccess(strings.markLoad.documentsUploaded);
         setDocsUploaded(true);
       } else {
         const errorMsg = response.message || response.error || 'Failed to upload documents';
@@ -308,8 +308,8 @@ export const LocationMarkScreen: React.FC = () => {
 
   const markTripAsLoaded = async () => {
 
-     if (LoadedValue === null || LoadedValue === '') {
-      showError('Please enter loaded weight');
+    if (LoadedValue === null || LoadedValue === '') {
+      showError(strings.markLoad.pleaseEnterWeight);
 
       return;
     }
@@ -317,7 +317,7 @@ export const LocationMarkScreen: React.FC = () => {
     try {
       await tripApi.markLoaded(tripId, 'All items loaded properly');
 
-      showSuccess('Trip marked as loaded');
+      showSuccess(strings.markLoad.tripMarkedLoaded);
       navigation.replace('TripInProgress', { tripId });
     } catch (error: any) {
       console.log(error);
@@ -328,14 +328,14 @@ export const LocationMarkScreen: React.FC = () => {
   };
   const handlePrimaryAction = () => {
     if (!docsUploaded) {
-      uploadDocuments(); // step 1
+      uploadDocuments();
     } else {
-      markTripAsLoaded(); // step 2
+      markTripAsLoaded();
     }
   };
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <Header title="Mark as Loaded" onBackPress={() => navigation.goBack()} />
+      <Header title={strings.markLoad.markAsLoaded} onBackPress={() => navigation.goBack()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -350,7 +350,7 @@ export const LocationMarkScreen: React.FC = () => {
               color="textSecondary"
               style={styles.loadingText}
             >
-              Accessing location...
+              {strings.markLoad.accessingLocation}
             </Typography>
           </View>
         )}
@@ -372,17 +372,17 @@ export const LocationMarkScreen: React.FC = () => {
               weight="700"
               style={styles.errorTitle}
             >
-              Location Required
+              {strings.markLoad.locationRequired}
             </Typography>
             <Typography
               variant="body"
               color="textSecondary"
               style={styles.errorDesc}
             >
-              Enable location services to continue
+              {strings.markLoad.enableLocation}
             </Typography>
             <Button
-              title="🔄 Retry"
+              title={strings.markLoad.retry}
               onPress={() => showSuccess('Location accessed')}
               variant="outline"
               style={styles.retryBtn}
@@ -403,7 +403,7 @@ export const LocationMarkScreen: React.FC = () => {
                     weight="700"
                     style={styles.combinedTitle}
                   >
-                    Trip Loading...
+                    {strings.history.loading}
                   </Typography>
                   <View style={styles.weightBadgeInline}>
                     <Typography
@@ -412,7 +412,7 @@ export const LocationMarkScreen: React.FC = () => {
                       weight="700"
                       style={styles.weightBadgeTextInline}
                     >
-                      {trip?.assignedWeight ?? 'N/A'} TON
+                      {trip?.assignedWeight ?? 'N/A'} {strings.tripDetail.ton}
                     </Typography>
                   </View>
                 </View>
@@ -432,7 +432,7 @@ export const LocationMarkScreen: React.FC = () => {
                       documents.length > 0 && styles.statusTextReady,
                     ]}
                   >
-                    {documents.length > 0 ? 'READY' : 'PENDING'}
+                    {documents.length > 0 ? strings.markLoad.ready : strings.markLoad.pending}
                   </Typography>
                 </View>
               </View>
@@ -441,7 +441,7 @@ export const LocationMarkScreen: React.FC = () => {
                 color="textSecondary"
                 style={styles.combinedSubtitle}
               >
-                All items loaded properly and ready for delivery
+                {strings.markLoad.allItemsLoaded}
               </Typography>
             </View>
 
@@ -455,7 +455,7 @@ export const LocationMarkScreen: React.FC = () => {
                     weight="500"
                     style={styles.tripInfoLabel}
                   >
-                    Trip Number
+                    {strings.tripDetail.tripId}
                   </Typography>
                   <Typography
                     variant="bodyMedium"
@@ -474,7 +474,7 @@ export const LocationMarkScreen: React.FC = () => {
                     weight="500"
                     style={styles.tripInfoLabel}
                   >
-                    Total Weight
+                    {strings.markLoad.totalWeight}
                   </Typography>
                   <Typography
                     variant="bodyMedium"
@@ -482,21 +482,21 @@ export const LocationMarkScreen: React.FC = () => {
                     weight="600"
                     style={styles.tripInfoValue}
                   >
-                    {trip?.assignedWeight ?? 'N/A'} TON
+                    {trip?.assignedWeight ?? 'N/A'} {strings.tripDetail.ton}
                   </Typography>
                 </View>
               </View>
             </View>
 
             <Input
-              label="Loaded Weight (TON)"
+              label={strings.markLoad.loadedWeightLabel}
               containerStyle={{ marginTop: spacing.xl, marginHorizontal: spacing.sm, marginBottom: 0 }}
-              placeholder="Enter loaded weight"
+              placeholder={strings.markLoad.loadedWeightPlaceholder}
               keyboardType="numeric"
               editable={true}
-              
+
               value={LoadedValue}
-            onChangeText={setLoadedValue}
+              onChangeText={setLoadedValue}
             />
             {/* Document Upload Section */}
             <View style={styles.documentSection}>
@@ -505,8 +505,8 @@ export const LocationMarkScreen: React.FC = () => {
                 onTakePhoto={handleTakePhoto}
                 onPickImage={handlePickImage}
                 onRemoveDocument={handleRemoveDocument}
-                title="Upload Documents"
-                subtitle={`Capture or select photos for the loding process`}
+                title={strings.markLoad.uploadDocuments}
+                subtitle={strings.markLoad.uploadSubtitle}
               />
             </View>
 
@@ -515,12 +515,12 @@ export const LocationMarkScreen: React.FC = () => {
               <Button
                 title={
                   marking
-                    ? 'Processing...'
+                    ? strings.markLoad.processing
                     : uploadingDocs
-                      ? 'Uploading...'
+                      ? strings.markLoad.uploading
                       : docsUploaded
-                        ? 'Mark as Loaded'
-                        : 'Upload Documents'
+                        ? strings.markLoad.markAsLoaded
+                        : strings.markLoad.uploadDocsButton
                 }
                 onPress={handlePrimaryAction}
                 loading={uploadingDocs || marking}
