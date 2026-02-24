@@ -73,7 +73,7 @@ export const MainNavigator: React.FC = () => {
           return {
             tabBarStyle: hideTabBarScreens.includes(routeName) ? {display: 'none'} : styles.tabBar,
             tabBarIcon: ({focused}) => (
-              <TabIcon iconSource={iconMap.trips} focused={focused} label={strings.todo.activeTrip} />
+              <TabIcon iconSource={iconMap.trips} focused={focused} label={strings.todo.todo} />
             ),
           };
         }}
@@ -96,7 +96,7 @@ export const MainNavigator: React.FC = () => {
           return {
             tabBarStyle: hideTabBarScreens.includes(routeName) ? {display: 'none'} : styles.tabBar,
             tabBarIcon: ({focused}) => (
-              <TabIcon iconSource={iconMap.history} focused={focused} label={strings.history.viewDetails} />
+              <TabIcon iconSource={iconMap.history} focused={focused} label={strings.todo.history} />
             ),
           };
         }}
@@ -106,7 +106,7 @@ export const MainNavigator: React.FC = () => {
         component={ProfileNavigator}
         options={{
           tabBarIcon: ({focused}) => (
-            <TabIcon iconSource={iconMap.profile} focused={focused} label={strings.profile.personalInformation} />
+            <TabIcon iconSource={iconMap.profile} focused={focused} label={strings.todo.profile} />
           ),
         }}
       />

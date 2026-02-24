@@ -106,11 +106,11 @@ export const LoginScreen: React.FC = () => {
   // Validate email
   const validateEmail = (emailValue: string): string => {
     if (!emailValue.trim()) {
-      return 'Email address is required';
+      return strings.auth.emailRequired;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailValue.trim())) {
-      return 'Please enter a valid email address';
+      return strings.auth.invalidEmail;
     }
     return '';
   };
@@ -118,10 +118,10 @@ export const LoginScreen: React.FC = () => {
   // Validate password
   const validatePassword = (passwordValue: string): string => {
     if (!passwordValue.trim()) {
-      return 'Password is required';
+      return strings.auth.passwordRequired;
     }
     if (passwordValue.length < 6) {
-      return 'Password must be at least 6 characters';
+      return strings.auth.passwordMin;
     }
     return '';
   };
@@ -148,7 +148,7 @@ export const LoginScreen: React.FC = () => {
 
 const handleLogin = async () => {
   if (!email.trim() || !password.trim()) {
-    showError('Please enter email and password');
+    showError(strings.auth.enterCredentials);
     return;
   }
 
@@ -176,7 +176,7 @@ const handleLogin = async () => {
       // Save token in Redux
       dispatch(setToken(res.token));
       dispatch(setUser(res?.user))
-      showSuccess('Login successful');
+      showSuccess(strings.auth.loginSuccess);
     } catch (error: any) {
       console.log('Login error:', error);
       showError(error?.message || 'Unable to login. Try again');
@@ -236,7 +236,8 @@ const handleLogin = async () => {
                       />
                     </View>
                     <Typography variant="bodySemibold" style={styles.logoLabel}>
-                      ATCE DRIVER
+                      {strings.auth.appName}
+                      
                     </Typography>
                   </Animated.View>
                   <View style={styles.titleContainer}>

@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Linking, RefreshControl, Image, Animated, PanResponder, Dimensions, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,8 +10,6 @@ import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colo
 import { tripApi } from '@/apiservice';
 import useLocation from '@/hooks/useLocation';
 import { useStrings } from '@/localization/useStrings';
-
-
 
 type TripDetailRouteProp = RouteProp<TodoStackParamList, 'TripDetail'>;
 type TripDetailNavigationProp = StackNavigationProp<TodoStackParamList, 'TripDetail'>;
@@ -216,7 +210,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
 
     // Only start trip if status is "Assigned"
     if (trip.status !== 'ASSIGNED') {
-      showSuccess('Trip cannot be started from current status');
+      showSuccess(strings.tripDetail.invalidStatus);
       // Reset slider anyway
       Animated.spring(slideProgress, {
         toValue: 0,
@@ -583,7 +577,29 @@ export const TripDetailScreen: React.FC = ({ }) => {
           {
             console.log(trips?.status, "test===========>")
           }
+{
+  trip?.order?.loadingInstructions && 
 
+    <View style={styles.timelineItem}>
+                {/* <Typography
+                  variant="bodyMedium"
+                  color="textSecondary"
+                  weight="600"
+                  style={styles.timelineLabel}>
+                  {strings.tripDetail.completed}
+                </Typography> */}
+                <Typography
+                  variant="bodyMedium"
+                  color="textPrimary"
+                  weight="500"
+                  style={styles.timelineDate}>
+                {trip?.order?.loadingInstructions}
+                </Typography>
+                </View>
+
+
+
+}
           {
             (trips?.status === "IN_PROGRESS" ||
               trips?.status === "ASSIGNED") && (
@@ -665,6 +681,30 @@ export const TripDetailScreen: React.FC = ({ }) => {
           )}
 
           {/* {console.log(trips?.status)} */}
+
+          {
+  trip?.order?.unloadingInstructions && 
+
+    <View style={styles.timelineItem}>
+                {/* <Typography
+                  variant="bodyMedium"
+                  color="textSecondary"
+                  weight="600"
+                  style={styles.timelineLabel}>
+                  {strings.tripDetail.completed}
+                </Typography> */}
+                <Typography
+                  variant="bodyMedium"
+                  color="textPrimary"
+                  weight="500"
+                  style={styles.timelineDate}>
+                {trip?.order?.unloadingInstructions}
+                </Typography>
+                </View>
+
+
+
+}
 
           {/* NAVIGATE */}
           {

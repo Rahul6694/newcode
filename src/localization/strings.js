@@ -61,6 +61,9 @@ const strings = new LocalizedStrings({
             ton: "TON",
             na: "NA",
             tabLabel: "Trips",
+            todo: "To-Do",
+            history: "History",
+            profile: "Profile"
         },
         tripDetail: {
             title: "Trip Details",
@@ -308,6 +311,9 @@ const strings = new LocalizedStrings({
             ton: "टन",
             na: "उपलब्ध नहीं",
             tabLabel: "यात्राएँ",
+            todo: "कार्य सूची",
+  history: "इतिहास",
+  profile: "प्रोफ़ाइल"
         },
         tripDetail: {
             title: "यात्रा विवरण",
@@ -494,8 +500,8 @@ const strings = new LocalizedStrings({
             selectLanguageMsg: 'कृपया अपनी पसंदीदा भाषा चुनें। आप इसे बाद में सेटिंग्स से बदल सकते हैं।',
             continue: 'जारी रखें',
         },
-        },
-    
+    },
+
     ur: {
         auth: {
             appName: "ای ٹی سی ای ڈرائیور",
@@ -556,6 +562,9 @@ const strings = new LocalizedStrings({
             ton: "ٹن",
             na: "دستیاب نہیں",
             tabLabel: "سفریں",
+            todo: "کاموں کی فہرست",
+  history: "تاریخچہ",
+  profile: "پروفائل"
         },
         tripDetail: {
             title: "سفر کی تفصیلات",
@@ -742,8 +751,8 @@ const strings = new LocalizedStrings({
             selectLanguageMsg: 'براہ کرم اپنی پسندیدہ زبان منتخب کریں۔ آپ بعد میں اسے سیٹنگز سے تبدیل کر سکتے ہیں۔',
             continue: 'جاری رکھیں',
         },
-        },
-    
+    },
+
     ar: {
         auth: {
             appName: "سائق ATCE",
@@ -791,8 +800,8 @@ const strings = new LocalizedStrings({
             resendOtp: "إعادة إرسال OTP",
             resendIn: "إعادة إرسال OTP في",
             otpResent: "تم إعادة إرسال OTP إلى بريدك الإلكتروني",
-            },
-            todo: {
+        },
+        todo: {
             goodMorning: "صباح الخير",
             goodAfternoon: "مساء الخير",
             goodEvening: "مساء الخير",
@@ -804,8 +813,11 @@ const strings = new LocalizedStrings({
             ton: "طن",
             na: "غير متاح",
             tabLabel: "الرحلات",
-            },
-            tripDetail: {
+            todo: "قائمة المهام",
+  history: "السجل",
+  profile: "الملف الشخصي"
+        },
+        tripDetail: {
             title: "تفاصيل الرحلة",
             loading: "جاري تحميل تفاصيل الرحلة...",
             noData: "لا توجد بيانات للرحلة",
@@ -843,8 +855,8 @@ const strings = new LocalizedStrings({
             slideDefault: "اسحب",
             tripStartedSuccess: "تم بدء الرحلة بنجاح!",
             invalidStatus: "لا يمكن بدء الرحلة من الحالة الحالية",
-            },
-            tripInProgress: {
+        },
+        tripInProgress: {
             title: "الرحلة جارية",
             fetchingLocation: "جاري الحصول على الموقع الحالي...",
             route: "المسار",
@@ -859,8 +871,8 @@ const strings = new LocalizedStrings({
             markArrived: "علم بوصوله",
             minutesShort: "دقيقة",
             hoursShort: "ساعة",
-            },
-            profile: {
+        },
+        profile: {
             personalInformation: "المعلومات الشخصية",
             accountOrganization: "الحساب والمنظمة",
             documents: "المستندات",
@@ -877,8 +889,8 @@ const strings = new LocalizedStrings({
             na: "غير متاح",
             loggedOutSuccess: "تم تسجيل الخروج بنجاح",
             tabLabel: "الملف الشخصي",
-            },
-            notifications: {
+        },
+        notifications: {
             title: "الإشعارات",
             unread: "غير مقروء",
             markAllRead: "وضع علامة مقروء على الكل",
@@ -886,8 +898,8 @@ const strings = new LocalizedStrings({
             delete: "حذف",
             noNotifications: "لا توجد إشعارات بعد",
             loading: "جاري التحميل...",
-            },
-            markComplete: {
+        },
+        markComplete: {
             header: "علم كمكتمل",
             orderDetails: "تفاصيل الطلب",
             tripId: "معرّف الرحلة",
@@ -915,8 +927,8 @@ const strings = new LocalizedStrings({
             deliverySuccess: "تم التسليم بنجاح 🎉",
             uploaded: "تم تحميل صورة/صور بنجاح.",
             done: "مكتمل",
-            },
-            markLoad: {
+        },
+        markLoad: {
             markAsLoaded: "علم كمحمّل",
             accessingLocation: "جاري الوصول إلى الموقع...",
             locationRequired: "الموقع مطلوب",
@@ -941,8 +953,8 @@ const strings = new LocalizedStrings({
             documentsUploaded: "تم تحميل المستندات بنجاح",
             tripMarkedLoaded: "تم تعليم الرحلة كمحمّلة",
             documentRemoved: "تمت إزالة المستند",
-            },
-            history: {
+        },
+        history: {
             loading: "جاري التحميل...",
             tripNotFound: "لم يتم العثور على الرحلة",
             failedToLoadTrip: "فشل تحميل تفاصيل الرحلة",
@@ -977,8 +989,8 @@ const strings = new LocalizedStrings({
             notAvailable: "غير متاح",
             ton: "طن",
             failedToLoadTripHistory: "فشل تحميل سجل الرحلة",
-            },
-            language: {
+        },
+        language: {
             english: 'الإنجليزية',
             hindi: 'الهندية',
             urdu: 'الأردية',
@@ -988,8 +1000,8 @@ const strings = new LocalizedStrings({
             welcome: 'مرحبًا',
             selectLanguageMsg: 'يرجى اختيار لغتك المفضلة. يمكنك تغييرها لاحقًا من الإعدادات.',
             continue: 'استمر',
-            },
-            },
+        },
+    },
 });
 
 export default strings;
