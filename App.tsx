@@ -2,20 +2,20 @@
 
 // export default App;
 
-import React, { useEffect } from 'react';
-import { StatusBar, Platform, PermissionsAndroid } from 'react-native';
-import { NavigationContainer, useIsFocused } from '@react-navigation/native';
-import { AppNavigator } from '@/navigation/AppNavigator';
 import { ToastProvider } from '@/components';
+import { AppNavigator } from '@/navigation/AppNavigator';
+import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { PermissionsAndroid, Platform, StatusBar } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 import { Provider, useSelector } from 'react-redux';
 
-import { PersistGate } from 'redux-persist/integration/react';
-import { persistor, RootState, store } from '@/redux/store';
-import { fcmService } from '@/pushNotifacation/FMCService';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import { localNotificationService } from '@/pushNotifacation/LocalNotificationService';
 import strings from '@/localization/strings';
+import { fcmService } from '@/pushNotifacation/FMCService';
+import { localNotificationService } from '@/pushNotifacation/LocalNotificationService';
+import { persistor, RootState, store } from '@/redux/store';
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import { PersistGate } from 'redux-persist/integration/react';
 
 
 const AppContent: React.FC = () => {
@@ -50,25 +50,12 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     requestNotificationPermissions()
+    // register FCM listeners once at app root
     fcmService.registerAppWithFCM();
-    fcmService.register(onRegister, onNotification, onOpenNotification);
+    fcmService.register();
 
-    localNotificationService.configure(onOpenNotification);
-
-    function onRegister(token) { }
-
-    function onNotification(notify) {
-      localNotificationService.showlocalNotification(
-        'channel-id',
-        Platform.OS === 'ios' ? notify.message : notify.title,
-        notify.body,
-        notify,
-      );
-    }
-
-    function onOpenNotification(notify, data) {
-      console.log('[App] onOpenNotification: ', notify);
-    }
+    // configure local notification callbacks (if any)
+    localNotificationService.configure();
   }, []);
 
   return (

@@ -1,24 +1,23 @@
-import React, { useEffect, useEffectEvent, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Animated,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation, RouteProp, CommonActions, useIsFocused } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { TodoStackParamList } from '@/types';
-import { Button, Card, useToast, Typography, ProofDocumentUpload, Input } from '@/components';
-import { Header } from '@/components/Header';
-import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import { usePermissions } from '@/hooks/usePermissions';
 import { tripApi } from '@/apiservice';
+import { Button, Card, Input, ProofDocumentUpload, Typography, useToast } from '@/components';
+import { Header } from '@/components/Header';
 import useLocation from '@/hooks/useLocation';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useStrings } from '@/localization/useStrings';
+import { borderRadius, colors, shadows, spacing, typography } from '@/theme/colors';
+import { TodoStackParamList } from '@/types';
+import { CommonActions, RouteProp, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useEffect, useState } from 'react';
+import {
+  Animated,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import ImageCropPicker from 'react-native-image-crop-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type MarkCompleteRouteProp = RouteProp<TodoStackParamList, 'MarkComplete'>;
 type MarkCompleteNavigationProp = StackNavigationProp<TodoStackParamList, 'MarkComplete'>;

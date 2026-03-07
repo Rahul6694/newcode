@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Dimensions, ActivityIndicator, View, Text, TouchableOpacity, Modal, Linking, Platform, Animated, PanResponder, ScrollView, Image, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation, RouteProp, useIsFocused } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from 'react-native-maps';
-import { TodoStackParamList } from '@/types';
-import { colors, spacing, typography, borderRadius, shadows } from '@/theme/colors';
-import { Header } from '@/components/Header';
-import { Typography } from '@/components';
 import { tripApi } from '@/apiservice';
-import { fetchCurrentLocation } from '@/utils/dataFactory';
+import { Typography } from '@/components';
+import { Header } from '@/components/Header';
 import useLocation from '@/hooks/useLocation';
 import { useStrings } from '@/localization/useStrings';
+import { borderRadius, colors, shadows, spacing, typography } from '@/theme/colors';
+import { TodoStackParamList } from '@/types';
+import { fetchCurrentLocation } from '@/utils/dataFactory';
+import { RouteProp, useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Dimensions, Image, Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const { height: FULL_HEIGHT, width: FULL_WIDTH } = Dimensions.get('window');
@@ -682,6 +682,16 @@ export const TripInProgressScreen: React.FC = () => {
                     {sampleTrip.unloadingLocation.address}
                   </Typography>
                 </View>
+                <TouchableOpacity
+                        style={styles.deliveryNavigateButton}
+                        onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
+                        activeOpacity={0.7}>
+                        <Image
+                          source={require('@/assets/images/location.png')}
+                          style={styles.deliveryNavigateButtonIcon}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
               </View>
             </View>
 
@@ -722,16 +732,7 @@ export const TripInProgressScreen: React.FC = () => {
                           resizeMode="contain"
                         />
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.deliveryNavigateButton}
-                        onPress={() => handleNavigate(unloadingAddress, 'Delivery Location')}
-                        activeOpacity={0.7}>
-                        <Image
-                          source={require('@/assets/images/location.png')}
-                          style={styles.deliveryNavigateButtonIcon}
-                          resizeMode="contain"
-                        />
-                      </TouchableOpacity>
+                      
                     </View>
                   </View>
                 </View>

@@ -127,7 +127,7 @@ export const TodoScreen: React.FC = () => {
         //   return;
         // }
 
-        fcmService.register();
+            // registration is handled at app root (App.tsx); only fetch the token here
         const token = await fcmService.getFcmToken();
         if (!token) {
           console.log('Token not received');
@@ -145,7 +145,7 @@ export const TodoScreen: React.FC = () => {
     initFCM();
 
     return () => {
-      fcmService.unRegister();
+      // no need to unregister here, global service managed in App.tsx
     };
   }, []);
 

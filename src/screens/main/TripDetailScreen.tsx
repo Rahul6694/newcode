@@ -873,6 +873,7 @@ export const TripDetailScreen: React.FC = ({ }) => {
               variant="bodyMedium"
               color="white"
               weight="700"
+         
               style={styles.slideButtonText}
             >
               {isSliding
@@ -1200,6 +1201,7 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.white,
     fontWeight: '700',
+    alignSelf:'center'
   },
   modalBody: {
     paddingHorizontal: spacing.xxl,

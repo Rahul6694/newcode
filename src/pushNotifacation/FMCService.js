@@ -131,7 +131,19 @@ import {localNotificationService} from './LocalNotificationService';
 import {notificationOpen} from './notificationAction';
 
 class FCMService {
+  constructor() {
+    this.messageListener = null;
+    this._registered = false; // prevent double registration
+  }
+
   register = () => {
+    // avoid installing listeners multiple times
+    if (this._registered) {
+      console.log('[FCMService] register called but already registered');
+      return;
+    }
+    this._registered = true;
+
     this.checkPermission();
     this.createNotificationListeners();
     localNotificationService.configure();
@@ -232,7 +244,9 @@ class FCMService {
   unRegister = () => {
     if (this.messageListener) {
       this.messageListener();
+      this.messageListener = null;
     }
+    this._registered = false;
   };
 }
 
