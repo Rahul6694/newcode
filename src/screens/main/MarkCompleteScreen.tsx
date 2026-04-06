@@ -29,6 +29,7 @@ export const MarkCompleteScreen: React.FC = () => {
   const { tripId } = route.params;
   const { showSuccess, showError } = useToast();
   const [LoadedValue, setLoadedValue] = useState<any>(null)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // UI state only
   const [deliveryPhotos, setDeliveryPhotos] = useState<any[]>([]);
   const [showCongratulations, setShowCongratulations] = useState(false);
@@ -223,6 +224,7 @@ export const MarkCompleteScreen: React.FC = () => {
 
       return;
     }
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
 
@@ -252,6 +254,9 @@ export const MarkCompleteScreen: React.FC = () => {
       }
     } catch (error) {
       console.log('Complete trip error:', error);
+    }
+    finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -364,6 +369,7 @@ export const MarkCompleteScreen: React.FC = () => {
             fullWidth
             size="lg"
             disabled={deliveryPhotos.length === 0}
+            loading={isSubmitting}
             style={styles.completeButton}
           />
         </View>
